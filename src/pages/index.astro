@@ -1,18 +1,5 @@
 ---
 import Layout from '@layouts/Layout.astro';
-
-// List of videos in the soup playlist
-const videos = [
-  '/videos/soup/Blank Room Soup.avi.webm',
-  '/videos/soup/Blank Room Soup 2.webm',
-  '/videos/soup/Blank Room Soup 3.webm',
-  '/videos/soup/Blank Room Soup 4.webm',
-  '/videos/soup/Blank Room Soup 5.webm',
-  '/videos/soup/Blank Corridors.webm',
-];
-
-// Select a random video
-const randomVideo = videos[Math.floor(Math.random() * videos.length)];
 ---
 
 <Layout title="Home">
@@ -25,7 +12,7 @@ const randomVideo = videos[Math.floor(Math.random() * videos.length)];
       loop
       playsinline
     >
-      <source src={randomVideo} type="video/webm" />
+      <source id="video-source" src="" type="video/webm" />
     </video>
     <div class="absolute inset-0 flex flex-col items-center justify-center z-20 overflow-y-auto py-8 px-4">
       <img 
@@ -94,9 +81,29 @@ const randomVideo = videos[Math.floor(Math.random() * videos.length)];
 </Layout>
 
 <script>
-  // Ensure video plays (some browsers require user interaction first)
+  // List of videos in the soup playlist
+  const videos = [
+    '/videos/soup/Blank Room Soup.avi.webm',
+    '/videos/soup/Blank Room Soup 2.webm',
+    '/videos/soup/Blank Room Soup 3.webm',
+    '/videos/soup/Blank Room Soup 4.webm',
+    '/videos/soup/Blank Room Soup 5.webm',
+    '/videos/soup/Blank Corridors.webm',
+  ];
+
+  // Select a random video on every page load
+  const randomVideo = videos[Math.floor(Math.random() * videos.length)];
+  
   const video = document.getElementById('background-video') as HTMLVideoElement;
-  if (video) {
+  const source = document.getElementById('video-source') as HTMLSourceElement;
+  
+  if (video && source) {
+    // Set the random video source
+    source.src = randomVideo;
+    // Force reload the video element to pick up the new source
+    video.load();
+    
+    // Ensure video plays (some browsers require user interaction first)
     video.play().catch((error) => {
       console.error('Error playing video:', error);
     });
