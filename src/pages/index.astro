@@ -1,0 +1,121 @@
+---
+import Layout from '@layouts/Layout.astro';
+
+// List of videos in the soup playlist
+const videos = [
+  '/videos/soup/Blank Room Soup.avi.webm',
+  '/videos/soup/Blank Room Soup 2.webm',
+  '/videos/soup/Blank Room Soup 3.webm',
+  '/videos/soup/Blank Room Soup 4.webm',
+  '/videos/soup/Blank Room Soup 5.webm',
+  '/videos/soup/Blank Corridors.webm',
+];
+
+// Select a random video
+const randomVideo = videos[Math.floor(Math.random() * videos.length)];
+---
+
+<Layout title="Home">
+  <main class="fixed inset-0 w-screen h-screen p-0 m-0 overflow-hidden">
+    <video 
+      id="background-video"
+      class="absolute top-0 left-0 w-full h-full object-cover"
+      autoplay
+      muted
+      loop
+      playsinline
+    >
+      <source src={randomVideo} type="video/webm" />
+    </video>
+    <div class="absolute inset-0 flex flex-col items-center justify-center z-20 overflow-y-auto py-8 px-4">
+      <img 
+        src="/hoe.webp" 
+        alt="HOE" 
+        class="max-w-[650px] w-full h-auto mb-8"
+      />
+      
+      <div class="text-center mb-4">
+        <p class="text-xl text-white">SUBSCRIBE TO OUR MAILINGLIST FOR UPDATES</p>
+      </div>
+
+      <div id="shortcode-3-20" class="ct-shortcode max-w-md w-full px-4">
+        <div class="mailpoet_form_popup_overlay"></div>
+        <div id="mailpoet_form_1" class="mailpoet_form mailpoet_form_shortcode mailpoet_form_position_ mailpoet_form_animation_">
+          <style is:inline>
+            #mailpoet_form_1 .mailpoet_form {  }
+            #mailpoet_form_1 .mailpoet_column_with_background { padding: 10px; }
+            #mailpoet_form_1 .mailpoet_form_column:not(:first-child) { margin-left: 20px; }
+            #mailpoet_form_1 .mailpoet_paragraph { line-height: 20px; margin-bottom: 20px; }
+            #mailpoet_form_1 .mailpoet_segment_label, #mailpoet_form_1 .mailpoet_text_label, #mailpoet_form_1 .mailpoet_textarea_label, #mailpoet_form_1 .mailpoet_select_label, #mailpoet_form_1 .mailpoet_radio_label, #mailpoet_form_1 .mailpoet_checkbox_label, #mailpoet_form_1 .mailpoet_list_label, #mailpoet_form_1 .mailpoet_date_label { display: block; font-weight: normal; }
+            #mailpoet_form_1 .mailpoet_text, #mailpoet_form_1 .mailpoet_textarea, #mailpoet_form_1 .mailpoet_select, #mailpoet_form_1 .mailpoet_date_month, #mailpoet_form_1 .mailpoet_date_day, #mailpoet_form_1 .mailpoet_date_year, #mailpoet_form_1 .mailpoet_date { display: block; }
+            #mailpoet_form_1 .mailpoet_text, #mailpoet_form_1 .mailpoet_textarea { width: 200px; }
+            #mailpoet_form_1 .mailpoet_checkbox {  }
+            #mailpoet_form_1 .mailpoet_submit { background-color: #000000 !important; color: #ffffff !important; font-weight: bold !important; }
+            #mailpoet_form_1 .mailpoet_divider {  }
+            #mailpoet_form_1 .mailpoet_message {  }
+            #mailpoet_form_1 .mailpoet_form_loading { width: 30px; text-align: center; line-height: normal; }
+            #mailpoet_form_1 .mailpoet_form_loading > span { width: 5px; height: 5px; background-color: #5b5b5b; }
+            #mailpoet_form_1{border-radius: 0px;text-align: left;}
+            #mailpoet_form_1 form.mailpoet_form {padding: 20px;}
+            #mailpoet_form_1{width: 100%;}
+            #mailpoet_form_1 .mailpoet_message {margin: 0; padding: 0 20px;}
+            #mailpoet_form_1 .mailpoet_paragraph.last {margin-bottom: 0}
+            @media (max-width: 500px) {#mailpoet_form_1 {background-image: none;}}
+            @media (min-width: 500px) {#mailpoet_form_1 .last .mailpoet_paragraph:last-child {margin-bottom: 0}}
+            @media (max-width: 500px) {#mailpoet_form_1 .mailpoet_form_column:last-child .mailpoet_paragraph:last-child {margin-bottom: 0}}
+          </style>
+
+          <form target="_self" method="post" action="https://hellonearthmfg.com/wp-admin/admin-post.php?action=mailpoet_subscription_form" class="mailpoet_form mailpoet_form_form mailpoet_form_shortcode" novalidate="" data-delay="" data-exit-intent-enabled="" data-font-family="" data-cookie-expiration-time="">
+            <input type="hidden" name="data[form_id]" value="1">
+            <input type="hidden" name="token" value="78939cab53">
+            <input type="hidden" name="api_version" value="v1">
+            <input type="hidden" name="endpoint" value="subscribers">
+            <input type="hidden" name="mailpoet_method" value="subscribe">
+
+            <label class="mailpoet_hp_email_label" style="display: none !important;">Please leave this field empty<input type="email" name="data[email]"></label>
+            <div class="mailpoet_paragraph">
+              <input type="email" autocomplete="email" class="mailpoet_text" id="form_email_1" name="data[form_field_ZDVhN2FkYTE5NmFiX2VtYWls]" title="Email Address" value="" style="font-weight: bold;text-transform: uppercase;width:100%;box-sizing:border-box;padding:5px;margin: 0 auto 0 0; background-color: #ffffff71; color: #D50909; text-align: center;" data-automation-id="form_email" placeholder="Email Address *" aria-label="Email Address *" data-parsley-errors-container=".mailpoet_error_thh1a" data-parsley-required="true" required="" aria-required="true" data-parsley-minlength="6" data-parsley-maxlength="150" data-parsley-type-message="This value should be a valid email." data-parsley-required-message="This field is required.">
+              <span class="mailpoet_error_thh1a"></span>
+            </div>
+            <div class="mailpoet_paragraph last">
+              <input type="submit" class="mailpoet_submit" value="SUBSCRIBE" data-automation-id="subscribe-submit-button" style="text-align: center; width:100%;box-sizing:border-box;padding:5px;margin: 0 auto 0 0;border-color:transparent;">
+              <span class="mailpoet_form_loading"><span class="mailpoet_bounce1"></span><span class="mailpoet_bounce2"></span><span class="mailpoet_bounce3"></span></span>
+            </div>
+
+            <div class="mailpoet_message">
+              <p class="mailpoet_validate_success" style="display:none;">Check your inbox or spam folder to confirm your subscription.</p>
+              <p class="mailpoet_validate_error" style="display:none;"></p>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </main>
+</Layout>
+
+<script>
+  // Ensure video plays (some browsers require user interaction first)
+  const video = document.getElementById('background-video') as HTMLVideoElement;
+  if (video) {
+    video.play().catch((error) => {
+      console.error('Error playing video:', error);
+    });
+  }
+</script>
+
+<style>
+  body {
+    margin: 0;
+    padding: 0;
+  }
+  
+  html {
+    overflow: hidden;
+  }
+  
+  #background-video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+</style>

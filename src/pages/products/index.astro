@@ -1,0 +1,79 @@
+---
+/**
+ * Products Listing Page
+ */
+import Layout from '@layouts/Layout.astro';
+import { graphqlRequest } from '@lib/wpgraphql';
+import { PRODUCTS_QUERY, type GetProductsResponse } from '@lib/queries';
+import { stripPriceHtml } from '@lib/wpgraphql';
+import type { Product } from '@lib/types';
+
+let products: Product[] = [];
+
+try {
+  const data = await graphqlRequest<GetProductsResponse>({
+    query: PRODUCTS_QUERY,
+    variables: {
+      first: 20,
+    },
+  });
+
+  products = data.products.nodes;
+} catch (error) {
+  console.error('Error fetching products:', error);
+}
+---
+
+<Layout title="Products">
+  <main class="min-h-screen p-8 max-w-7xl mx-auto">
+    <h1 class="text-4xl font-bold mb-8">Products</h1>
+
+    {products.length === 0 ? (
+      <div class="text-center py-12">
+        <p class="text-gray-500">No products found.</p>
+        <p class="text-sm text-gray-400 mt-2">
+          Make sure WORDPRESS_API_URL is configured and your WordPress site has WPGraphQL + WooGraphQL installed.
+        </p>
+      </div>
+    ) : (
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {products.map((product) => (
+          <a
+            href={`/products/${product.slug}`}
+            class="group bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow"
+            key={product.id}
+          >
+            {product.image ? (
+              <img
+                src={product.image.sourceUrl}
+                alt={product.image.altText || product.name}
+                class="w-full h-48 object-cover group-hover:scale-105 transition-transform"
+              />
+            ) : (
+              <div class="w-full h-48 bg-gray-200 flex items-center justify-center">
+                <span class="text-gray-400">No image</span>
+              </div>
+            )}
+            
+            <div class="p-4">
+              <h2 class="font-semibold text-lg mb-2 line-clamp-2 group-hover:text-primary-600 transition-colors">
+                {product.name}
+              </h2>
+              
+              {product.price && (
+                <div class="text-xl font-bold text-primary-600">
+                  {stripPriceHtml(product.price)}
+                  {product.onSale && product.regularPrice && (
+                    <span class="ml-2 text-sm text-gray-500 line-through">
+                      {stripPriceHtml(product.regularPrice)}
+                    </span>
+                  )}
+                </div>
+              )}
+            </div>
+          </a>
+        ))}
+      </div>
+    )}
+  </main>
+</Layout>

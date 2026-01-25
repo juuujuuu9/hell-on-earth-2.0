@@ -1,0 +1,319 @@
+# .cursorrules
+
+> **Philosophy**: Simple > Clever. Solve today's problem, not tomorrow's hypotheticals.
+
+---
+
+## Project Context: Headless WooCommerce with Astro
+
+You are an expert in Astro and Headless E-commerce. We are using WordPress/WooCommerce as a backend and Astro as the frontend.
+
+### Tech Stack
+- Frontend: Astro (Static Site Generation)
+- Data Source: WPGraphQL + WooGraphQL
+- Interaction: React (for Cart/Checkout islands)
+- Styling: Tailwind CSS
+
+### Coding Standards
+1. Use `src/lib/wpgraphql.ts` for all fetch requests.
+2. Use environment variables (`WORDPRESS_API_URL`) for all API endpoints.
+3. Every product page must have a `getStaticPaths` function.
+4. If the user asks for a "Cart", suggest using 'nanostores' for lightweight state management between Astro islands.
+5. Handle WooCommerce price formatting correctly (stripping HTML tags from the `price` string if necessary).
+
+---
+
+## Core Principles
+
+- **Explicit > Implicit** - No magic, no surprises
+- **Local clarity > Global cleverness** - Readable beats smart
+- **Simple > Clever** - Boring solutions win
+- **Direct > Abstracted** - Skip unnecessary layers
+- **Delete > Add** - Removal is a feature
+
+**When suggesting code, always prefer the most straightforward approach that solves the immediate problem.**
+
+---
+
+## Rule Update System
+
+Instead of fake commands, use **inline annotations** in code:
+
+```typescript
+// RULE-CANDIDATE: API error responses need standardization
+// Pattern: try/catch with Response.json({ error }) appears 5+ times
+// Suggest: RULE-014 for consistent error shape
+
+// RULE-QUESTION: Is RULE-007 still relevant?
+// Haven't seen state management patterns in recent work
+
+// RULE-VIOLATION: RULE-003
+// Reason: Legacy component, refactor tracked in issue #123
+```
+
+**How it works:**
+1. Add `RULE-CANDIDATE` comments when you spot patterns
+2. Add `RULE-QUESTION` when rules feel stale
+3. I'll detect these in your code and summarize proposals
+4. You approve/reject in natural conversation
+
+---
+
+## Active Rules
+
+### RULE-000: Simplicity First ⚠️
+**Core principle** - Choose the most direct solution
+- Avoid speculative generalization
+- Refactor toward simplicity, not complexity
+- Delete code more often than you add
+- Inline small abstractions that obscure clarity
+- Question every abstraction: "Does this add value now?"
+
+### RULE-001: TypeScript Strictness 🔴
+**Type safety is non-negotiable**
+- Strict mode enabled
+- No `any` type usage
+- Explicit return types for exported functions
+- Simple types over complex generics (unions/intersections preferred)
+
+### RULE-002: Project Structure ⚠️
+**Organize by feature, not file type**
+- Use path aliases (`@/`, `@components/`, etc.)
+- Keep related code colocated
+- Flat structure > deep nesting (max 3 levels)
+
+### RULE-003: Styling Standards ⚠️
+**Tailwind-first approach**
+- Tailwind utilities are default
+- No inline `style` props
+- Use design tokens for spacing/colors
+- Compose utilities inline; `@apply` only for ≥5 repeated uses
+
+### RULE-004: Font Handling 🔴
+**Specific font implementation**
+- Omit `"Satoshi Variable"` references
+- Map `"Lexend Mega"` → `.font-lexend-mega`
+- Map `"Roboto"` → `.font-roboto`
+- Expand CSS variables manually
+- Add `/* VAR_NEEDED:<name> */` for unresolved variables
+
+### RULE-005: Framework Architecture ⚠️
+**Clean framework boundaries**
+- Astro pages = routing/layout only
+- Extract logic to typed modules/components
+- Share state via explicit imports
+- Use composition, not wrappers or base classes
+
+### RULE-006: Data Validation 🔴
+**Validate all external data**
+- Use Zod or schema guards
+- No unvalidated API responses or user input
+- Type guards for runtime checks
+- Simple schemas only; avoid complex transforms
+
+### RULE-007: State Management ⚠️
+**Keep state simple**
+- Prefer server-side caching over stores
+- Document state dependencies
+- Start with component state
+- Stores only when sharing across ≥3 components
+
+### RULE-008: Accessibility 🔴
+**Accessible by default**
+- Keyboard navigation support required
+- Semantic HTML first; ARIA only when insufficient
+- Test focus management in interactive components
+
+### RULE-009: Performance ⚠️
+**Optimize what matters**
+- Optimize images before commit
+- Limit `client:load` usage
+- Lazy load heavy components
+- Measure before optimizing (no speculative performance code)
+
+### RULE-010: Security 🔴
+**Security fundamentals**
+- No secrets in client-side code
+- Parameterized queries only (no string concatenation)
+- Sanitize user-generated content
+- Use framework security features (no custom crypto/auth)
+
+### RULE-011: Development Workflow ⚠️
+**Consistent practices**
+- Conventional commits (feat:, fix:, docs:, etc.)
+- Include "Refs: RULE-###" in commits when relevant
+- Update tests for rule-enforced patterns
+- Test behavior, not implementation
+
+### RULE-012: Dependency Management ⚠️
+**Justify every dependency**
+- Prefer platform/framework features
+- Remove unused dependencies immediately
+- Ask: "Can I write this in 20 lines instead?"
+
+### RULE-013: Vercel Static Files ⚠️
+**Handle Vercel quirks**
+- Critical static files (OG images, favicons) may need API routes
+- If static file 404s on Vercel but works locally → API route immediately
+- API routes for assets: set `Cache-Control: public, max-age=31536000, immutable`
+- Pattern: `src/pages/api/[asset-name].ts` reads `public/` and serves
+- Example: See `src/pages/api/og-image.ts`
+
+---
+
+## Rule Symbols
+
+- 🔴 **Error** - Must fix, blocks commits
+- ⚠️ **Warning** - Should fix, but can proceed
+- ℹ️ **Info** - Suggestion only
+
+---
+
+## Override Syntax
+
+```typescript
+// RULE-VIOLATION: RULE-003
+// Reason: Legacy component, refactor planned in issue #123
+// Expires: 2025-12-31
+```
+
+**Properties:**
+- Creates audit trail
+- Links to tickets for cleanup
+- Can set expiration dates
+
+---
+
+## Scoped Rules
+
+```yaml
+src/components/ui/*:
+  - enforce: [RULE-003, RULE-004]
+  - downgrade: RULE-009 → Info
+
+src/pages/api/*:
+  - enforce: [RULE-006, RULE-010]
+  - disable: [RULE-003]
+
+src/lib/*:
+  - enforce: [RULE-001, RULE-012]
+  - strict: true
+```
+
+---
+
+## Anti-Patterns to Flag
+
+**Immediate warnings for:**
+- Generic wrappers around single-use functions
+- Premature abstraction (pattern appears <3 times)
+- Complex inheritance hierarchies
+- Over-engineered state for simple data
+- Configuration systems for static values
+- Middleware for inline operations
+
+**Complexity thresholds:**
+- Functions >50 lines without clear reason
+- Files >300 lines
+- Nesting depth >4 levels
+- Cyclomatic complexity >10
+- Abstractions used only once
+
+---
+
+## When to Add Complexity
+
+**Only when:**
+1. Pattern appears ≥3 times across codebase
+2. Complexity reduces cognitive load (not just LOC)
+3. Change frequency justifies indirection
+4. Team explicitly requests the pattern
+
+---
+
+## Rule Evolution Process
+
+### 1. Pattern Detection (You do this)
+When you notice patterns, add inline comments:
+```typescript
+// RULE-CANDIDATE: Error response standardization
+// Seen 5+ times: try/catch → Response.json({ error })
+```
+
+### 2. Natural Conversation (We discuss)
+```
+You: "I'm seeing this error handling pattern everywhere. 
+     Should we make it a rule?"
+
+Me: "Good catch! That's 7 occurrences. Here's a draft:
+    
+    RULE-014: Standardized Error Responses
+    - All API routes return { error: string, code?: string }
+    - Use helper: formatApiError(error)
+    - Severity: Warning
+    
+    This would affect 7 files. Sound good?"
+
+You: "Yes, add it"
+```
+
+### 3. File Update (I do this)
+I'll create a formatted rule entry you can paste into this file.
+
+### 4. Deprecation (Natural pruning)
+```
+You: "I don't think we use RULE-007 anymore"
+
+Me: "Checked your recent code - you're right. Last use was 
+    3 months ago. Mark as archived?"
+
+You: "Yes"
+```
+
+---
+
+## Base Rules (Never Override)
+
+- ✅ RULE-000: Simplicity First
+- ✅ RULE-010: Security  
+- ✅ RULE-008: Accessibility
+
+---
+
+## Conflict Resolution
+
+1. **RULE-000** (Simplicity) > Convenience
+2. **RULE-010** (Security) > Everything
+3. **RULE-008** (Accessibility) > Aesthetics
+4. **Explicit overrides** > All rules
+
+---
+
+## Quick Reference
+
+**Before suggesting code:**
+- ✓ Simplest approach that works?
+- ✓ Solvable with existing tools/patterns?
+- ✓ Avoiding unnecessary layers?
+- ✓ Understandable in 6 months?
+
+**Red flags:**
+- Solving imagined future problems
+- Adding abstraction for single use
+- Complex generics for simple data
+- Helper functions that just wrap one call
+
+---
+
+## Notes
+
+- Rules marked 🔴 should block commits (use pre-commit hook)
+- Rules marked ⚠️ are enforced during code review
+- Override annotations expire after 90 days (review required)
+- Keep this file under 500 lines (currently: ~270)
+
+---
+
+**Last updated:** 2025-11-17  
+**Active rules:** 13  
+**Philosophy:** Radical simplicity

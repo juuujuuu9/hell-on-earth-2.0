@@ -1,0 +1,153 @@
+---
+/**
+ * Product Detail Page
+ * 
+ * RULE-005: Every product page must have a getStaticPaths function
+ */
+import Layout from '@layouts/Layout.astro';
+import { graphqlRequest } from '@lib/wpgraphql';
+import { PRODUCT_QUERY, PRODUCT_SLUGS_QUERY, type GetProductResponse, type GetProductSlugsResponse } from '@lib/queries';
+import { stripPriceHtml } from '@lib/wpgraphql';
+import type { Product } from '@lib/types';
+import CartButton from '@components/CartButton';
+
+interface Props {
+  product: Product;
+}
+
+export async function getStaticPaths() {
+  try {
+    const data = await graphqlRequest<GetProductSlugsResponse>({
+      query: PRODUCT_SLUGS_QUERY,
+      variables: { first: 100 },
+    });
+
+    return data.products.nodes.map((product) => ({
+      params: { slug: product.slug },
+      props: {
+        productSlug: product.slug,
+        productId: product.databaseId,
+      },
+    }));
+  } catch (error) {
+    console.error('Error fetching product slugs:', error);
+    return [];
+  }
+}
+
+const { productSlug } = Astro.props;
+let product: Product | null = null;
+
+try {
+  const data = await graphqlRequest<GetProductResponse>({
+    query: PRODUCT_QUERY,
+    variables: {
+      id: productSlug,
+      idType: 'SLUG',
+    },
+  });
+
+  product = data.product;
+} catch (error) {
+  console.error('Error fetching product:', error);
+}
+
+if (!product) {
+  return Astro.redirect('/404');
+}
+
+const formattedPrice = product.price ? stripPriceHtml(product.price) : 'Price unavailable';
+---
+
+<Layout title={product.name}>
+  <main class="min-h-screen p-8 max-w-6xl mx-auto">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+      {/* Product Image */}
+      <div>
+        {product.image ? (
+          <img
+            src={product.image.sourceUrl}
+            alt={product.image.altText || product.name}
+            class="w-full rounded-lg shadow-lg"
+          />
+        ) : (
+          <div class="w-full aspect-square bg-gray-200 rounded-lg flex items-center justify-center">
+            <span class="text-gray-400">No image available</span>
+          </div>
+        )}
+      </div>
+
+      {/* Product Details */}
+      <div class="space-y-6">
+        <div>
+          <h1 class="text-4xl font-bold mb-4">{product.name}</h1>
+          
+          {product.categories && product.categories.nodes.length > 0 && (
+            <div class="flex flex-wrap gap-2 mb-4">
+              {product.categories.nodes.map((category) => (
+                <span
+                  class="px-3 py-1 bg-gray-200 rounded-full text-sm"
+                  key={category.id}
+                >
+                  {category.name}
+                </span>
+              ))}
+            </div>
+          )}
+
+          <div class="text-3xl font-bold text-primary-600 mb-6">
+            {formattedPrice}
+            {product.onSale && product.regularPrice && (
+              <span class="ml-3 text-lg text-gray-500 line-through">
+                {stripPriceHtml(product.regularPrice)}
+              </span>
+            )}
+          </div>
+
+          {product.stockStatus && (
+            <div class="mb-4">
+              <span
+                class={`px-3 py-1 rounded-full text-sm font-medium ${
+                  product.stockStatus === 'IN_STOCK'
+                    ? 'bg-green-100 text-green-800'
+                    : 'bg-red-100 text-red-800'
+                }`}
+              >
+                {product.stockStatus === 'IN_STOCK' ? 'In Stock' : 'Out of Stock'}
+              </span>
+            </div>
+          )}
+
+          {product.stockStatus === 'IN_STOCK' && (
+            <div class="mt-6">
+              <CartButton
+                client:load
+                productId={product.databaseId.toString()}
+                productName={product.name}
+              />
+            </div>
+          )}
+        </div>
+
+        {product.shortDescription && (
+          <div
+            class="prose prose-sm max-w-none"
+            set:html={product.shortDescription}
+          />
+        )}
+
+        {product.description && (
+          <details class="mt-6">
+            <summary class="cursor-pointer font-semibold text-lg mb-2">
+              Description
+            </summary>
+            <div
+              class="prose prose-sm max-w-none mt-2"
+              set:html={product.description}
+            />
+          </details>
+        )}
+      </div>
+    </div>
+  </main>
+</Layout>

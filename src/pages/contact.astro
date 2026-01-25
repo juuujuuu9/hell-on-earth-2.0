@@ -1,0 +1,49 @@
+---
+import Layout from '@layouts/Layout.astro';
+import GravityForm from '@components/GravityForm';
+---
+
+<Layout title="Contact">
+  <main class="min-h-screen py-12 px-4">
+    <div class="max-w-2xl mx-auto">
+      <h1 class="text-3xl font-bold mb-8 text-center">Contact Us</h1>
+      
+      <div class="bg-white rounded-lg shadow-md p-6">
+        <GravityForm
+          client:load
+          formId={1}
+          fields={[
+            {
+              id: 1,
+              label: 'Name',
+              type: 'text',
+              required: true,
+              placeholder: 'Your name',
+            },
+            {
+              id: 2,
+              label: 'Email',
+              type: 'email',
+              required: true,
+              placeholder: 'your.email@example.com',
+            },
+            {
+              id: 3,
+              label: 'Message',
+              type: 'textarea',
+              required: true,
+              placeholder: 'Your message...',
+            },
+          ]}
+          onSubmitSuccess={(response) => {
+            console.log('Form submitted successfully:', response);
+          }}
+          onSubmitError={(error) => {
+            console.error('Form submission error:', error);
+          }}
+          submitButtonText="Send Message"
+        />
+      </div>
+    </div>
+  </main>
+</Layout>
