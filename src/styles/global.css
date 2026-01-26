@@ -84,21 +84,10 @@
 
 /* Base Styles */
 * {
-  margin: 0;
-  padding: 0;
   box-sizing: border-box;
 }
 
 html {
-  font-family: var(--font-family-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-}
-
-body {
-  min-height: 100vh;
-  line-height: 1.5;
-  color: var(--color-gray-900);
-  background-color: var(--color-gray-50);
-  font-family: var(--font-family-sans);
 }

@@ -11,35 +11,59 @@ export const PRODUCT_FIELDS = `
   slug
   description
   shortDescription
-  price
-  regularPrice
-  salePrice
-  onSale
-  stockStatus
-  stockQuantity
   image {
     sourceUrl
     altText
   }
-  galleryImages {
-    nodes {
-      sourceUrl
-      altText
+  ... on Product {
+    productCategories {
+      nodes {
+        id
+        name
+        slug
+      }
+    }
+    galleryImages {
+      nodes {
+        sourceUrl
+        altText
+      }
+    }
+    attributes {
+      nodes {
+        id
+        name
+        options
+      }
     }
   }
-  categories {
-    nodes {
-      id
-      name
-      slug
-    }
+  ... on SimpleProduct {
+    price
+    regularPrice
+    salePrice
+    onSale
+    stockStatus
+    stockQuantity
   }
-  attributes {
-    nodes {
-      id
-      name
-      options
-    }
+  ... on VariableProduct {
+    price
+    regularPrice
+    salePrice
+    onSale
+    stockStatus
+    stockQuantity
+  }
+  ... on ExternalProduct {
+    price
+    regularPrice
+    salePrice
+    onSale
+  }
+  ... on GroupProduct {
+    price
+    regularPrice
+    salePrice
+    onSale
   }
 `;
 
@@ -52,8 +76,8 @@ export const PRODUCT_QUERY = `
 `;
 
 export const PRODUCTS_QUERY = `
-  query GetProducts($first: Int, $after: String, $where: RootQueryToProductConnectionWhereArgs) {
-    products(first: $first, after: $after, where: $where) {
+  query GetProducts($first: Int, $after: String) {
+    products(first: $first, after: $after) {
       pageInfo {
         hasNextPage
         hasPreviousPage
@@ -108,12 +132,6 @@ export interface GetProductResponse {
 export interface GetProductsVariables {
   first?: number;
   after?: string;
-  where?: {
-    category?: string;
-    categoryId?: number;
-    search?: string;
-    stockStatus?: 'IN_STOCK' | 'OUT_OF_STOCK' | 'ON_BACKORDER';
-  };
 }
 
 export interface GetProductsResponse {

@@ -4,9 +4,10 @@ import CartIcon from '@components/CartIcon';
 
 interface Props {
   title: string;
+  hideHeader?: boolean;
 }
 
-const { title } = Astro.props;
+const { title, hideHeader = false } = Astro.props;
 ---
 
 <!doctype html>
@@ -26,9 +27,24 @@ const { title } = Astro.props;
     <title>{title}</title>
   </head>
   <body>
-    <header class="fixed top-0 right-0 z-50 p-4">
-      <CartIcon client:load />
-    </header>
+    {!hideHeader && (
+      <header class="fixed top-0 left-0 right-0 z-50 p-4 flex items-center justify-between">
+        <nav class="flex items-center gap-6">
+          <a href="/" class="text-white hover:text-gray-300 transition-colors font-semibold">
+            Home
+          </a>
+          <a href="/products" class="text-white hover:text-gray-300 transition-colors font-semibold">
+            Products
+          </a>
+          <a href="/contact" class="text-white hover:text-gray-300 transition-colors font-semibold">
+            Contact
+          </a>
+        </nav>
+        <div>
+          <CartIcon client:load />
+        </div>
+      </header>
+    )}
     <slot />
   </body>
 </html>

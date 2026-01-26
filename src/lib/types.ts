@@ -19,20 +19,26 @@ export interface Product {
     sourceUrl: string;
     altText?: string;
   };
-  galleryImages?: Array<{
-    sourceUrl: string;
-    altText?: string;
-  }>;
-  categories?: Array<{
-    id: string;
-    name: string;
-    slug: string;
-  }>;
-  attributes?: Array<{
-    id: string;
-    name: string;
-    options: string[];
-  }>;
+  galleryImages?: {
+    nodes: Array<{
+      sourceUrl: string;
+      altText?: string;
+    }>;
+  };
+  productCategories?: {
+    nodes: Array<{
+      id: string;
+      name: string;
+      slug: string;
+    }>;
+  };
+  attributes?: {
+    nodes: Array<{
+      id: string;
+      name: string;
+      options: string[];
+    }>;
+  };
 }
 
 export interface ProductCategory {

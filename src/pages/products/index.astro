@@ -3,6 +3,8 @@
  * Products Listing Page
  */
 import Layout from '@layouts/Layout.astro';
+import Header from '@components/Header.astro';
+import Footer from '@components/Footer.astro';
 import { graphqlRequest } from '@lib/wpgraphql';
 import { PRODUCTS_QUERY, type GetProductsResponse } from '@lib/queries';
 import { stripPriceHtml } from '@lib/wpgraphql';
@@ -14,7 +16,7 @@ try {
   const data = await graphqlRequest<GetProductsResponse>({
     query: PRODUCTS_QUERY,
     variables: {
-      first: 20,
+      first: 100,
     },
   });
 
@@ -24,56 +26,104 @@ try {
 }
 ---
 
-<Layout title="Products">
-  <main class="min-h-screen p-8 max-w-7xl mx-auto">
-    <h1 class="text-4xl font-bold mb-8">Products</h1>
+<Layout title="All Products" hideHeader={true}>
+  <main class="min-h-screen bg-white">
+    <Header />
 
-    {products.length === 0 ? (
-      <div class="text-center py-12">
-        <p class="text-gray-500">No products found.</p>
-        <p class="text-sm text-gray-400 mt-2">
-          Make sure WORDPRESS_API_URL is configured and your WordPress site has WPGraphQL + WooGraphQL installed.
-        </p>
-      </div>
-    ) : (
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {products.map((product) => (
-          <a
-            href={`/products/${product.slug}`}
-            class="group bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow"
-            key={product.id}
-          >
-            {product.image ? (
-              <img
-                src={product.image.sourceUrl}
-                alt={product.image.altText || product.name}
-                class="w-full h-48 object-cover group-hover:scale-105 transition-transform"
-              />
-            ) : (
-              <div class="w-full h-48 bg-gray-200 flex items-center justify-center">
-                <span class="text-gray-400">No image</span>
-              </div>
-            )}
+    <!-- Main Content -->
+    <div class="max-w-[1920px] mx-auto px-8">
+      <h1 class="text-4xl font-bold mb-12 text-black">All Products</h1>
+
+      {products.length === 0 ? (
+        <div class="text-center py-12">
+          <p class="text-gray-500">No products found.</p>
+          <p class="text-sm text-gray-400 mt-2">
+            Make sure WORDPRESS_API_URL is configured and your WordPress site has WPGraphQL + WooGraphQL installed.
+          </p>
+        </div>
+      ) : (
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+          {products.map((product) => {
+            // Format price: extract numeric value and format as USD XX.XX
+            let formattedPrice: string | null = null;
+            if (product.price) {
+              const cleanPrice = stripPriceHtml(product.price);
+              // Extract numeric value (handles various formats like $50.00, 50.00, £50, etc.)
+              const numericMatch = cleanPrice.match(/(\d+\.?\d*)/);
+              if (numericMatch) {
+                const numericValue = parseFloat(numericMatch[1]);
+                formattedPrice = `USD ${numericValue.toFixed(2)}`;
+              }
+            }
             
-            <div class="p-4">
-              <h2 class="font-semibold text-lg mb-2 line-clamp-2 group-hover:text-primary-600 transition-colors">
-                {product.name}
-              </h2>
-              
-              {product.price && (
-                <div class="text-xl font-bold text-primary-600">
-                  {stripPriceHtml(product.price)}
-                  {product.onSale && product.regularPrice && (
-                    <span class="ml-2 text-sm text-gray-500 line-through">
-                      {stripPriceHtml(product.regularPrice)}
-                    </span>
+            return (
+              <a
+                href={`/products/${product.slug}`}
+                class="group"
+                key={product.id}
+              >
+                {/* Product Image - Square with light gray background */}
+                <div class="w-full aspect-square bg-gray-100 mb-2 flex items-center justify-center overflow-hidden">
+                  {product.image ? (
+                    <img
+                      src={product.image.sourceUrl}
+                      alt={product.image.altText || product.name}
+                      class="w-full h-full object-contain group-hover:opacity-90 transition-opacity"
+                    />
+                  ) : (
+                    <span class="text-gray-400 text-sm">No image</span>
                   )}
                 </div>
-              )}
-            </div>
-          </a>
-        ))}
-      </div>
-    )}
+                
+                {/* Product Info */}
+                <div class="space-y-1 text-center">
+                  <h2 class="text-base font-bold uppercase text-[#1ee11e] group-hover:opacity-70 transition-opacity product-title">
+                    {product.name}
+                  </h2>
+                  
+                  {formattedPrice && (
+                    <p class="text-sm text-black font-medium mt-2">
+                      {formattedPrice}
+                    </p>
+                  )}
+                </div>
+              </a>
+            );
+          })}
+        </div>
+      )}
+    </div>
+
+    <Footer />
   </main>
 </Layout>
+
+<style>
+  /* Custom scrollbar styling */
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    background: #f9fafb;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    background: #e5e7eb;
+    border-radius: 4px;
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    background: #d1d5db;
+  }
+  
+  /* Subtle black glow on text */
+  h1, p, span {
+    text-shadow: 0 0 2px rgba(0, 0, 0, 0.3), 0 0 4px rgba(0, 0, 0, 0.2);
+  }
+  
+  /* Yellow-green glow on product titles */
+  .product-title {
+    text-shadow: 0 0 2px rgba(200, 255, 0, 0.8), 0 0 4px rgba(200, 255, 0, 0.6), 0 0 6px rgba(200, 255, 0, 0.4);
+  }
+</style>
