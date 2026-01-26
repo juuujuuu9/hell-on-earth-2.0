@@ -1,0 +1,13 @@
+---
+/**
+ * Cart Page
+ * 
+ * Displays cart contents and allows updating quantities or removing items
+ */
+import Layout from '@layouts/Layout.astro';
+import CartPage from '@components/CartPage';
+---
+
+<Layout title="Cart">
+  <CartPage client:load />
+</Layout>
