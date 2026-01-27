@@ -10,6 +10,9 @@ import { PRODUCTS_QUERY, CATEGORIES_QUERY, type GetProductsResponse, type GetCat
 import { stripPriceHtml } from '@lib/wpgraphql';
 import type { Product, ProductCategory } from '@lib/types';
 
+// Get category filter from URL query parameter
+const selectedCategorySlug = Astro.url.searchParams.get('category') || null;
+
 let products: Product[] = [];
 let categories: ProductCategory[] = [];
 
@@ -34,6 +37,16 @@ try {
 } catch (error) {
   console.error('Error fetching data:', error);
 }
+
+// Filter products by selected category
+let filteredProducts = products;
+if (selectedCategorySlug) {
+  filteredProducts = products.filter((product) => {
+    return product.productCategories?.nodes.some(
+      (category) => category.slug === selectedCategorySlug
+    );
+  });
+}
 ---
 
 <Layout title="All Products" hideHeader={true}>
@@ -45,15 +58,27 @@ try {
       <div id="shop-navigation" class="w-full px-8 py-4 flex items-center justify-between relative">
         <h1 class="text-md text-black uppercase">SHOP</h1>
         {categories.length > 0 && (
-          <ul class="flex items-center gap-6 absolute left-1/2 transform -translate-x-1/2">
+          <ul class="flex items-center gap-6 absolute left-1/2 transform -translate-x-1/2" id="category-filters">
+            <li>
+              <button
+                data-category=""
+                class={`text-md uppercase hover:opacity-70 transition-opacity ${
+                  !selectedCategorySlug ? 'text-[#00cd00] font-bold' : 'text-black'
+                }`}
+              >
+                ALL
+              </button>
+            </li>
             {categories.map((category) => (
               <li>
-                <a
-                  href={`/products?category=${category.slug}`}
-                  class="text-md text-black uppercase hover:opacity-70 transition-opacity"
+                <button
+                  data-category={category.slug}
+                  class={`text-md uppercase hover:opacity-70 transition-opacity ${
+                    selectedCategorySlug === category.slug ? 'text-[#00cd00] font-bold' : 'text-black'
+                  }`}
                 >
                   {category.name}
-                </a>
+                </button>
               </li>
             ))}
           </ul>
@@ -63,16 +88,24 @@ try {
         </button>
       </div>
 
-      {products.length === 0 ? (
-        <div class="text-center py-12">
-          <p class="text-gray-500">No products found.</p>
+      {filteredProducts.length === 0 ? (
+        <div class="text-center py-12 empty-state" id="empty-state">
+          <p class="text-gray-500">
+            {selectedCategorySlug ? 'No products found in this category.' : 'No products found.'}
+          </p>
           <p class="text-sm text-gray-400 mt-2">
-            Make sure WORDPRESS_API_URL is configured and your WordPress site has WPGraphQL + WooGraphQL installed.
+            {selectedCategorySlug ? (
+              <button class="text-[#00cd00] hover:opacity-70 underline show-all-btn">
+                View all products
+              </button>
+            ) : (
+              'Make sure WORDPRESS_API_URL is configured and your WordPress site has WPGraphQL + WooGraphQL installed.'
+            )}
           </p>
         </div>
       ) : (
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-0 product-grid">
-          {products.map((product) => {
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-0 product-grid" id="products-grid">
+          {filteredProducts.map((product) => {
             // Format price: extract numeric value and format as USD XX.XX
             let formattedPrice: string | null = null;
             if (product.price) {
@@ -88,7 +121,8 @@ try {
             return (
               <a
                 href={`/products/${product.slug}`}
-                class="group"
+                class="group product-item"
+                data-categories={JSON.stringify(product.productCategories?.nodes.map(c => c.slug) || [])}
               >
                 {/* Product Image - Square with light gray background */}
                 <div class="w-full aspect-square bg-gray-100 mb-2 flex items-center justify-center overflow-hidden">
@@ -201,3 +235,126 @@ try {
     }
   }
 </style>
+
+<script>
+  // Client-side category filtering
+  (function() {
+    const categoryButtons = document.querySelectorAll('#category-filters button[data-category]');
+    const productItems = document.querySelectorAll('.product-item');
+    const productsGrid = document.getElementById('products-grid');
+    let emptyState = document.getElementById('empty-state');
+    
+    // Early return if no products or buttons
+    if (categoryButtons.length === 0 || productItems.length === 0) {
+      return;
+    }
+    
+    // Create empty state element if it doesn't exist (for client-side filtering)
+    if (!emptyState) {
+      const container = productsGrid ? productsGrid.parentNode : document.querySelector('.max-w-\\[1920px\\]');
+      if (container) {
+        emptyState = document.createElement('div');
+        emptyState.id = 'empty-state';
+        emptyState.className = 'text-center py-12 empty-state hidden';
+        emptyState.innerHTML = `
+          <p class="text-gray-500">No products found in this category.</p>
+          <p class="text-sm text-gray-400 mt-2">
+            <button class="text-[#00cd00] hover:opacity-70 underline show-all-btn">View all products</button>
+          </p>
+        `;
+        if (productsGrid) {
+          container.insertBefore(emptyState, productsGrid);
+        } else {
+          container.appendChild(emptyState);
+        }
+      }
+    }
+
+    function filterProducts(categorySlug) {
+      let visibleCount = 0;
+      
+      productItems.forEach((item) => {
+        const categoriesAttr = item.getAttribute('data-categories');
+        if (!categoriesAttr) {
+          item.classList.add('hidden');
+          return;
+        }
+        
+        const productCategories = JSON.parse(categoriesAttr);
+        const shouldShow = !categorySlug || productCategories.includes(categorySlug);
+        
+        if (shouldShow) {
+          item.classList.remove('hidden');
+          visibleCount++;
+        } else {
+          item.classList.add('hidden');
+        }
+      });
+
+      // Show/hide empty state
+      if (visibleCount === 0) {
+        if (emptyState) {
+          emptyState.classList.remove('hidden');
+          // Update empty state message
+          const message = emptyState.querySelector('p.text-gray-500');
+          const action = emptyState.querySelector('p.text-sm');
+          if (message) {
+            message.textContent = categorySlug ? 'No products found in this category.' : 'No products found.';
+          }
+          if (action && categorySlug) {
+            action.innerHTML = '<button class="text-[#00cd00] hover:opacity-70 underline show-all-btn">View all products</button>';
+          }
+        }
+        if (productsGrid) productsGrid.classList.add('hidden');
+      } else {
+        if (emptyState) emptyState.classList.add('hidden');
+        if (productsGrid) productsGrid.classList.remove('hidden');
+      }
+
+      // Update URL without page reload
+      const url = new URL(window.location.href);
+      if (categorySlug) {
+        url.searchParams.set('category', categorySlug);
+      } else {
+        url.searchParams.delete('category');
+      }
+      window.history.pushState({}, '', url.toString());
+
+      // Update active button states
+      categoryButtons.forEach((btn) => {
+        const btnCategory = btn.getAttribute('data-category');
+        if ((!categorySlug && btnCategory === '') || (categorySlug === btnCategory)) {
+          btn.classList.add('text-[#00cd00]', 'font-bold');
+          btn.classList.remove('text-black');
+        } else {
+          btn.classList.remove('text-[#00cd00]', 'font-bold');
+          btn.classList.add('text-black');
+        }
+      });
+    }
+
+    // Add click handlers to category buttons
+    categoryButtons.forEach((button) => {
+      button.addEventListener('click', (e) => {
+        e.preventDefault();
+        const categorySlug = button.getAttribute('data-category');
+        filterProducts(categorySlug === '' ? null : categorySlug);
+      });
+    });
+
+    // Handle "show all" button in empty state
+    const showAllBtn = document.querySelector('.show-all-btn');
+    if (showAllBtn) {
+      showAllBtn.addEventListener('click', () => {
+        filterProducts(null);
+      });
+    }
+
+    // Handle browser back/forward buttons
+    window.addEventListener('popstate', () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const categorySlug = urlParams.get('category');
+      filterProducts(categorySlug);
+    });
+  })();
+</script>
