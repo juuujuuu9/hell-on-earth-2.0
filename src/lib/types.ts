@@ -1,5 +1,5 @@
 /**
- * TypeScript types for WooCommerce/WPGraphQL data
+ * TypeScript types for e-commerce data
  */
 
 export interface Product {
@@ -15,6 +15,7 @@ export interface Product {
   onSale?: boolean;
   stockStatus?: 'IN_STOCK' | 'OUT_OF_STOCK' | 'ON_BACKORDER';
   stockQuantity?: number;
+  stripeCheckoutUrl?: string | null;
   image?: {
     sourceUrl: string;
     altText?: string;

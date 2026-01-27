@@ -7,7 +7,7 @@
 
 import type { APIRoute } from 'astro';
 import {
-  getWordPressBaseUrl,
+  getApiBaseUrl,
   type GravityFormSubmission,
   type GravityFormResponse,
 } from '@lib/gravityforms';
@@ -42,7 +42,8 @@ export const POST: APIRoute = async ({ request }) => {
       );
     }
 
-    const baseUrl = getWordPressBaseUrl();
+    // TODO: Replace with your new API endpoint structure
+    const baseUrl = getApiBaseUrl();
     const endpoint = `${baseUrl}/wp-json/gf/v2/forms/${body.formId}/submissions`;
 
     const requestBody: Record<string, unknown> = {

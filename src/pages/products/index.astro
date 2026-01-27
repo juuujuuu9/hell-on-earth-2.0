@@ -5,40 +5,25 @@
 import Layout from '@layouts/Layout.astro';
 import Header from '@components/Header.astro';
 import Footer from '@components/Footer.astro';
-import { graphqlRequest } from '@lib/wpgraphql';
-import { PRODUCTS_QUERY, CATEGORIES_QUERY, type GetProductsResponse, type GetCategoriesResponse } from '@lib/queries';
-import { stripPriceHtml } from '@lib/wpgraphql';
 import type { Product, ProductCategory } from '@lib/types';
+import { getAllProducts, getAllCategories } from '@lib/db/queries';
 
 // Get category filter from URL query parameter
 const selectedCategorySlug = Astro.url.searchParams.get('category') || null;
 
+// Fetch products and categories from database
 let products: Product[] = [];
 let categories: ProductCategory[] = [];
 
 try {
-  const [productsData, categoriesData] = await Promise.all([
-    graphqlRequest<GetProductsResponse>({
-      query: PRODUCTS_QUERY,
-      variables: {
-        first: 100,
-      },
-    }),
-    graphqlRequest<GetCategoriesResponse>({
-      query: CATEGORIES_QUERY,
-      variables: {
-        first: 50,
-      },
-    }),
-  ]);
-
-  products = productsData.products.nodes;
-  categories = categoriesData.productCategories.nodes;
+  products = await getAllProducts(selectedCategorySlug || undefined);
+  categories = await getAllCategories();
 } catch (error) {
-  console.error('Error fetching data:', error);
+  console.error('Error fetching products:', error);
+  // Fallback to empty arrays if database is not set up yet
 }
 
-// Filter products by selected category
+// Filter products by selected category (client-side filtering also available)
 let filteredProducts = products;
 if (selectedCategorySlug) {
   filteredProducts = products.filter((product) => {
@@ -46,6 +31,11 @@ if (selectedCategorySlug) {
       (category) => category.slug === selectedCategorySlug
     );
   });
+}
+
+// Helper function to strip HTML from price strings
+function stripPriceHtml(price: string): string {
+  return price.replace(/<[^>]*>/g, '').trim();
 }
 ---
 
@@ -90,7 +80,7 @@ if (selectedCategorySlug) {
         )}
         {/* Season text and Filter button - same row on mobile, separate on desktop */}
         <div class="flex items-center justify-between lg:contents">
-          <h1 class="text-md text-black font-bold uppercase order-2 lg:order-none season-title">SEASON N</h1>
+          <h1 class="text-md text-black font-bold uppercase order-2 lg:order-none season-title">MMXXVI-I</h1>
           <button class="text-md text-black uppercase hover:opacity-70 transition-opacity order-3 lg:order-none">
             FILTERS
           </button>
@@ -108,7 +98,7 @@ if (selectedCategorySlug) {
                 View all products
               </button>
             ) : (
-              'Make sure WORDPRESS_API_URL is configured and your WordPress site has WPGraphQL + WooGraphQL installed.'
+              'No products available.'
             )}
           </p>
         </div>
@@ -186,26 +176,6 @@ if (selectedCategorySlug) {
   
   ::-webkit-scrollbar-thumb:hover {
     background: #d1d5db;
-  }
-  
-  /* Subtle black glow on text */
-  h1, p, span {
-    text-shadow: 0 0 2px rgba(0, 0, 0, 0.3), 0 0 4px rgba(0, 0, 0, 0.2);
-  }
-  
-  /* Product titles match active category color - no text-shadow */
-  .product-title {
-    text-shadow: none;
-  }
-  
-  /* Product prices - no text-shadow */
-  .product-price {
-    text-shadow: none;
-  }
-  
-  /* Season title - no text-shadow */
-  .season-title {
-    text-shadow: none;
   }
   
   /* Grid divider lines - shared borders for consistent 1px thickness */

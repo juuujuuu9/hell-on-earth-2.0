@@ -7,9 +7,11 @@
 import { useEffect, useState } from 'react';
 import { useStore } from '@nanostores/react';
 import { cartStore, setCart, setCartLoading, setCartError } from '@lib/cartStore';
-import { graphqlRequest } from '@lib/wpgraphql';
-import { CART_QUERY, UPDATE_CART_ITEM_MUTATION, REMOVE_CART_ITEM_MUTATION, type GetCartResponse, type UpdateCartItemResponse, type RemoveCartItemResponse } from '@lib/queries';
-import { stripPriceHtml } from '@lib/wpgraphql';
+
+// Helper function to strip HTML from price strings
+function stripPriceHtml(price: string): string {
+  return price.replace(/<[^>]*>/g, '').trim();
+}
 
 export default function CartPage() {
   const cart = useStore(cartStore);
@@ -26,11 +28,8 @@ export default function CartPage() {
     setCartError(null);
 
     try {
-      const data = await graphqlRequest<GetCartResponse>({
-        query: CART_QUERY,
-      });
-
-      setCart(data.cart);
+      // TODO: Replace with your new cart API
+      setCart(null);
       setCartLoading(false);
     } catch (error) {
       console.error('Error fetching cart:', error);
@@ -49,15 +48,7 @@ export default function CartPage() {
     setCartError(null);
 
     try {
-      const data = await graphqlRequest<UpdateCartItemResponse>({
-        query: UPDATE_CART_ITEM_MUTATION,
-        variables: {
-          key,
-          quantity,
-        },
-      });
-
-      setCart(data.updateItemQuantities.cart);
+      // TODO: Replace with your new cart API
       setUpdatingKeys((prev) => {
         const next = new Set(prev);
         next.delete(key);
@@ -79,12 +70,7 @@ export default function CartPage() {
     setCartError(null);
 
     try {
-      const data = await graphqlRequest<RemoveCartItemResponse>({
-        query: REMOVE_CART_ITEM_MUTATION,
-        variables: { key },
-      });
-
-      setCart(data.removeItemsFromCart.cart);
+      // TODO: Replace with your new cart API
       setRemovingKeys((prev) => {
         const next = new Set(prev);
         next.delete(key);

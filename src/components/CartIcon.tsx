@@ -8,8 +8,6 @@
 import { useEffect } from 'react';
 import { useStore } from '@nanostores/react';
 import { cartStore, setCart, setCartLoading, setCartError } from '@lib/cartStore';
-import { graphqlRequest } from '@lib/wpgraphql';
-import { CART_QUERY, type GetCartResponse } from '@lib/queries';
 
 export default function CartIcon() {
   const cart = useStore(cartStore);
@@ -26,11 +24,8 @@ export default function CartIcon() {
     setCartError(null);
 
     try {
-      const data = await graphqlRequest<GetCartResponse>({
-        query: CART_QUERY,
-      });
-
-      setCart(data.cart);
+      // TODO: Replace with your new cart API
+      setCart(null);
       setCartLoading(false);
     } catch (error) {
       console.error('Error fetching cart:', error);

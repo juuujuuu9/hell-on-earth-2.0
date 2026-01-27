@@ -5,11 +5,9 @@
  * RULE-005: Every product page must have a getStaticPaths function
  */
 import Layout from '@layouts/Layout.astro';
-import { graphqlRequest } from '@lib/wpgraphql';
-import { PRODUCT_QUERY, PRODUCT_SLUGS_QUERY, type GetProductResponse, type GetProductSlugsResponse } from '@lib/queries';
-import { stripPriceHtml } from '@lib/wpgraphql';
 import type { Product } from '@lib/types';
 import CartButton from '@components/CartButton';
+import { getAllProducts, getProductBySlug } from '@lib/db/queries';
 
 interface Props {
   product: Product;
@@ -17,40 +15,25 @@ interface Props {
 
 export async function getStaticPaths() {
   try {
-    const data = await graphqlRequest<GetProductSlugsResponse>({
-      query: PRODUCT_SLUGS_QUERY,
-      variables: { first: 100 },
-    });
-
-    return data.products.nodes.map((product) => ({
+    const products = await getAllProducts();
+    return products.map((product) => ({
       params: { slug: product.slug },
-      props: {
-        productSlug: product.slug,
-        productId: product.databaseId,
-      },
+      props: { product },
     }));
   } catch (error) {
-    console.error('Error fetching product slugs:', error);
+    console.error('Error generating static paths:', error);
+    // Return empty array if database is not set up yet
     return [];
   }
 }
 
-const { productSlug } = Astro.props;
-let product: Product | null = null;
-
-try {
-  const data = await graphqlRequest<GetProductResponse>({
-    query: PRODUCT_QUERY,
-    variables: {
-      id: productSlug,
-      idType: 'SLUG',
-    },
-  });
-
-  product = data.product;
-} catch (error) {
-  console.error('Error fetching product:', error);
+// Helper function to strip HTML from price strings
+function stripPriceHtml(price: string): string {
+  return price.replace(/<[^>]*>/g, '').trim();
 }
+
+const { slug } = Astro.params;
+const product = await getProductBySlug(slug || '');
 
 if (!product) {
   return Astro.redirect('/404');
@@ -122,8 +105,9 @@ const formattedPrice = product.price ? stripPriceHtml(product.price) : 'Price un
             <div class="mt-6">
               <CartButton
                 client:load
-                productId={product.databaseId.toString()}
+                productId={product.id}
                 productName={product.name}
+                stripeCheckoutUrl={product.stripeCheckoutUrl}
               />
             </div>
           )}

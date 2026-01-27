@@ -4,22 +4,20 @@
 
 ---
 
-## Project Context: Headless WooCommerce with Astro
+## Project Context: Headless E-commerce with Astro
 
-You are an expert in Astro and Headless E-commerce. We are using WordPress/WooCommerce as a backend and Astro as the frontend.
+You are an expert in Astro and Headless E-commerce. We are using Astro as the frontend.
 
 ### Tech Stack
 - Frontend: Astro (Static Site Generation)
-- Data Source: WPGraphQL + WooGraphQL
 - Interaction: React (for Cart/Checkout islands)
 - Styling: Tailwind CSS
 
 ### Coding Standards
-1. Use `src/lib/wpgraphql.ts` for all fetch requests.
-2. Use environment variables (`WORDPRESS_API_URL`) for all API endpoints.
-3. Every product page must have a `getStaticPaths` function.
-4. If the user asks for a "Cart", suggest using 'nanostores' for lightweight state management between Astro islands.
-5. Handle WooCommerce price formatting correctly (stripping HTML tags from the `price` string if necessary).
+1. Use environment variables (`PUBLIC_API_BASE_URL`) for all API endpoints.
+2. Every product page must have a `getStaticPaths` function.
+3. If the user asks for a "Cart", suggest using 'nanostores' for lightweight state management between Astro islands.
+4. Handle price formatting correctly (stripping HTML tags from the `price` string if necessary).
 
 ---
 

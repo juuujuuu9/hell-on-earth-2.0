@@ -6,17 +6,26 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:push": "drizzle-kit push",
+    "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
     "@astrojs/react": "^4.4.2",
     "@astrojs/vercel": "^9.0.4",
     "@nanostores/react": "^1.0.0",
+    "@neondatabase/serverless": "^1.0.2",
     "@tailwindcss/vite": "^4.1.18",
     "astro": "^5.16.12",
+    "dotenv": "^17.2.3",
+    "drizzle-kit": "^0.31.8",
+    "drizzle-orm": "^0.45.1",
     "nanostores": "^1.1.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "stripe": "^20.2.0",
     "tailwindcss": "^4.1.18"
   }
 }
