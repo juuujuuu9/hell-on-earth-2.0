@@ -55,37 +55,43 @@ if (selectedCategorySlug) {
 
     <!-- Main Content -->
     <div class="max-w-[1920px] mx-auto flex flex-col gap-0">
-      <div id="shop-navigation" class="w-full px-8 py-4 flex items-center justify-between relative">
-        <h1 class="text-md text-black uppercase">SHOP</h1>
+      <div id="shop-navigation" class="w-full px-8 py-4 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between lg:gap-0 lg:relative">
+        {/* Categories - top row on mobile, centered on desktop */}
         {categories.length > 0 && (
-          <ul class="flex items-center gap-6 absolute left-1/2 transform -translate-x-1/2" id="category-filters">
-            <li>
-              <button
-                data-category=""
-                class={`text-md uppercase hover:opacity-70 transition-opacity ${
-                  !selectedCategorySlug ? 'text-[#00cd00] font-bold' : 'text-black'
-                }`}
-              >
-                ALL
-              </button>
-            </li>
-            {categories.map((category) => (
+          <div class="w-full overflow-x-auto lg:w-auto lg:overflow-visible order-first lg:order-none lg:absolute lg:left-1/2 lg:transform lg:-translate-x-1/2">
+            <ul class="flex items-center gap-6 flex-nowrap lg:flex-wrap" id="category-filters">
               <li>
                 <button
-                  data-category={category.slug}
-                  class={`text-md uppercase hover:opacity-70 transition-opacity ${
-                    selectedCategorySlug === category.slug ? 'text-[#00cd00] font-bold' : 'text-black'
+                  data-category=""
+                  class={`text-md uppercase hover:opacity-70 transition-opacity whitespace-nowrap ${
+                    !selectedCategorySlug ? 'text-[#00cd00] font-bold' : 'text-black'
                   }`}
                 >
-                  {category.name}
+                  ALL
                 </button>
               </li>
-            ))}
-          </ul>
+              {categories.map((category) => (
+                <li>
+                  <button
+                    data-category={category.slug}
+                    class={`text-md uppercase hover:opacity-70 transition-opacity whitespace-nowrap ${
+                      selectedCategorySlug === category.slug ? 'text-[#00cd00] font-bold' : 'text-black'
+                    }`}
+                  >
+                    {category.name}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
         )}
-        <button class="text-md text-black uppercase hover:opacity-70 transition-opacity">
-          FILTERS
-        </button>
+        {/* Season text and Filter button - same row on mobile, separate on desktop */}
+        <div class="flex items-center justify-between lg:contents">
+          <h1 class="text-md text-black font-bold uppercase order-2 lg:order-none">SEASON N</h1>
+          <button class="text-md text-black uppercase hover:opacity-70 transition-opacity order-3 lg:order-none">
+            FILTERS
+          </button>
+        </div>
       </div>
 
       {filteredProducts.length === 0 ? (
@@ -104,7 +110,7 @@ if (selectedCategorySlug) {
           </p>
         </div>
       ) : (
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-0 product-grid" id="products-grid">
+        <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-0 product-grid" id="products-grid">
           {filteredProducts.map((product) => {
             // Format price: extract numeric value and format as USD XX.XX
             let formattedPrice: string | null = null;
@@ -184,55 +190,31 @@ if (selectedCategorySlug) {
     text-shadow: 0 0 2px rgba(0, 0, 0, 0.3), 0 0 4px rgba(0, 0, 0, 0.2);
   }
   
-  /* Yellow-green glow on product titles */
+  /* Product titles match active category color - no text-shadow */
   .product-title {
-    text-shadow: 0 0 2px rgba(200, 255, 0, 0.8), 0 0 4px rgba(200, 255, 0, 0.6), 0 0 6px rgba(200, 255, 0, 0.4);
+    /* Removed text-shadow to match active category text color exactly */
   }
   
-  /* Grid divider lines */
+  /* Grid divider lines - shared borders for consistent 1px thickness */
+  /* Grid container provides top, left, and bottom borders */
   .product-grid {
     border-top: 1px solid #e5e7eb;
+    border-left: 1px solid #e5e7eb;
     border-bottom: 1px solid #e5e7eb;
   }
   
+  /* Each product provides right and bottom borders */
+  /* This ensures every product appears to have borders on all 4 sides */
+  /* without doubling up where borders meet */
   .product-grid > a {
     border-right: 1px solid #e5e7eb;
     border-bottom: 1px solid #e5e7eb;
     padding: 1rem;
   }
   
-  /* Remove right border on last column */
-  .product-grid > a:nth-child(3n) {
-    border-right: none;
-  }
-  
-  /* Remove bottom border on last row items */
-  .product-grid > a:nth-last-child(-n+3) {
+  /* Remove bottom border from last row items to avoid doubling with grid bottom border */
+  .product-grid > a.no-bottom-border {
     border-bottom: none;
-  }
-  
-  /* Responsive: Remove right border on 2-column layout */
-  @media (min-width: 640px) and (max-width: 1023px) {
-    .product-grid > a:nth-child(3n) {
-      border-right: 1px solid #e5e7eb;
-    }
-    .product-grid > a:nth-child(2n) {
-      border-right: none;
-    }
-    .product-grid > a:nth-last-child(-n+2) {
-      border-bottom: none;
-    }
-  }
-  
-  /* Responsive: Remove all borders on single column */
-  @media (max-width: 639px) {
-    .product-grid > a {
-      border-right: none;
-      border-bottom: 1px solid #e5e7eb;
-    }
-    .product-grid > a:last-child {
-      border-bottom: none;
-    }
   }
 </style>
 
@@ -267,6 +249,29 @@ if (selectedCategorySlug) {
         } else {
           container.appendChild(emptyState);
         }
+      }
+    }
+
+    function updateLastRowBorders() {
+      // Get all visible products
+      const visibleProducts = Array.from(productItems).filter(item => !item.classList.contains('hidden'));
+      
+      if (visibleProducts.length === 0) return;
+      
+      // Remove the class from all products first
+      productItems.forEach(item => item.classList.remove('no-bottom-border'));
+      
+      // Determine grid columns based on viewport width
+      const columnsPerRow = window.innerWidth < 1024 ? 2 : 3;
+      
+      // Calculate how many items are in the last row
+      const totalVisible = visibleProducts.length;
+      const itemsInLastRow = totalVisible % columnsPerRow || columnsPerRow;
+      
+      // Remove bottom border from last row items
+      const startIndex = totalVisible - itemsInLastRow;
+      for (let i = startIndex; i < totalVisible; i++) {
+        visibleProducts[i].classList.add('no-bottom-border');
       }
     }
 
@@ -309,6 +314,9 @@ if (selectedCategorySlug) {
       } else {
         if (emptyState) emptyState.classList.add('hidden');
         if (productsGrid) productsGrid.classList.remove('hidden');
+        
+        // Remove bottom borders from last visible row to avoid doubling with grid bottom border
+        updateLastRowBorders();
       }
 
       // Update URL without page reload
@@ -355,6 +363,18 @@ if (selectedCategorySlug) {
       const urlParams = new URLSearchParams(window.location.search);
       const categorySlug = urlParams.get('category');
       filterProducts(categorySlug);
+    });
+    
+    // Update borders on initial load
+    updateLastRowBorders();
+    
+    // Update borders on window resize (in case grid columns change)
+    let resizeTimeout;
+    window.addEventListener('resize', () => {
+      clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(() => {
+        updateLastRowBorders();
+      }, 100);
     });
   })();
 </script>

@@ -4,12 +4,25 @@ import CartIcon from '@components/CartIcon';
 
 <header class="sticky top-0 z-50 bg-black border-b border-gray-200c px-8 py-3">
   <div class="max-w-[1920px] mx-auto flex items-center justify-between min-h-fit">
-    <nav class="flex items-center gap-6">
+    {/* Desktop Menu - hidden on screens < 1024px */}
+    <nav class="hidden lg:flex items-center gap-6">
       <a href="/products" class="text-white hover:opacity-70 transition-opacity">SHOP</a>
       <a href="/lookbook" class="text-white hover:opacity-70 transition-opacity">LOOKBOOK</a>
       <a href="/cart" class="text-white hover:opacity-70 transition-opacity">CHECKOUT</a>
       <a href="/terms" class="text-white hover:opacity-70 transition-opacity">TERMS</a>
     </nav>
+    
+    {/* Hamburger Menu Button - visible on screens < 1024px */}
+    <button id="hamburger-menu-btn" class="lg:hidden text-white hover:opacity-70 transition-opacity" aria-label="Open menu">
+      <svg fill="#ffffff" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" stroke="#ffffff" class="w-6 h-6">
+        <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+        <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
+        <g id="SVGRepo_iconCarrier">
+          <path d="M10.001 7.8a2.2 2.2 0 1 0 0 4.402A2.2 2.2 0 0 0 10 7.8zm-7 0a2.2 2.2 0 1 0 0 4.402A2.2 2.2 0 0 0 3 7.8zm14 0a2.2 2.2 0 1 0 0 4.402A2.2 2.2 0 0 0 17 7.8z"></path>
+        </g>
+      </svg>
+    </button>
+    
     <div class="items-center pt-1 absolute left-1/2 transform -translate-x-1/2">
       <img src="/cropped-logo.webp" alt="HELL ON EARTH" class="h-10 w-auto" />
     </div>
@@ -22,4 +35,62 @@ import CartIcon from '@components/CartIcon';
       </div>
     </div>
   </div>
+  
+  {/* Mobile Tray Menu */}
+  <div id="mobile-menu-tray" class="fixed inset-0 bg-black z-50 transform translate-x-full transition-transform duration-300 ease-in-out lg:hidden">
+    <div class="flex flex-col h-full">
+      {/* Close Button - positioned to align with hamburger button */}
+      <div class="flex justify-start px-8 pt-5">
+        <button id="close-menu-btn" class="text-white hover:opacity-70 transition-opacity" aria-label="Close menu">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      
+      {/* Menu Items */}
+      <nav class="flex flex-col gap-8 px-8 py-8">
+        <a href="/products" class="text-white text-xl hover:opacity-70 transition-opacity">SHOP</a>
+        <a href="/lookbook" class="text-white text-xl hover:opacity-70 transition-opacity">LOOKBOOK</a>
+        <a href="/cart" class="text-white text-xl hover:opacity-70 transition-opacity">CHECKOUT</a>
+        <a href="/terms" class="text-white text-xl hover:opacity-70 transition-opacity">TERMS</a>
+      </nav>
+    </div>
+  </div>
+  
+  {/* Backdrop */}
+  <div id="menu-backdrop" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden lg:hidden"></div>
 </header>
+
+<script>
+  (function() {
+    const hamburgerBtn = document.getElementById('hamburger-menu-btn');
+    const closeBtn = document.getElementById('close-menu-btn');
+    const menuTray = document.getElementById('mobile-menu-tray');
+    const backdrop = document.getElementById('menu-backdrop');
+    
+    if (!hamburgerBtn || !closeBtn || !menuTray || !backdrop) return;
+    
+    function openMenu() {
+      menuTray.classList.remove('translate-x-full');
+      backdrop.classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+    }
+    
+    function closeMenu() {
+      menuTray.classList.add('translate-x-full');
+      backdrop.classList.add('hidden');
+      document.body.style.overflow = '';
+    }
+    
+    hamburgerBtn.addEventListener('click', openMenu);
+    closeBtn.addEventListener('click', closeMenu);
+    backdrop.addEventListener('click', closeMenu);
+    
+    // Close menu when clicking on menu links
+    const menuLinks = menuTray.querySelectorAll('nav a');
+    menuLinks.forEach(link => {
+      link.addEventListener('click', closeMenu);
+    });
+  })();
+</script>
