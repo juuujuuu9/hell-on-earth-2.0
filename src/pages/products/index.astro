@@ -90,7 +90,7 @@ if (selectedCategorySlug) {
         )}
         {/* Season text and Filter button - same row on mobile, separate on desktop */}
         <div class="flex items-center justify-between lg:contents">
-          <h1 class="text-md text-black font-bold uppercase order-2 lg:order-none">SEASON N</h1>
+          <h1 class="text-md text-black font-bold uppercase order-2 lg:order-none season-title">SEASON N</h1>
           <button class="text-md text-black uppercase hover:opacity-70 transition-opacity order-3 lg:order-none">
             FILTERS
           </button>
@@ -153,7 +153,7 @@ if (selectedCategorySlug) {
                   </h2>
                   
                   {formattedPrice && (
-                    <p class="text-sm text-black font-medium mt-2">
+                    <p class="text-sm text-black font-medium mt-2 product-price">
                       {formattedPrice}
                     </p>
                   )}
@@ -195,7 +195,17 @@ if (selectedCategorySlug) {
   
   /* Product titles match active category color - no text-shadow */
   .product-title {
-    /* Removed text-shadow to match active category text color exactly */
+    text-shadow: none;
+  }
+  
+  /* Product prices - no text-shadow */
+  .product-price {
+    text-shadow: none;
+  }
+  
+  /* Season title - no text-shadow */
+  .season-title {
+    text-shadow: none;
   }
   
   /* Grid divider lines - shared borders for consistent 1px thickness */
