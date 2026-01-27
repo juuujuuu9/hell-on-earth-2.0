@@ -4,15 +4,20 @@ import CartIcon from '@components/CartIcon';
 
 <header class="sticky top-0 z-50 bg-black border-b border-gray-200c px-8 py-3">
   <div class="max-w-[1920px] mx-auto flex items-center justify-between min-h-fit">
-    <div class="text-2xl font-bold text-black">*</div>
+    <nav class="flex items-center gap-6">
+      <a href="/products" class="text-white hover:opacity-70 transition-opacity">SHOP</a>
+      <a href="/lookbook" class="text-white hover:opacity-70 transition-opacity">LOOKBOOK</a>
+      <a href="/cart" class="text-white hover:opacity-70 transition-opacity">CHECKOUT</a>
+      <a href="/terms" class="text-white hover:opacity-70 transition-opacity">TERMS</a>
+    </nav>
     <div class="items-center pt-1 absolute left-1/2 transform -translate-x-1/2">
       <img src="/cropped-logo.webp" alt="HELL ON EARTH" class="h-10 w-auto" />
     </div>
     <div class="flex items-center gap-6">
-      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 cursor-pointer hover:opacity-70 transition-opacity text-black">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 cursor-pointer hover:opacity-70 transition-opacity text-white">
         <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
       </svg>
-      <div class="text-black">
+      <div class="text-white">
         <CartIcon client:load />
       </div>
     </div>

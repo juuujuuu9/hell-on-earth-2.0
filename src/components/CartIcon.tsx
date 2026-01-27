@@ -44,7 +44,7 @@ export default function CartIcon() {
   return (
     <a
       href="/cart"
-      className="relative inline-flex items-center justify-center p-2 hover:bg-gray-100 rounded transition-colors"
+      className="relative inline-flex items-center justify-center p-2 hover:opacity-70 rounded transition-opacity"
       aria-label={`Shopping cart with ${itemCount} items`}
     >
       <svg
