@@ -42,8 +42,42 @@ import Layout from '@layouts/Layout.astro';
             #mailpoet_form_1 .mailpoet_submit { background-color: #000000 !important; color: #ffffff !important; font-weight: bold !important; }
             #mailpoet_form_1 .mailpoet_divider {  }
             #mailpoet_form_1 .mailpoet_message {  }
-            #mailpoet_form_1 .mailpoet_form_loading { width: 30px; text-align: center; line-height: normal; }
-            #mailpoet_form_1 .mailpoet_form_loading > span { width: 5px; height: 5px; background-color: #5b5b5b; }
+            #mailpoet_form_1 .mailpoet_form_loading { 
+              width: 100%; 
+              text-align: center; 
+              line-height: normal; 
+              display: none; 
+              margin-top: 10px;
+            }
+            #mailpoet_form_1 .mailpoet_form_loading > span { 
+              display: inline-block;
+              width: 8px; 
+              height: 8px; 
+              background-color: #00FF00; 
+              border-radius: 50%;
+              margin: 0 3px;
+              animation: mailpoet_bounce 1.4s infinite ease-in-out both;
+            }
+            #mailpoet_form_1 .mailpoet_form_loading > span.mailpoet_bounce1 {
+              animation-delay: -0.32s;
+            }
+            #mailpoet_form_1 .mailpoet_form_loading > span.mailpoet_bounce2 {
+              animation-delay: -0.16s;
+            }
+            @keyframes mailpoet_bounce {
+              0%, 80%, 100% {
+                transform: scale(0);
+                opacity: 0.5;
+              }
+              40% {
+                transform: scale(1);
+                opacity: 1;
+              }
+            }
+            #mailpoet_form_1 .mailpoet_submit:disabled {
+              opacity: 0.6;
+              cursor: not-allowed;
+            }
             #mailpoet_form_1{border-radius: 0px;text-align: left;}
             #mailpoet_form_1 form.mailpoet_form {padding: 20px;}
             #mailpoet_form_1{width: 100%;}
@@ -54,7 +88,7 @@ import Layout from '@layouts/Layout.astro';
             @media (max-width: 500px) {#mailpoet_form_1 .mailpoet_form_column:last-child .mailpoet_paragraph:last-child {margin-bottom: 0}}
           </style>
 
-          <form target="_self" method="post" action="https://hellonearthmfg.com/wp-admin/admin-post.php?action=mailpoet_subscription_form" class="mailpoet_form mailpoet_form_form mailpoet_form_shortcode" novalidate="" data-delay="" data-exit-intent-enabled="" data-font-family="" data-cookie-expiration-time="">
+          <form id="subscription-form" target="_self" method="post" action="https://hellonearthmfg.com/wp-admin/admin-post.php?action=mailpoet_subscription_form" class="mailpoet_form mailpoet_form_form mailpoet_form_shortcode" novalidate="" data-delay="" data-exit-intent-enabled="" data-font-family="" data-cookie-expiration-time="">
             <input type="hidden" name="data[form_id]" value="1">
             <input type="hidden" name="token" value="78939cab53">
             <input type="hidden" name="api_version" value="v1">
@@ -67,13 +101,17 @@ import Layout from '@layouts/Layout.astro';
               <span class="mailpoet_error_thh1a"></span>
             </div>
             <div class="mailpoet_paragraph last">
-              <input type="submit" class="mailpoet_submit" value="SUBSCRIBE" data-automation-id="subscribe-submit-button" style="text-align: center; width:100%;box-sizing:border-box;padding:10px;margin: 0 auto 0 0;border-color:transparent;">
-              <span class="mailpoet_form_loading"><span class="mailpoet_bounce1"></span><span class="mailpoet_bounce2"></span><span class="mailpoet_bounce3"></span></span>
+              <input type="submit" class="mailpoet_submit" value="SUBSCRIBE" data-automation-id="subscribe-submit-button" style="text-align: center; width:100%;box-sizing:border-box;padding:10px;margin: 0 auto 0 0;border-color:transparent; transition: opacity 0.3s ease;">
+              <div class="mailpoet_form_loading">
+                <span class="mailpoet_bounce1"></span>
+                <span class="mailpoet_bounce2"></span>
+                <span class="mailpoet_bounce3"></span>
+              </div>
             </div>
 
             <div class="mailpoet_message">
-              <p class="mailpoet_validate_success" style="display:none;">Check your inbox or spam folder to confirm your subscription.</p>
-              <p class="mailpoet_validate_error" style="display:none;"></p>
+              <p class="mailpoet_validate_success" style="display:none; color: #00FF00; text-align: center; margin-top: 10px;">Check your inbox or spam folder to confirm your subscription.</p>
+              <p class="mailpoet_validate_error" style="display:none; color: #ff0000; text-align: center; margin-top: 10px;"></p>
             </div>
           </form>
         </div>
@@ -111,6 +149,85 @@ import Layout from '@layouts/Layout.astro';
     // Ensure video plays (some browsers require user interaction first)
     video.play().catch((error) => {
       console.error('Error playing video:', error);
+    });
+  }
+
+  // Intercept form submission to prevent redirect
+  const subscriptionForm = document.getElementById('subscription-form') as HTMLFormElement;
+  const successMessage = document.querySelector('.mailpoet_validate_success') as HTMLElement;
+  const errorMessage = document.querySelector('.mailpoet_validate_error') as HTMLElement;
+  const submitButton = subscriptionForm?.querySelector('input[type="submit"]') as HTMLInputElement;
+  const loadingIndicator = subscriptionForm?.querySelector('.mailpoet_form_loading') as HTMLElement;
+  const emailInput = subscriptionForm?.querySelector('input[type="email"]') as HTMLInputElement;
+
+  if (subscriptionForm) {
+    subscriptionForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      // Hide previous messages
+      if (successMessage) successMessage.style.display = 'none';
+      if (errorMessage) errorMessage.style.display = 'none';
+      
+      // Show loading state
+      if (submitButton) {
+        submitButton.disabled = true;
+        submitButton.value = 'SUBMITTING...';
+      }
+      if (loadingIndicator) {
+        loadingIndicator.style.display = 'block';
+      }
+
+      try {
+        // Create FormData from the form and convert to URLSearchParams
+        const formData = new FormData(subscriptionForm);
+        const params = new URLSearchParams();
+        for (const [key, value] of formData.entries()) {
+          params.append(key, value.toString());
+        }
+        
+        // Submit via our API route to prevent CORS and redirects
+        const response = await fetch('/api/mailpoet', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: params.toString(),
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          // Show success message
+          if (successMessage) {
+            successMessage.style.display = 'block';
+            successMessage.textContent = result.message || 'Check your inbox or spam folder to confirm your subscription.';
+          }
+          
+          // Reset form
+          subscriptionForm.reset();
+        } else {
+          // Show error message
+          if (errorMessage) {
+            errorMessage.style.display = 'block';
+            errorMessage.textContent = result.error || 'There was an error submitting your subscription. Please try again.';
+          }
+        }
+      } catch (error) {
+        console.error('Form submission error:', error);
+        if (errorMessage) {
+          errorMessage.style.display = 'block';
+          errorMessage.textContent = 'There was an error submitting your subscription. Please try again.';
+        }
+      } finally {
+        // Reset loading state
+        if (submitButton) {
+          submitButton.disabled = false;
+          submitButton.value = 'SUBSCRIBE';
+        }
+        if (loadingIndicator) {
+          loadingIndicator.style.display = 'none';
+        }
+      }
     });
   }
 </script>
