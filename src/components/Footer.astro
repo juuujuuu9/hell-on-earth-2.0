@@ -1,22 +1,88 @@
 ---
 ---
 
-<footer class="max-w-[1920px] mx-auto px-8 py-16 mt-24">
-  <nav class="flex items-center justify-center gap-8 mb-12">
-    <a href="/products" class="text-black hover:opacity-70 transition-opacity text-sm">Product</a>
-    <a href="/products" class="text-black hover:opacity-70 transition-opacity text-sm">Catalogue</a>
-    <a href="/contact" class="text-black hover:opacity-70 transition-opacity text-sm">Contact</a>
-    <a href="/" class="text-black hover:opacity-70 transition-opacity text-sm">Newsletter</a>
-  </nav>
-  
-  <div class="text-center mb-8">
-    <div class="flex items-center justify-center gap-2">
-      <span class="text-4xl font-bold">HELL ON EARTH</span>
-      <span class="text-xs">®</span>
+<footer class="max-w-[1920px] mx-auto px-4 lg:px-8 pb-16 pt-16">
+  <!-- Mailing List Section -->
+  <div class="border-b border-gray-200 pb-12 mb-12">
+    <div class="text-center">
+      <h2 class="text-lg uppercase font-bold mb-2">JOIN OUR MAILING LIST</h2>
+      <p class="text-sm mb-6">Enter your email to be notified of upcoming releases.</p>
+      
+      <form 
+        id="footer-mailing-list-form"
+        class="max-w-md mx-auto space-y-4"
+        method="post"
+        action="https://hellonearthmfg.com/wp-admin/admin-post.php?action=mailpoet_subscription_form"
+      >
+        <input type="hidden" name="data[form_id]" value="1">
+        <input type="hidden" name="token" value="78939cab53">
+        <input type="hidden" name="api_version" value="v1">
+        <input type="hidden" name="endpoint" value="subscribers">
+        <input type="hidden" name="mailpoet_method" value="subscribe">
+        
+        <input
+          type="email"
+          name="data[form_field_ZDVhN2FkYTE5NmFiX2VtYWls]"
+          placeholder="Email Address *"
+          required
+          class="w-full px-4 py-2 border border-gray-300 bg-white text-center focus:outline-none focus:ring-2 focus:ring-gray-400"
+          aria-label="Email Address"
+        />
+        
+        <button
+          type="submit"
+          class="w-full px-4 py-2 bg-gray-300 text-black uppercase font-bold hover:opacity-70 transition-opacity"
+        >
+          SUBSCRIBE
+        </button>
+      </form>
     </div>
   </div>
   
-  <div class="text-center">
-    <p class="text-xs text-gray-400">Made with Astro</p>
+  <!-- Logo, Social, Info Section -->
+  <div class="flex flex-col lg:flex-row items-center justify-between gap-8">
+    <!-- Left: Instagram Icon -->
+    <div class="flex-shrink-0">
+      <a 
+        href="https://instagram.com" 
+        target="_blank" 
+        rel="noopener noreferrer"
+        class="text-black hover:opacity-70 transition-opacity"
+        aria-label="Instagram"
+      >
+        <svg 
+          xmlns="http://www.w3.org/2000/svg" 
+          viewBox="0 0 24 24" 
+          fill="none" 
+          stroke="currentColor" 
+          stroke-width="1.5" 
+          stroke-linecap="round" 
+          stroke-linejoin="round"
+          class="w-6 h-6"
+        >
+          <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+          <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
+          <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
+        </svg>
+      </a>
+    </div>
+    
+    <!-- Center: Logo and E-Commerce Info -->
+    <div class="flex-1 text-center">
+      <div class="mb-2">
+        <img 
+          src="/hell-grey.png" 
+          alt="hell" 
+          class="h-20 mx-auto object-contain"
+        />
+      </div>
+      <p class="text-xs">E-Commerce by THOUGHTFORM WORLDWIDE</p>
+    </div>
+    
+    <!-- Right: Terms and Copyright -->
+    <div class="flex-shrink-0 text-center">
+      <p class="text-sm uppercase font-bold mb-2">TERMS OF USE & CONTACT INFO</p>
+      <p class="text-xs">©2026 HELL ON EARTH MFG.</p>
+    </div>
   </div>
 </footer>
