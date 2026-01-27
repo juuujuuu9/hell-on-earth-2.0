@@ -55,35 +55,38 @@ if (selectedCategorySlug) {
 
     <!-- Main Content -->
     <div class="max-w-[1920px] mx-auto flex flex-col gap-0">
-      <div id="shop-navigation" class="w-full px-2 lg:px-8 py-2 lg:py-4 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between lg:gap-0 lg:relative">
+      <div id="shop-navigation" class="w-full px-2 lg:px-8 py-2 lg:py-4 flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between lg:gap-0 lg:relative">
         {/* Categories - top row on mobile, centered on desktop */}
         {categories.length > 0 && (
-          <div class="category-scroll-container w-full overflow-x-auto border-b border-gray-200 lg:border-b-0 lg:w-auto lg:overflow-visible order-first lg:order-none lg:absolute lg:left-1/2 lg:transform lg:-translate-x-1/2 pb-4 lg:pb-0">
-            <ul class="flex items-center gap-6 flex-nowrap lg:flex-wrap" id="category-filters">
-              <li>
-                <button
-                  data-category=""
-                  class={`text-md uppercase hover:opacity-70 transition-opacity whitespace-nowrap ${
-                    !selectedCategorySlug ? 'text-[#00cd00] font-bold' : 'text-black'
-                  }`}
-                >
-                  ALL
-                </button>
-              </li>
-              {categories.map((category) => (
+          <>
+            <div class="category-scroll-container w-full overflow-x-auto lg:w-auto lg:overflow-visible order-first lg:order-none lg:absolute lg:left-1/2 lg:transform lg:-translate-x-1/2 pb-0">
+              <ul class="flex items-center gap-6 flex-nowrap lg:flex-wrap" id="category-filters">
                 <li>
                   <button
-                    data-category={category.slug}
+                    data-category=""
                     class={`text-md uppercase hover:opacity-70 transition-opacity whitespace-nowrap ${
-                      selectedCategorySlug === category.slug ? 'text-[#00cd00] font-bold' : 'text-black'
+                      !selectedCategorySlug ? 'text-[#00cd00] font-bold' : 'text-black'
                     }`}
                   >
-                    {category.name}
+                    ALL
                   </button>
                 </li>
-              ))}
-            </ul>
-          </div>
+                {categories.map((category) => (
+                  <li>
+                    <button
+                      data-category={category.slug}
+                      class={`text-md uppercase hover:opacity-70 transition-opacity whitespace-nowrap ${
+                        selectedCategorySlug === category.slug ? 'text-[#00cd00] font-bold' : 'text-black'
+                      }`}
+                    >
+                      {category.name}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div class="border-b border-gray-200 lg:hidden -mx-2 lg:mx-0"></div>
+          </>
         )}
         {/* Season text and Filter button - same row on mobile, separate on desktop */}
         <div class="flex items-center justify-between lg:contents">
