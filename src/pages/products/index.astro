@@ -212,6 +212,14 @@ if (selectedCategorySlug) {
     padding: 1rem;
   }
   
+  /* Remove horizontal padding on mobile (2 columns) */
+  @media (max-width: 1023px) {
+    .product-grid > a {
+      padding-left: 0;
+      padding-right: 0;
+    }
+  }
+  
   /* Remove bottom border from last row items to avoid doubling with grid bottom border */
   .product-grid > a.no-bottom-border {
     border-bottom: none;
