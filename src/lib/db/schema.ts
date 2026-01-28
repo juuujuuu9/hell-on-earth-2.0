@@ -18,6 +18,7 @@ export const categories = pgTable('categories', {
   description: text('description'),
   imageUrl: text('image_url'),
   imageAlt: text('image_alt'),
+  sortOrder: integer('sort_order').default(0).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });

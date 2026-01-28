@@ -117,6 +117,15 @@ function stripPriceHtml(price: string): string {
               }
             }
             
+            // Find second image that's different from primary
+            // Exclude jackets from hover effect
+            const isJacket = product.name.toLowerCase().includes('jacket');
+            const hasMultipleImages = product.galleryImages?.nodes && product.galleryImages.nodes.length > 1;
+            const secondImage = hasMultipleImages 
+              ? product.galleryImages.nodes.find(img => img.sourceUrl !== product.image?.sourceUrl) 
+              : null;
+            const showHoverEffect = hasMultipleImages && secondImage && !isJacket;
+            
             return (
               <a
                 href={`/products/${product.slug}`}
@@ -124,13 +133,28 @@ function stripPriceHtml(price: string): string {
                 data-categories={JSON.stringify(product.productCategories?.nodes.map(c => c.slug) || [])}
               >
                 {/* Product Image - Square with light gray background */}
-                <div class="w-full aspect-square bg-gray-100 mb-2 flex items-center justify-center overflow-hidden">
+                <div class="w-full aspect-square bg-gray-100 mb-2 flex items-center justify-center overflow-hidden relative">
                   {product.image ? (
-                    <img
-                      src={product.image.sourceUrl}
-                      alt={product.image.altText || product.name}
-                      class="w-full h-full object-contain group-hover:opacity-90 transition-opacity"
-                    />
+                    <>
+                      {/* Primary image */}
+                      <img
+                        src={product.image.sourceUrl}
+                        alt={product.image.altText || product.name}
+                        class={`w-full h-full object-contain transition-opacity duration-300 absolute inset-0 ${
+                          showHoverEffect
+                            ? 'opacity-100 group-hover:opacity-0' 
+                            : 'group-hover:opacity-90'
+                        }`}
+                      />
+                      {/* Second image - visible on hover (only if different from primary) */}
+                      {showHoverEffect && secondImage && (
+                        <img
+                          src={secondImage.sourceUrl}
+                          alt={secondImage.altText || product.name}
+                          class="w-full h-full object-contain transition-opacity duration-300 opacity-0 group-hover:opacity-100 absolute inset-0"
+                        />
+                      )}
+                    </>
                   ) : (
                     <span class="text-gray-400 text-sm">No image</span>
                   )}

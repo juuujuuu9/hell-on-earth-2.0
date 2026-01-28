@@ -4,7 +4,7 @@
  * Helper functions for querying products and categories
  */
 
-import { eq, and, desc, inArray, sql } from 'drizzle-orm';
+import { eq, and, desc, asc, inArray, sql } from 'drizzle-orm';
 import { db } from './index';
 import { products, categories, productImages, productCategories, productAttributes } from './schema';
 import type { Product, ProductCategory } from '../types';
@@ -207,9 +207,68 @@ export async function getAllProducts(categorySlug?: string): Promise<Product[]> 
     }
   }
 
-  return Array.from(productMap.values()).map(({ product, images, categories, attributes }) =>
+  // Convert to products array
+  const productsList = Array.from(productMap.values()).map(({ product, images, categories, attributes }) =>
     formatProduct(product, images, categories, attributes)
   );
+
+  // Sort products by type order: jackets, hoodies, logo tees, other tees, denims, beanies, masks
+  function getProductTypeOrder(productName: string): number {
+    const nameLower = productName.toLowerCase();
+    
+    // Order: 1. Jackets, 2. Hoodies, 3. Logo tees, 4. Other tees, 5. Denims, 6. Beanies, 7. Masks
+    if (nameLower.includes('jacket')) return 1;
+    if (nameLower.includes('hoodie')) return 2;
+    if (nameLower.includes('logo') && (nameLower.includes('tee') || nameLower.includes('t-shirt') || nameLower.includes('shirt'))) return 3;
+    if (nameLower.includes('tee') || nameLower.includes('t-shirt') || nameLower.includes('shirt')) return 4;
+    if (nameLower.includes('jeans') || nameLower.includes('denim')) return 5;
+    if (nameLower.includes('beanie')) return 6;
+    if (nameLower.includes('mask') || nameLower.includes('therma')) return 7;
+    
+    // Default order for unmatched products
+    return 99;
+  }
+
+  // Sort products by type order, then by name
+  productsList.sort((a, b) => {
+    const orderA = getProductTypeOrder(a.name);
+    const orderB = getProductTypeOrder(b.name);
+    
+    if (orderA !== orderB) {
+      return orderA - orderB;
+    }
+    
+    // Special handling for jackets: black/white first, blue second, black last
+    if (orderA === 1) { // Both are jackets
+      const aNameLower = a.name.toLowerCase();
+      const bNameLower = b.name.toLowerCase();
+      
+      // Get jacket priority: 1 = black/white, 2 = blue, 3 = black only, 4 = other
+      function getJacketPriority(name: string): number {
+        const nameLower = name.toLowerCase();
+        const hasBlack = nameLower.includes('black');
+        const hasWhite = nameLower.includes('white');
+        const hasBlue = nameLower.includes('blue');
+        
+        if ((hasBlack && hasWhite) || (hasBlack && nameLower.includes('blackwhite'))) return 1; // Black/white first
+        if (hasBlue) return 2; // Blue second
+        if (hasBlack && !hasWhite) return 3; // Black only last
+        return 4; // Other jackets
+      }
+      
+      const priorityA = getJacketPriority(a.name);
+      const priorityB = getJacketPriority(b.name);
+      
+      if (priorityA !== priorityB) {
+        return priorityA - priorityB;
+      }
+    }
+    
+    // If same order, sort alphabetically by name
+    return a.name.localeCompare(b.name);
+  });
+
+  return productsList;
 }
 
 /**
@@ -269,7 +328,7 @@ export async function getAllCategories(): Promise<ProductCategory[]> {
   const results = await db
     .select()
     .from(categories)
-    .orderBy(categories.name);
+    .orderBy(asc(categories.sortOrder), asc(categories.name));
 
   return results.map(cat => ({
     id: cat.id,
