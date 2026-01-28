@@ -2,7 +2,7 @@
 import CartIcon from '@components/CartIcon';
 ---
 
-<header class="sticky top-0 z-50 bg-black border-b border-gray-200c px-2 lg:px-8 py-3">
+<header class="sticky top-0 z-50 bg-black border-b border-gray-200c px-2 lg:px-8 py-4">
   <div class="max-w-[1920px] mx-auto flex items-center justify-between min-h-fit">
     {/* Desktop Menu - hidden on screens < 1024px */}
     <nav class="hidden lg:flex items-center gap-6">
@@ -23,8 +23,8 @@ import CartIcon from '@components/CartIcon';
       </svg>
     </button>
     
-    <a href="/" class="items-center pt-1 absolute left-1/2 transform -translate-x-1/2 cursor-pointer">
-      <div class="h-10" style="aspect-ratio: 1080 / 581;">
+    <a href="/" class="items-center pt-0 absolute left-1/2 transform -translate-x-1/2 cursor-pointer">
+      <div class="h-14" style="aspect-ratio: 1080 / 581;">
         <img src="/3d-logo-header.webp" alt="HELL ON EARTH" class="w-full h-full object-cover" loading="eager" />
       </div>
     </a>
@@ -42,7 +42,7 @@ import CartIcon from '@components/CartIcon';
   <div id="mobile-menu-tray" class="fixed inset-0 bg-black z-50 transform translate-x-full transition-transform duration-300 ease-in-out lg:hidden">
     <div class="flex flex-col h-full">
       {/* Close Button - positioned to align with hamburger button */}
-      <div class="flex justify-start px-2 lg:px-8 pt-5">
+      <div class="flex justify-start px-2 lg:px-8 pt-6">
         <button id="close-menu-btn" class="text-white hover:opacity-70 transition-opacity cursor-pointer" aria-label="Close menu">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
             <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
