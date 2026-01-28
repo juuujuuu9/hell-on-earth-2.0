@@ -18,7 +18,8 @@
     "compress:webp": "tsx scripts/compress-images.ts --webp",
     "create:products": "tsx scripts/create-products-from-images.ts",
     "update:image-urls": "tsx scripts/update-image-urls.ts",
-    "create:categories": "tsx scripts/create-categories.ts"
+    "create:categories": "tsx scripts/create-categories.ts",
+    "add:images": "tsx scripts/add-images-to-products.ts"
   },
   "dependencies": {
     "@astrojs/react": "^4.4.2",
