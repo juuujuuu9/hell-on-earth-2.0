@@ -157,6 +157,17 @@ Instead of fake commands, use **inline annotations** in code:
 - Pattern: `src/pages/api/[asset-name].ts` reads `public/` and serves
 - Example: See `src/pages/api/og-image.ts`
 
+### RULE-014: Image Processing Workflow 🔴
+**All images must be processed before serving**
+- Compress images using `scripts/compress-images.ts` (PNG compression or WebP conversion)
+- Convert to WebP format for optimal performance (`--webp` flag)
+- Upload to Bunny CDN using `scripts/upload-product-images.ts` or `src/lib/bunny.ts`
+- Never reference local image files in production code - always use Bunny CDN URLs
+- Store original images in `public/products/images/` for processing
+- After upload, reference images via `productImages` table with CDN URLs
+- Workflow: Add image → Compress → Convert to WebP → Upload to Bunny → Add to database → Use CDN URL
+- Scripts available: `npm run compress:webp`, `npm run upload:images`
+
 ---
 
 ## Rule Symbols
@@ -312,6 +323,6 @@ You: "Yes"
 
 ---
 
-**Last updated:** 2025-11-17  
-**Active rules:** 13  
+**Last updated:** 2026-01-27  
+**Active rules:** 14  
 **Philosophy:** Radical simplicity

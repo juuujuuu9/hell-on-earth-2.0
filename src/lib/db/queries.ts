@@ -27,37 +27,15 @@ interface CategoryInfo {
 
 /**
  * Ensure image URL is properly encoded (but don't double-encode)
- * URLs from bunny.ts are already encoded, so we just return them as-is
- * Only encode if the URL appears to not be encoded (no % in path)
+ * URLs from bunny.ts are already encoded using encodeURIComponent
+ * encodeURIComponent doesn't encode parentheses () as they're valid in URLs
+ * We preserve the encoding as returned by bunny.ts
  */
 function encodeImageUrl(url: string): string {
-  // If URL already contains encoded characters, assume it's already encoded
-  if (url.includes('%')) {
-    return url;
-  }
-  
-  // Otherwise, encode it
-  try {
-    const urlObj = new URL(url);
-    // Only encode segments that aren't already encoded
-    urlObj.pathname = urlObj.pathname
-      .split('/')
-      .map(segment => {
-        // If segment already has encoded chars, don't encode again
-        if (segment.includes('%')) {
-          return segment;
-        }
-        return encodeURIComponent(segment);
-      })
-      .join('/');
-    return urlObj.toString();
-  } catch {
-    // If URL parsing fails, check if it's already encoded
-    if (url.includes('%')) {
-      return url;
-    }
-    return encodeURI(url);
-  }
+  // URLs from bunny.ts are already properly encoded
+  // encodeURIComponent handles spaces and most special chars, but not parentheses
+  // Parentheses are valid in URLs per RFC 3986, so we keep them as-is
+  return url;
 }
 
 /**
