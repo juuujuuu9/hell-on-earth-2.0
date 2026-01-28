@@ -1,0 +1,290 @@
+---
+/**
+ * Filter Tray Component
+ * Sliding filter panel that opens from the right side
+ */
+import type { Product, ProductCategory } from '@lib/types';
+
+interface Props {
+  products: Product[];
+  categories: ProductCategory[];
+}
+
+const { products = [], categories = [] } = Astro.props;
+
+// Extract unique sizes from product attributes
+const sizes = new Set<string>();
+products.forEach(product => {
+  product.attributes?.nodes.forEach(attr => {
+    if (attr.name.toLowerCase() === 'size') {
+      attr.options.forEach(option => sizes.add(option));
+    }
+  });
+});
+const sortedSizes = Array.from(sizes).sort();
+
+// Extract unique colors from product attributes
+const colors = new Set<string>();
+products.forEach(product => {
+  product.attributes?.nodes.forEach(attr => {
+    if (attr.name.toLowerCase() === 'color') {
+      attr.options.forEach(option => colors.add(option));
+    }
+  });
+});
+const sortedColors = Array.from(colors).sort();
+
+// Product types are the categories
+const productTypes = categories.map(cat => cat.name).sort();
+---
+
+<div id="filter-tray-overlay" class="fixed inset-0 bg-black bg-opacity-0 pointer-events-none transition-opacity duration-300 z-40 hidden">
+</div>
+
+<div id="filter-tray" class="fixed top-0 right-0 h-full w-80 bg-white shadow-2xl transform translate-x-full transition-transform duration-300 ease-in-out z-50">
+  <div class="flex flex-col h-full">
+    <!-- Header -->
+    <div class="flex items-center justify-between p-6 border-b border-gray-200">
+      <h2 class="text-lg font-bold uppercase text-black">FILTERS</h2>
+      <div class="flex items-center gap-4">
+        <button 
+          id="filter-tray-clear"
+          class="text-sm text-gray-400 uppercase hover:text-black transition-colors cursor-pointer"
+        >
+          CLEAR ALL
+        </button>
+        <button 
+          id="filter-tray-close"
+          class="text-black hover:opacity-70 transition-opacity cursor-pointer"
+          aria-label="Close filters"
+        >
+          ✕
+        </button>
+      </div>
+    </div>
+
+    <!-- Filter Options -->
+    <div class="flex-1 overflow-y-auto p-6">
+      <ul class="space-y-6">
+        <!-- SIZE Filter -->
+        <li>
+          <button 
+            class="w-full flex items-center justify-between text-left text-gray-400 uppercase hover:opacity-70 transition-opacity cursor-pointer"
+            data-filter-type="size"
+            aria-expanded="false"
+            aria-controls="filter-size-options"
+          >
+            <span>SIZE</span>
+            <span>→</span>
+          </button>
+          <div id="filter-size-options" class="hidden mt-4 pl-4 space-y-3">
+            {sortedSizes.length > 0 ? (
+              sortedSizes.map((size) => (
+                <label class="flex items-center cursor-pointer group">
+                  <input 
+                    type="checkbox" 
+                    value={size}
+                    data-filter="size"
+                    class="mr-3 cursor-pointer"
+                  />
+                  <span class="text-gray-600 uppercase text-sm group-hover:text-black transition-colors">{size}</span>
+                </label>
+              ))
+            ) : (
+              <p class="text-gray-400 text-sm italic">No sizes available</p>
+            )}
+          </div>
+        </li>
+
+        <!-- COLOR Filter -->
+        <li>
+          <button 
+            class="w-full flex items-center justify-between text-left text-gray-400 uppercase hover:opacity-70 transition-opacity cursor-pointer"
+            data-filter-type="color"
+            aria-expanded="false"
+            aria-controls="filter-color-options"
+          >
+            <span>COLOR</span>
+            <span>→</span>
+          </button>
+          <div id="filter-color-options" class="hidden mt-4 pl-4 space-y-3">
+            {sortedColors.length > 0 ? (
+              sortedColors.map((color) => (
+                <label class="flex items-center cursor-pointer group">
+                  <input 
+                    type="checkbox" 
+                    value={color}
+                    data-filter="color"
+                    class="mr-3 cursor-pointer"
+                  />
+                  <span class="text-gray-600 uppercase text-sm group-hover:text-black transition-colors">{color}</span>
+                </label>
+              ))
+            ) : (
+              <p class="text-gray-400 text-sm italic">No colors available</p>
+            )}
+          </div>
+        </li>
+
+        <!-- PRODUCT TYPE Filter -->
+        <li>
+          <button 
+            class="w-full flex items-center justify-between text-left text-gray-400 uppercase hover:opacity-70 transition-opacity cursor-pointer"
+            data-filter-type="product-type"
+            aria-expanded="false"
+            aria-controls="filter-product-type-options"
+          >
+            <span>PRODUCT TYPE</span>
+            <span>→</span>
+          </button>
+          <div id="filter-product-type-options" class="hidden mt-4 pl-4 space-y-3">
+            {productTypes.length > 0 ? (
+              productTypes.map((type) => (
+                <label class="flex items-center cursor-pointer group">
+                  <input 
+                    type="checkbox" 
+                    value={type}
+                    data-filter="product-type"
+                    class="mr-3 cursor-pointer"
+                  />
+                  <span class="text-gray-600 uppercase text-sm group-hover:text-black transition-colors">{type}</span>
+                </label>
+              ))
+            ) : (
+              <p class="text-gray-400 text-sm italic">No product types available</p>
+            )}
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Type declarations for window properties
+  declare global {
+    interface Window {
+      openFilterTray?: () => void;
+      getActiveFilters?: () => Record<string, string[]>;
+      clearAllFilters?: () => void;
+    }
+  }
+
+  (function() {
+    const filterTray = document.getElementById('filter-tray') as HTMLElement | null;
+    const filterOverlay = document.getElementById('filter-tray-overlay') as HTMLElement | null;
+    const filterTrayClose = document.getElementById('filter-tray-close') as HTMLElement | null;
+    const filterTrayClear = document.getElementById('filter-tray-clear') as HTMLElement | null;
+    const filterButtons = document.querySelectorAll('[data-filter-type]');
+    
+    if (!filterTray || !filterOverlay || !filterTrayClose) return;
+
+    // Open filter tray
+    function openFilterTray() {
+      if (!filterTray || !filterOverlay) return;
+      filterTray.classList.remove('translate-x-full');
+      filterOverlay.classList.remove('hidden', 'bg-opacity-0', 'pointer-events-none');
+      filterOverlay.classList.add('bg-opacity-50', 'pointer-events-auto');
+      document.body.style.overflow = 'hidden';
+    }
+
+    // Close filter tray
+    function closeFilterTray() {
+      if (!filterTray || !filterOverlay) return;
+      filterTray.classList.add('translate-x-full');
+      filterOverlay.classList.remove('bg-opacity-50', 'pointer-events-auto');
+      filterOverlay.classList.add('bg-opacity-0', 'pointer-events-none');
+      document.body.style.overflow = '';
+    }
+
+    // Toggle filter options
+    filterButtons.forEach(button => {
+      button.addEventListener('click', () => {
+        const filterType = button.getAttribute('data-filter-type');
+        const optionsPanel = document.getElementById(`filter-${filterType}-options`);
+        const isExpanded = button.getAttribute('aria-expanded') === 'true';
+        
+        if (optionsPanel) {
+          if (isExpanded) {
+            optionsPanel.classList.add('hidden');
+            button.setAttribute('aria-expanded', 'false');
+          } else {
+            optionsPanel.classList.remove('hidden');
+            button.setAttribute('aria-expanded', 'true');
+          }
+        }
+      });
+    });
+
+    // Filter functionality
+    const filterCheckboxes = document.querySelectorAll('[data-filter]');
+    let activeFilters: Record<string, string[]> = {
+      size: [],
+      color: [],
+      'product-type': []
+    };
+
+    function updateFilters() {
+      // Reset active filters
+      activeFilters = {
+        size: [],
+        color: [],
+        'product-type': []
+      };
+
+      // Collect checked filters
+      filterCheckboxes.forEach((checkbox) => {
+        const input = checkbox as HTMLInputElement;
+        if (input.checked) {
+          const filterType = input.getAttribute('data-filter');
+          const value = input.value;
+          if (filterType && activeFilters[filterType as keyof typeof activeFilters]) {
+            activeFilters[filterType as keyof typeof activeFilters].push(value);
+          }
+        }
+      });
+
+      // Trigger filter event
+      window.dispatchEvent(new CustomEvent('filtersChanged', { detail: activeFilters }));
+    }
+
+    // Clear all filters
+    function clearAllFilters() {
+      filterCheckboxes.forEach((checkbox) => {
+        const input = checkbox as HTMLInputElement;
+        input.checked = false;
+      });
+      updateFilters();
+    }
+
+    // Add change listeners to checkboxes
+    filterCheckboxes.forEach((checkbox) => {
+      checkbox.addEventListener('change', updateFilters);
+    });
+
+    // Close button handler
+    filterTrayClose.addEventListener('click', closeFilterTray);
+
+    // Clear button handler
+    if (filterTrayClear) {
+      filterTrayClear.addEventListener('click', clearAllFilters);
+    }
+
+    // Overlay click handler
+    filterOverlay.addEventListener('click', closeFilterTray);
+
+    // ESC key handler
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !filterTray.classList.contains('translate-x-full')) {
+        closeFilterTray();
+      }
+    });
+
+    // Expose open function globally for the FILTERS button
+    window.openFilterTray = openFilterTray;
+
+    // Expose filter state and clear function
+    window.getActiveFilters = () => activeFilters;
+    window.clearAllFilters = clearAllFilters;
+  })();
+</script>

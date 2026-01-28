@@ -5,6 +5,7 @@
 import Layout from '@layouts/Layout.astro';
 import Header from '@components/Header.astro';
 import Footer from '@components/Footer.astro';
+import FilterTray from '@components/FilterTray.astro';
 import type { Product, ProductCategory } from '@lib/types';
 import { getAllProducts, getAllCategories } from '@lib/db/queries';
 
@@ -54,7 +55,7 @@ function stripPriceHtml(price: string): string {
                 <li>
                   <button
                     data-category=""
-                    class={`text-md uppercase hover:opacity-70 transition-opacity whitespace-nowrap ${
+                    class={`text-md uppercase hover:opacity-70 transition-opacity whitespace-nowrap cursor-pointer ${
                       !selectedCategorySlug ? 'text-[#00cd00] font-bold' : 'text-black'
                     }`}
                   >
@@ -65,7 +66,7 @@ function stripPriceHtml(price: string): string {
                   <li>
                     <button
                       data-category={category.slug}
-                      class={`text-md uppercase hover:opacity-70 transition-opacity whitespace-nowrap ${
+                      class={`text-md uppercase hover:opacity-70 transition-opacity whitespace-nowrap cursor-pointer ${
                         selectedCategorySlug === category.slug ? 'text-[#00cd00] font-bold' : 'text-black'
                       }`}
                     >
@@ -81,7 +82,10 @@ function stripPriceHtml(price: string): string {
         {/* Season text and Filter button - same row on mobile, separate on desktop */}
         <div class="flex items-center justify-between lg:contents">
           <h1 class="text-md text-black font-bold uppercase order-2 lg:order-none season-title">MMXXVI-I</h1>
-          <button class="text-md text-black uppercase hover:opacity-70 transition-opacity order-3 lg:order-none">
+          <button 
+            id="filters-button"
+            class="text-md text-black uppercase hover:opacity-70 transition-opacity order-3 lg:order-none cursor-pointer"
+          >
             FILTERS
           </button>
         </div>
@@ -94,7 +98,7 @@ function stripPriceHtml(price: string): string {
           </p>
           <p class="text-sm text-gray-400 mt-2">
             {selectedCategorySlug ? (
-              <button class="text-[#00cd00] hover:opacity-70 underline show-all-btn">
+              <button class="text-[#00cd00] hover:opacity-70 underline show-all-btn cursor-pointer">
                 View all products
               </button>
             ) : (
@@ -121,16 +125,32 @@ function stripPriceHtml(price: string): string {
             // Exclude jackets from hover effect
             const isJacket = product.name.toLowerCase().includes('jacket');
             const hasMultipleImages = product.galleryImages?.nodes && product.galleryImages.nodes.length > 1;
-            const secondImage = hasMultipleImages 
+            const secondImage = hasMultipleImages && product.galleryImages?.nodes
               ? product.galleryImages.nodes.find(img => img.sourceUrl !== product.image?.sourceUrl) 
               : null;
             const showHoverEffect = hasMultipleImages && secondImage && !isJacket;
             
+            // Extract sizes and colors from attributes
+            const productSizes: string[] = [];
+            const productColors: string[] = [];
+            product.attributes?.nodes.forEach(attr => {
+              if (attr.name.toLowerCase() === 'size') {
+                productSizes.push(...attr.options);
+              }
+              if (attr.name.toLowerCase() === 'color') {
+                productColors.push(...attr.options);
+              }
+            });
+            const productTypeNames = product.productCategories?.nodes.map(c => c.name) || [];
+
             return (
               <a
                 href={`/products/${product.slug}`}
-                class="group product-item"
+                class="group product-item cursor-pointer"
                 data-categories={JSON.stringify(product.productCategories?.nodes.map(c => c.slug) || [])}
+                data-sizes={JSON.stringify(productSizes)}
+                data-colors={JSON.stringify(productColors)}
+                data-product-types={JSON.stringify(productTypeNames)}
               >
                 {/* Product Image - Square with light gray background */}
                 <div class="w-full aspect-square bg-gray-100 mb-2 flex items-center justify-center overflow-hidden relative">
@@ -178,6 +198,8 @@ function stripPriceHtml(price: string): string {
         </div>
       )}
     </div>
+
+    <FilterTray products={products} categories={categories} />
 
     <Footer />
   </main>
@@ -244,6 +266,13 @@ function stripPriceHtml(price: string): string {
 </style>
 
 <script>
+  // Type declarations for window properties
+  declare global {
+    interface Window {
+      openFilterTray?: () => void;
+    }
+  }
+
   // Client-side category filtering
   (function() {
     const categoryButtons = document.querySelectorAll('#category-filters button[data-category]');
@@ -266,7 +295,7 @@ function stripPriceHtml(price: string): string {
         emptyState.innerHTML = `
           <p class="text-gray-500">No products found in this category.</p>
           <p class="text-sm text-gray-400 mt-2">
-            <button class="text-[#00cd00] hover:opacity-70 underline show-all-btn">View all products</button>
+            <button class="text-[#00cd00] hover:opacity-70 underline show-all-btn cursor-pointer">View all products</button>
           </p>
         `;
         if (productsGrid) {
@@ -300,10 +329,11 @@ function stripPriceHtml(price: string): string {
       }
     }
 
-    function filterProducts(categorySlug) {
+    function filterProducts(categorySlug: string | null, trayFilters?: { size: string[]; color: string[]; 'product-type': string[] }) {
       let visibleCount = 0;
       
       productItems.forEach((item) => {
+        // Category filter
         const categoriesAttr = item.getAttribute('data-categories');
         if (!categoriesAttr) {
           item.classList.add('hidden');
@@ -311,7 +341,42 @@ function stripPriceHtml(price: string): string {
         }
         
         const productCategories = JSON.parse(categoriesAttr);
-        const shouldShow = !categorySlug || productCategories.includes(categorySlug);
+        let shouldShow = !categorySlug || productCategories.includes(categorySlug);
+        
+        // Apply tray filters if provided
+        if (trayFilters && shouldShow) {
+          const sizesAttr = item.getAttribute('data-sizes');
+          const colorsAttr = item.getAttribute('data-colors');
+          const productTypesAttr = item.getAttribute('data-product-types');
+          
+          const productSizes = sizesAttr ? JSON.parse(sizesAttr) : [];
+          const productColors = colorsAttr ? JSON.parse(colorsAttr) : [];
+          const productTypes = productTypesAttr ? JSON.parse(productTypesAttr) : [];
+          
+          // Size filter: if sizes are selected, product must have at least one matching size
+          if (trayFilters.size.length > 0) {
+            const hasMatchingSize = trayFilters.size.some(size => productSizes.includes(size));
+            if (!hasMatchingSize) {
+              shouldShow = false;
+            }
+          }
+          
+          // Color filter: if colors are selected, product must have at least one matching color
+          if (trayFilters.color.length > 0 && shouldShow) {
+            const hasMatchingColor = trayFilters.color.some(color => productColors.includes(color));
+            if (!hasMatchingColor) {
+              shouldShow = false;
+            }
+          }
+          
+          // Product type filter: if types are selected, product must have at least one matching type
+          if (trayFilters['product-type'].length > 0 && shouldShow) {
+            const hasMatchingType = trayFilters['product-type'].some(type => productTypes.includes(type));
+            if (!hasMatchingType) {
+              shouldShow = false;
+            }
+          }
+        }
         
         if (shouldShow) {
           item.classList.remove('hidden');
@@ -394,12 +459,28 @@ function stripPriceHtml(price: string): string {
     updateLastRowBorders();
     
     // Update borders on window resize (in case grid columns change)
-    let resizeTimeout;
+    let resizeTimeout: ReturnType<typeof setTimeout> | undefined;
     window.addEventListener('resize', () => {
-      clearTimeout(resizeTimeout);
+      if (resizeTimeout) clearTimeout(resizeTimeout);
       resizeTimeout = setTimeout(() => {
         updateLastRowBorders();
       }, 100);
     });
+
+    // Filter tray button handler
+    const filtersButton = document.getElementById('filters-button');
+    if (filtersButton && window.openFilterTray) {
+      filtersButton.addEventListener('click', () => {
+        window.openFilterTray?.();
+      });
+    }
+
+    // Listen for filter tray changes
+    window.addEventListener('filtersChanged', ((e: CustomEvent) => {
+      const activeFilters = e.detail;
+      const urlParams = new URLSearchParams(window.location.search);
+      const categorySlug = urlParams.get('category');
+      filterProducts(categorySlug, activeFilters);
+    }) as EventListener);
   })();
 </script>

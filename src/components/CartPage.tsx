@@ -105,7 +105,7 @@ export default function CartPage() {
           <p className="text-gray-500 mb-4">Your cart is empty.</p>
           <a
             href="/products"
-            className="inline-block px-6 py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition-colors"
+            className="inline-block px-6 py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition-colors cursor-pointer"
           >
             Continue Shopping
           </a>
@@ -149,7 +149,7 @@ export default function CartPage() {
                 <h2 className="text-xl font-semibold mb-2">
                   <a
                     href={`/products/${item.product.node.slug}`}
-                    className="hover:text-primary-600 transition-colors"
+                    className="hover:text-primary-600 transition-colors cursor-pointer"
                   >
                     {item.product.node.name}
                   </a>
@@ -163,7 +163,7 @@ export default function CartPage() {
                     <button
                       onClick={() => handleUpdateQuantity(item.key, item.quantity - 1)}
                       disabled={isDisabled}
-                      className="px-3 py-1 border border-gray-300 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="px-3 py-1 border border-gray-300 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                     >
                       −
                     </button>
@@ -184,7 +184,7 @@ export default function CartPage() {
                     <button
                       onClick={() => handleUpdateQuantity(item.key, item.quantity + 1)}
                       disabled={isDisabled}
-                      className="px-3 py-1 border border-gray-300 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="px-3 py-1 border border-gray-300 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                     >
                       +
                     </button>
@@ -197,7 +197,7 @@ export default function CartPage() {
                   <button
                     onClick={() => handleRemoveItem(item.key)}
                     disabled={isDisabled}
-                    className="ml-auto px-4 py-2 text-red-600 hover:text-red-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="ml-auto px-4 py-2 text-red-600 hover:text-red-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
                   >
                     {isRemoving ? 'Removing...' : 'Remove'}
                   </button>
@@ -224,13 +224,13 @@ export default function CartPage() {
         <div className="flex gap-4">
           <a
             href="/products"
-            className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 text-center transition-colors"
+            className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 text-center transition-colors cursor-pointer"
           >
             Continue Shopping
           </a>
           <button
             disabled={cart.isLoading}
-            className="flex-1 px-6 py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+            className="flex-1 px-6 py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors cursor-pointer"
           >
             Proceed to Checkout
           </button>
