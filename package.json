@@ -11,7 +11,14 @@
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
-    "bunny:test": "tsx scripts/test-bunny.ts"
+    "bunny:test": "tsx scripts/test-bunny.ts",
+    "upload:images": "tsx scripts/upload-product-images.ts",
+    "upload:products": "tsx scripts/upload-product-images.ts --create-products",
+    "compress:images": "tsx scripts/compress-images.ts",
+    "compress:webp": "tsx scripts/compress-images.ts --webp",
+    "create:products": "tsx scripts/create-products-from-images.ts",
+    "update:image-urls": "tsx scripts/update-image-urls.ts",
+    "create:categories": "tsx scripts/create-categories.ts"
   },
   "dependencies": {
     "@astrojs/react": "^4.4.2",
@@ -30,6 +37,7 @@
     "tailwindcss": "^4.1.18"
   },
   "devDependencies": {
+    "sharp": "^0.34.5",
     "tsx": "^4.21.0"
   }
 }

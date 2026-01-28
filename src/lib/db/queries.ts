@@ -4,7 +4,7 @@
  * Helper functions for querying products and categories
  */
 
-import { eq, and, desc } from 'drizzle-orm';
+import { eq, and, desc, inArray, sql } from 'drizzle-orm';
 import { db } from './index';
 import { products, categories, productImages, productCategories, productAttributes } from './schema';
 import type { Product, ProductCategory } from '../types';
@@ -23,6 +23,41 @@ interface CategoryInfo {
   categoryId: string;
   name: string;
   slug: string;
+}
+
+/**
+ * Ensure image URL is properly encoded (but don't double-encode)
+ * URLs from bunny.ts are already encoded, so we just return them as-is
+ * Only encode if the URL appears to not be encoded (no % in path)
+ */
+function encodeImageUrl(url: string): string {
+  // If URL already contains encoded characters, assume it's already encoded
+  if (url.includes('%')) {
+    return url;
+  }
+  
+  // Otherwise, encode it
+  try {
+    const urlObj = new URL(url);
+    // Only encode segments that aren't already encoded
+    urlObj.pathname = urlObj.pathname
+      .split('/')
+      .map(segment => {
+        // If segment already has encoded chars, don't encode again
+        if (segment.includes('%')) {
+          return segment;
+        }
+        return encodeURIComponent(segment);
+      })
+      .join('/');
+    return urlObj.toString();
+  } catch {
+    // If URL parsing fails, check if it's already encoded
+    if (url.includes('%')) {
+      return url;
+    }
+    return encodeURI(url);
+  }
 }
 
 /**
@@ -51,12 +86,12 @@ function formatProduct(
     stockQuantity: dbProduct.stockQuantity || undefined,
     stripeCheckoutUrl: dbProduct.stripeCheckoutUrl || null,
     image: primaryImage ? {
-      sourceUrl: primaryImage.imageUrl,
+      sourceUrl: encodeImageUrl(primaryImage.imageUrl),
       altText: primaryImage.altText || undefined,
     } : undefined,
     galleryImages: images.length > 0 ? {
       nodes: images.map(img => ({
-        sourceUrl: img.imageUrl,
+        sourceUrl: encodeImageUrl(img.imageUrl),
         altText: img.altText || undefined,
       })),
     } : undefined,
@@ -81,6 +116,38 @@ function formatProduct(
  * Get all products with optional category filter
  */
 export async function getAllProducts(categorySlug?: string): Promise<Product[]> {
+  // If filtering by category, first get product IDs that belong to that category
+  let productIdsInCategory: string[] | undefined;
+  
+  if (categorySlug) {
+    // Get the category ID
+    const categoryResult = await db
+      .select({ id: categories.id })
+      .from(categories)
+      .where(eq(categories.slug, categorySlug))
+      .limit(1);
+    
+    if (categoryResult.length === 0) {
+      // Category doesn't exist, return empty array
+      return [];
+    }
+    
+    const categoryId = categoryResult[0].id;
+    
+    // Get all product IDs that belong to this category
+    const productCategoryResults = await db
+      .select({ productId: productCategories.productId })
+      .from(productCategories)
+      .where(eq(productCategories.categoryId, categoryId));
+    
+    productIdsInCategory = productCategoryResults.map(r => r.productId);
+    
+    // If no products in this category, return empty array
+    if (productIdsInCategory.length === 0) {
+      return [];
+    }
+  }
+
   // Build base query
   const baseQuery = db
     .select({
@@ -94,13 +161,12 @@ export async function getAllProducts(categorySlug?: string): Promise<Product[]> 
     .leftJoin(productImages, eq(products.id, productImages.productId))
     .leftJoin(productCategories, eq(products.id, productCategories.productId))
     .leftJoin(categories, eq(productCategories.categoryId, categories.id))
-    .leftJoin(productAttributes, eq(products.id, productAttributes.productId))
-    .orderBy(desc(products.createdAt));
+    .leftJoin(productAttributes, eq(products.id, productAttributes.productId));
 
-  // Apply category filter if provided
-  const results: ProductQueryResult[] = categorySlug
-    ? await baseQuery.where(eq(categories.slug, categorySlug))
-    : await baseQuery;
+  // Apply category filter if provided (filter by product IDs)
+  const results: ProductQueryResult[] = categorySlug && productIdsInCategory
+    ? await baseQuery.where(inArray(products.id, productIdsInCategory)).orderBy(desc(products.createdAt))
+    : await baseQuery.orderBy(desc(products.createdAt));
 
   // Group results by product
   const productMap = new Map<string, {

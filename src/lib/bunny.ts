@@ -40,8 +40,8 @@ export async function uploadImageToBunny(
   const cdnUrl = process.env.BUNNY_CDN_URL;
   const storageEndpoint = process.env.BUNNY_STORAGE_ENDPOINT || 'storage.bunnycdn.com';
 
-  if (!apiKey || !storageZone || !cdnUrl) {
-    throw new Error('Bunny.net credentials not configured. Check BUNNY_API_KEY, BUNNY_STORAGE_ZONE, and BUNNY_CDN_URL environment variables.');
+  if (!apiKey || !storageZone) {
+    throw new Error('Bunny.net credentials not configured. Check BUNNY_API_KEY and BUNNY_STORAGE_ZONE environment variables.');
   }
 
   // Read file if it's a path
@@ -74,9 +74,19 @@ export async function uploadImageToBunny(
     throw new Error(`Failed to upload to Bunny.net: ${response.status} ${errorText}`);
   }
 
-  // Return CDN URL (ensure no double slashes)
-  const cleanCdnUrl = cdnUrl.endsWith('/') ? cdnUrl.slice(0, -1) : cdnUrl;
-  return `${cleanCdnUrl}/${cleanFilename}`;
+  // Return public URL for the file
+  // Note: Requires a Pull Zone (CDN) to be set up in Bunny.net
+  // The CDN URL should be in format: https://[pull-zone-name].b-cdn.net
+  const encodedPath = cleanFilename.split('/').map(segment => encodeURIComponent(segment)).join('/');
+  
+  if (cdnUrl) {
+    const cleanCdnUrl = cdnUrl.endsWith('/') ? cdnUrl.slice(0, -1) : cdnUrl;
+    return `${cleanCdnUrl}/${encodedPath}`;
+  } else {
+    // If no CDN URL configured, return a placeholder
+    // User needs to set up a Pull Zone in Bunny.net
+    throw new Error('BUNNY_CDN_URL not configured. Please set up a Pull Zone in Bunny.net and configure BUNNY_CDN_URL.');
+  }
 }
 
 /**
@@ -116,13 +126,12 @@ export async function deleteImageFromBunny(filename: string): Promise<void> {
 export async function testBunnyConnection(): Promise<{ success: boolean; message: string }> {
   const apiKey = process.env.BUNNY_API_KEY;
   const storageZone = process.env.BUNNY_STORAGE_ZONE;
-  const cdnUrl = process.env.BUNNY_CDN_URL;
   const storageEndpoint = process.env.BUNNY_STORAGE_ENDPOINT || 'storage.bunnycdn.com';
 
-  if (!apiKey || !storageZone || !cdnUrl) {
+  if (!apiKey || !storageZone) {
     return {
       success: false,
-      message: 'Missing Bunny.net credentials. Check BUNNY_API_KEY, BUNNY_STORAGE_ZONE, and BUNNY_CDN_URL environment variables.',
+      message: 'Missing Bunny.net credentials. Check BUNNY_API_KEY and BUNNY_STORAGE_ZONE environment variables.',
     };
   }
 
