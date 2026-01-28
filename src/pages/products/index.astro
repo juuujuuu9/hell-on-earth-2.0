@@ -121,14 +121,30 @@ function stripPriceHtml(price: string): string {
               }
             }
             
-            // Find second image that's different from primary
-            // Exclude jackets from hover effect
-            const isJacket = product.name.toLowerCase().includes('jacket');
+            // Find hover image based on product type
+            const isShellJacket = product.name.toLowerCase().includes('shell jacket');
+            const isShellJacketBlue = product.name.toLowerCase().includes('shell jacket') && product.name.toLowerCase().includes('blue');
             const hasMultipleImages = product.galleryImages?.nodes && product.galleryImages.nodes.length > 1;
-            const secondImage = hasMultipleImages && product.galleryImages?.nodes
-              ? product.galleryImages.nodes.find(img => img.sourceUrl !== product.image?.sourceUrl) 
-              : null;
-            const showHoverEffect = hasMultipleImages && secondImage && !isJacket;
+            
+            let hoverImage = null;
+            let showHoverEffect = false;
+            
+            // Exclude blue shell jacket from hover effects
+            if (isShellJacketBlue) {
+              showHoverEffect = false;
+            } else if (isShellJacket && hasMultipleImages && product.galleryImages?.nodes) {
+              // For shell jackets (except blue): use thermochromic if available
+              const thermochromicImage = product.galleryImages.nodes.find(img => 
+                img.sourceUrl.toLowerCase().includes('thermochromic')
+              );
+              
+              hoverImage = thermochromicImage;
+              showHoverEffect = !!hoverImage && hoverImage.sourceUrl !== product.image?.sourceUrl;
+            } else if (hasMultipleImages && product.galleryImages?.nodes) {
+              // For other products: use second image that's different from primary
+              hoverImage = product.galleryImages.nodes.find(img => img.sourceUrl !== product.image?.sourceUrl);
+              showHoverEffect = !!hoverImage;
+            }
             
             // Extract sizes and colors from attributes
             const productSizes: string[] = [];
@@ -166,11 +182,11 @@ function stripPriceHtml(price: string): string {
                             : 'group-hover:opacity-90'
                         }`}
                       />
-                      {/* Second image - visible on hover (only if different from primary) */}
-                      {showHoverEffect && secondImage && (
+                      {/* Hover image - visible on hover */}
+                      {showHoverEffect && hoverImage && (
                         <img
-                          src={secondImage.sourceUrl}
-                          alt={secondImage.altText || product.name}
+                          src={hoverImage.sourceUrl}
+                          alt={hoverImage.altText || product.name}
                           class="w-full h-full object-contain transition-opacity duration-300 opacity-0 group-hover:opacity-100 absolute inset-0"
                         />
                       )}
