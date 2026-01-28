@@ -1,4 +1,3 @@
----
 /**
  * API Route: Get Stripe Checkout URL for a product
  * 

@@ -6,10 +6,15 @@
 
 import { drizzle } from 'drizzle-orm/neon-http';
 import { neon } from '@neondatabase/serverless';
+import { config } from 'dotenv';
 import * as schema from './schema';
 
+// Load environment variables (Astro loads .env automatically, but this ensures it's loaded)
+config({ path: '.env.local' });
+config({ path: '.env' });
+
 if (!process.env.DATABASE_URL) {
-  throw new Error('DATABASE_URL environment variable is not set');
+  throw new Error('DATABASE_URL environment variable is not set. Check your .env or .env.local file.');
 }
 
 // Create Neon HTTP client
