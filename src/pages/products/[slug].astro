@@ -74,7 +74,7 @@ const hasMultipleImages = displayImages.length > 1;
     <Header />
 
     <!-- Product Content -->
-    <div class="px-8 py-0">
+    <div class="p-0">
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-0 max-w-[1920px] mx-auto">
         <!-- Left Column: Product Image -->
         <div class="w-full lg:border-r lg:border-gray-200 pr-0 py-0">
@@ -108,22 +108,22 @@ const hasMultipleImages = displayImages.length > 1;
         </div>
 
         <!-- Right Column: Product Details -->
-        <div class="flex flex-col py-0 pl-8 pt-10">
+        <div class="flex flex-col py-0 pt-10">
           <!-- Product Identifier -->
-          <div class="text-xl font-bold uppercase tracking-wide text-gray-700 pb-0">
+          <div class="text-xl font-bold uppercase tracking-wide text-gray-700 pb-0 px-8">
             <!-- <span class="text-black">■</span> -->
              {product.name}
           </div>
 
           <!-- Price -->
-          <div class="space-y-1 border-t border-gray-200 pt-4">
+          <div class="space-y-1 pt-4 px-8">
             <div class="text-base tracking-wide">{formattedPrice}</div>
             <div class="text-xs text-gray-500">VAT EXCLUDED / EXCL. SHIPPING</div>
           </div>
 
           <!-- Add to Cart Button -->
           {product.stockStatus === 'IN_STOCK' && (
-            <div class="border-t border-gray-200 pt-4">
+            <div class="pt-4 px-8">
               <CartButton
                 client:load
                 productId={product.id}
@@ -135,14 +135,14 @@ const hasMultipleImages = displayImages.length > 1;
 
           <!-- Short Description -->
           {product.shortDescription && (
-            <div class="text-sm leading-relaxed border-t border-gray-200 pt-4">
+            <div class="text-sm leading-relaxed border-t border-gray-200 pt-4 px-8">
               <div set:html={product.shortDescription} />
             </div>
           )}
 
           <!-- Product Features -->
           {features.length > 0 && (
-            <div class="space-y-3 border-t border-gray-200 pt-4">
+            <div class="space-y-3 border-t border-gray-200 pt-4 px-8">
               <div class="text-xs font-semibold uppercase tracking-wide mb-4">PRODUCT FEATURES</div>
               <ul class="space-y-2 text-sm leading-relaxed">
                 {features.map((feature) => (

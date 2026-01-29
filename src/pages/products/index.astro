@@ -129,11 +129,12 @@ function stripPriceHtml(price: string): string {
             let hoverImage = null;
             let showHoverEffect = false;
             
-            // Exclude blue shell jacket from hover effects
-            if (isShellJacketBlue) {
-              showHoverEffect = false;
+            if (isShellJacketBlue && hasMultipleImages && product.galleryImages?.nodes) {
+              // For blue shell jacket: use second image that's different from primary
+              hoverImage = product.galleryImages.nodes.find(img => img.sourceUrl !== product.image?.sourceUrl);
+              showHoverEffect = !!hoverImage;
             } else if (isShellJacket && hasMultipleImages && product.galleryImages?.nodes) {
-              // For shell jackets (except blue): use thermochromic if available
+              // For other shell jackets: use thermochromic if available
               const thermochromicImage = product.galleryImages.nodes.find(img => 
                 img.sourceUrl.toLowerCase().includes('thermochromic')
               );
