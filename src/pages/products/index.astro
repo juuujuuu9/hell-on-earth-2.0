@@ -465,6 +465,16 @@ function stripPriceHtml(price: string): string {
       });
     }
 
+    // Initialize filter state from URL on page load
+    const urlParams = new URLSearchParams(window.location.search);
+    const initialCategorySlug = urlParams.get('category');
+    if (initialCategorySlug) {
+      filterProducts(initialCategorySlug);
+    } else {
+      // Still need to update button states even if no category filter
+      filterProducts(null);
+    }
+
     // Handle browser back/forward buttons
     window.addEventListener('popstate', () => {
       const urlParams = new URLSearchParams(window.location.search);

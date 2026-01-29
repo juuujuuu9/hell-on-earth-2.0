@@ -16,6 +16,9 @@ export interface Product {
   stockStatus?: 'IN_STOCK' | 'OUT_OF_STOCK' | 'ON_BACKORDER';
   stockQuantity?: number;
   measurements?: string;
+  materials?: string;
+  features?: string;
+  details?: string;
   stripeCheckoutUrl?: string | null;
   image?: {
     sourceUrl: string;

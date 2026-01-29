@@ -143,7 +143,33 @@ const hasMultipleImages = displayImages.length > 1;
         </div>
 
         <!-- Right Column: Product Details -->
-        <div class="flex flex-col py-0 pt-10">
+        <div class="flex flex-col py-0 pt-4">
+          <!-- Breadcrumbs -->
+          <nav class="text-sm text-gray-600 px-8 pb-8" aria-label="Breadcrumb">
+            <ol class="flex items-center gap-2">
+              <li>
+                <a href="/" class="hover:text-gray-900 transition-colors">HOME</a>
+              </li>
+              {product.productCategories?.nodes && product.productCategories.nodes.length > 0 && (
+                <>
+                  <li class="text-gray-400">/</li>
+                  <li>
+                    <a 
+                      href={`/products?category=${encodeURIComponent(product.productCategories.nodes[0].slug)}`}
+                      class="hover:text-gray-900 transition-colors"
+                    >
+                      {product.productCategories.nodes[0].name.toUpperCase()}
+                    </a>
+                  </li>
+                </>
+              )}
+              <li class="text-gray-400">/</li>
+              <li class="text-gray-900 font-medium" aria-current="page">
+                {product.name.toUpperCase()}
+              </li>
+            </ol>
+          </nav>
+
           <!-- Product Identifier -->
           <div class="text-xl font-bold uppercase tracking-wide text-gray-700 pb-0 px-8">
             <!-- <span class="text-black">■</span> -->
@@ -191,18 +217,26 @@ const hasMultipleImages = displayImages.length > 1;
               <div class="text-xs font-bold uppercase tracking-wide mb-4">
                 <span class="text-black">■</span> DETAILS
               </div>
-              {colorAttribute && colorAttribute.options.length > 0 && (
-                <div class="text-base">
-                  <span class="font-medium uppercase">COLOR:</span> {colorAttribute.options.join(', ').toUpperCase()}
+              {product.details ? (
+                <div class="text-base leading-relaxed [&_ul]:list-disc [&_ul]:ml-6 [&_ul]:space-y-1 [&_li]:leading-relaxed">
+                  <div set:html={product.details} />
                 </div>
-              )}
-              <div class="text-base">
-                <a href="#" class="uppercase underline">MEASUREMENTS</a>
-              </div>
-              {sizeAttribute && sizeAttribute.options.length > 0 && (
-                <div class="text-base">
-                  <span class="font-medium uppercase">SIZE:</span> {sizeAttribute.options.join(', ').toUpperCase()}
-                </div>
+              ) : (
+                <>
+                  {colorAttribute && colorAttribute.options.length > 0 && (
+                    <div class="text-base">
+                      <span class="font-medium uppercase">COLOR:</span> {colorAttribute.options.join(', ').toUpperCase()}
+                    </div>
+                  )}
+                  <div class="text-base">
+                    <a href="#" class="uppercase underline">MEASUREMENTS</a>
+                  </div>
+                  {sizeAttribute && sizeAttribute.options.length > 0 && (
+                    <div class="text-base">
+                      <span class="font-medium uppercase">SIZE:</span> {sizeAttribute.options.join(', ').toUpperCase()}
+                    </div>
+                  )}
+                </>
               )}
             </div>
 
@@ -211,9 +245,9 @@ const hasMultipleImages = displayImages.length > 1;
               <div class="text-xs font-bold uppercase tracking-wide mb-4">
                 <span class="text-black">■</span> MATERIALS
               </div>
-              <div class="text-base leading-relaxed">
-                {product.description && product.description.toLowerCase().includes('recycled') ? (
-                  <div set:html={product.description} />
+              <div class="text-base leading-relaxed [&_ul]:list-disc [&_ul]:ml-6 [&_ul]:space-y-1 [&_li]:leading-relaxed">
+                {product.materials ? (
+                  <div set:html={product.materials} />
                 ) : (
                   <div>Product materials information available upon request.</div>
                 )}
@@ -222,19 +256,25 @@ const hasMultipleImages = displayImages.length > 1;
           </div>
 
           <!-- Product Features -->
-          {features.length > 0 && (
+          {(product.features || features.length > 0) && (
             <div class="space-y-3 border-t border-gray-200 pt-8 px-8 pb-8">
               <div class="text-xs font-bold uppercase tracking-wide mb-4">
                 <span class="text-black">■</span> PRODUCT FEATURES
               </div>
-              <ul class="space-y-2 text-base leading-relaxed">
-                {features.map((feature) => (
-                  <li class="flex items-start">
-                    <span class="mr-2 text-black">•</span>
-                    <span>{feature.options.map(opt => `${feature.name.toLowerCase()} ${opt}`).join(', ')}</span>
-                  </li>
-                ))}
-              </ul>
+              {product.features ? (
+                <div class="text-base leading-relaxed [&_ul]:list-disc [&_ul]:ml-6 [&_ul]:space-y-1 [&_li]:leading-relaxed">
+                  <div set:html={product.features} />
+                </div>
+              ) : (
+                <ul class="space-y-2 text-base leading-relaxed">
+                  {features.map((feature) => (
+                    <li class="flex items-start">
+                      <span class="mr-2 text-black">•</span>
+                      <span>{feature.options.map(opt => `${feature.name.toLowerCase()} ${opt}`).join(', ')}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
           )}
         </div>

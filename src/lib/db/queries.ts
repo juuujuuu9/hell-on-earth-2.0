@@ -63,6 +63,9 @@ function formatProduct(
     stockStatus: dbProduct.stockStatus || 'IN_STOCK',
     stockQuantity: dbProduct.stockQuantity || undefined,
     measurements: dbProduct.measurements || undefined,
+    materials: dbProduct.materials || undefined,
+    features: dbProduct.features || undefined,
+    details: dbProduct.details || undefined,
     stripeCheckoutUrl: dbProduct.stripeCheckoutUrl || null,
     image: primaryImage ? {
       sourceUrl: encodeImageUrl(primaryImage.imageUrl),

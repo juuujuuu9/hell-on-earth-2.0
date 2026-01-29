@@ -37,6 +37,9 @@ export const products = pgTable('products', {
   stockStatus: stockStatusEnum('stock_status').default('IN_STOCK').notNull(),
   stockQuantity: integer('stock_quantity'),
   measurements: text('measurements'), // Product measurements/sizing information
+  materials: text('materials'), // Product materials information (rich text/HTML)
+  features: text('features'), // Product features information (rich text/HTML)
+  details: text('details'), // Product details information (rich text/HTML)
   stripeCheckoutUrl: text('stripe_checkout_url'), // Stripe Checkout link
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
