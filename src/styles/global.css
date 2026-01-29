@@ -103,3 +103,26 @@ img {
   height: auto;
   display: block;
 }
+
+/* Custom scrollbar for measurements tray */
+#measurements-tray {
+  scrollbar-width: thin;
+  scrollbar-color: #e5e7eb transparent;
+}
+
+#measurements-tray::-webkit-scrollbar {
+  width: 3px !important;
+}
+
+#measurements-tray::-webkit-scrollbar-track {
+  background: transparent !important;
+}
+
+#measurements-tray::-webkit-scrollbar-thumb {
+  background: #e5e7eb !important; /* border-gray-200 */
+  border-radius: 0 !important;
+}
+
+#measurements-tray::-webkit-scrollbar-thumb:hover {
+  background: #d1d5db !important; /* border-gray-300 */
+}
