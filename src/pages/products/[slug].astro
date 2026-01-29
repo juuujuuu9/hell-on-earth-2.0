@@ -215,14 +215,30 @@ const hasMultipleImages = displayImages.length > 1;
           </div>
 
           <!-- Add to Cart Button -->
-          <div class="pt-4 px-8 pb-4 min-h-[60px]">
+          <div class="pt-4 px-8 pb-4 min-h-[60px]" id="cart-button-wrapper">
             {product.stockStatus === 'IN_STOCK' ? (
-              <CartButton
-                client:load
-                productId={product.id}
-                productName={product.name}
-                stripeCheckoutUrl={product.stripeCheckoutUrl}
-              />
+              <>
+                {/* Static fallback button - renders immediately, prevents flash */}
+                <div id="cart-button-fallback" class="min-h-[52px]">
+                  <button
+                    id="cart-button-fallback-btn"
+                    class="w-full px-6 py-4 bg-black text-white uppercase font-semibold hover:opacity-70 transition-opacity cursor-pointer"
+                    data-stripe-url={product.stripeCheckoutUrl || ''}
+                    data-product-id={product.id}
+                  >
+                    + ADD TO CART
+                  </button>
+                </div>
+                {/* React component - replaces fallback when hydrated */}
+                <div id="cart-button-react" style="display: none;">
+                  <CartButton
+                    client:load
+                    productId={product.id}
+                    productName={product.name}
+                    stripeCheckoutUrl={product.stripeCheckoutUrl}
+                  />
+                </div>
+              </>
             ) : (
               <div class="h-[52px]"></div>
             )}
@@ -549,3 +565,52 @@ const hasMultipleImages = displayImages.length > 1;
     })();
   </script>
 )}
+
+{/* Replace static button with React component when ready */}
+{product.stockStatus === 'IN_STOCK' && (
+  <script define:vars={{ stripeCheckoutUrl: product.stripeCheckoutUrl, productId: product.id }}>
+    (function() {
+      const fallback = document.getElementById('cart-button-fallback');
+      const reactContainer = document.getElementById('cart-button-react');
+      const fallbackBtn = document.getElementById('cart-button-fallback-btn');
+      
+      if (!fallback || !reactContainer || !fallbackBtn) return;
+      
+      // Attach click handler to fallback button
+      fallbackBtn.addEventListener('click', async () => {
+        if (stripeCheckoutUrl) {
+          window.location.href = stripeCheckoutUrl;
+          return;
+        }
+        
+        try {
+          const response = await fetch(`/api/stripe-checkout?productId=${productId}`);
+          if (!response.ok) throw new Error('Failed to get checkout URL');
+          const data = await response.json();
+          if (data.checkoutUrl) {
+            window.location.href = data.checkoutUrl;
+          }
+        } catch (err) {
+          console.error('Error getting checkout URL:', err);
+        }
+      });
+      
+      // Check if React component has hydrated
+      const checkReactReady = setInterval(() => {
+        const reactButton = reactContainer.querySelector('button');
+        if (reactButton && reactButton.offsetParent !== null) {
+          // React component is ready, swap them
+          fallback.style.display = 'none';
+          reactContainer.style.display = 'block';
+          clearInterval(checkReactReady);
+        }
+      }, 50);
+      
+      // Cleanup after 5 seconds - keep fallback if React never loads
+      setTimeout(() => {
+        clearInterval(checkReactReady);
+      }, 5000);
+    })();
+  </script>
+)}
+
