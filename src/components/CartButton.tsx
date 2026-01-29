@@ -49,20 +49,19 @@ export default function CartButton({ productId, productName, stripeCheckoutUrl }
 
   if (!stripeCheckoutUrl && error) {
     return (
-      <div>
+      <div className="min-h-[52px]">
         <button
           disabled
-          className="px-6 py-3 bg-gray-400 text-white rounded-lg font-semibold cursor-not-allowed"
+          className="w-full px-6 py-4 bg-gray-400 text-white uppercase font-semibold cursor-not-allowed"
         >
           Unavailable
         </button>
-        <p className="mt-2 text-sm text-red-600">{error}</p>
       </div>
     );
   }
 
   return (
-    <div>
+    <div className="min-h-[52px]">
       <button
         onClick={handleCheckout}
         disabled={isLoading}

@@ -91,3 +91,10 @@ html {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+/* Prevent layout shift from images */
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}

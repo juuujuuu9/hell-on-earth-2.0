@@ -62,6 +62,7 @@ function formatProduct(
     onSale: dbProduct.onSale || false,
     stockStatus: dbProduct.stockStatus || 'IN_STOCK',
     stockQuantity: dbProduct.stockQuantity || undefined,
+    measurements: dbProduct.measurements || undefined,
     stripeCheckoutUrl: dbProduct.stripeCheckoutUrl || null,
     image: primaryImage ? {
       sourceUrl: encodeImageUrl(primaryImage.imageUrl),
@@ -295,8 +296,6 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
   }
 
   return formatProduct(product, images, categoryInfos, attributeList);
-
-  return formatProduct(product, images, categories, attributes);
 }
 
 /**
