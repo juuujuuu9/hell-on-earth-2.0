@@ -5,6 +5,8 @@
  * RULE-005: Every product page must have a getStaticPaths function
  */
 import Layout from '@layouts/Layout.astro';
+import Header from '@components/Header.astro';
+import Footer from '@components/Footer.astro';
 import type { Product } from '@lib/types';
 import CartButton from '@components/CartButton';
 import { getAllProducts, getProductBySlug } from '@lib/db/queries';
@@ -32,6 +34,18 @@ function stripPriceHtml(price: string): string {
   return price.replace(/<[^>]*>/g, '').trim();
 }
 
+// Helper function to format price as USD
+function formatPrice(price: string | undefined): string {
+  if (!price) return 'Price unavailable';
+  const cleanPrice = stripPriceHtml(price);
+  const numericMatch = cleanPrice.match(/(\d+\.?\d*)/);
+  if (numericMatch) {
+    const numericValue = parseFloat(numericMatch[1]);
+    return `${numericValue.toFixed(2)} USD`;
+  }
+  return cleanPrice;
+}
+
 const { slug } = Astro.params;
 const product = await getProductBySlug(slug || '');
 
@@ -39,70 +53,77 @@ if (!product) {
   return Astro.redirect('/404');
 }
 
-const formattedPrice = product.price ? stripPriceHtml(product.price) : 'Price unavailable';
+const formattedPrice = formatPrice(product.price);
+const colorAttribute = product.attributes?.nodes.find(attr => attr.name.toLowerCase() === 'color');
+const sizeAttribute = product.attributes?.nodes.find(attr => attr.name.toLowerCase() === 'size');
+const features = product.attributes?.nodes.filter(attr => 
+  attr.name.toLowerCase() !== 'color' && attr.name.toLowerCase() !== 'size'
+) || [];
+
+// Get all images for gallery
+const allImages = product.galleryImages?.nodes || [];
+const primaryImage = product.image;
+const displayImages = primaryImage 
+  ? [primaryImage, ...allImages.filter(img => img.sourceUrl !== primaryImage.sourceUrl)]
+  : allImages;
+const hasMultipleImages = displayImages.length > 1;
 ---
 
-<Layout title={product.name}>
-  <main class="min-h-screen p-8 max-w-6xl mx-auto">
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-      {/* Product Image */}
-      <div>
-        {product.image ? (
-          <img
-            src={product.image.sourceUrl}
-            alt={product.image.altText || product.name}
-            class="w-full rounded-lg shadow-lg"
-          />
-        ) : (
-          <div class="w-full aspect-square bg-gray-200 rounded-lg flex items-center justify-center">
-            <span class="text-gray-400">No image available</span>
-          </div>
-        )}
-      </div>
+<Layout title={product.name} hideHeader={true}>
+  <main class="min-h-screen bg-white">
+    <Header />
 
-      {/* Product Details */}
-      <div class="space-y-6">
-        <div>
-          <h1 class="text-4xl font-bold mb-4">{product.name}</h1>
-          
-          {product.productCategories && product.productCategories.nodes.length > 0 && (
-            <div class="flex flex-wrap gap-2 mb-4">
-              {product.productCategories.nodes.map((category) => (
-                <span
-                  class="px-3 py-1 bg-gray-200 rounded-full text-sm"
-                  key={category.id}
-                >
-                  {category.name}
-                </span>
-              ))}
+    <!-- Product Content -->
+    <div class="px-8 py-0">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-0 max-w-[1920px] mx-auto">
+        <!-- Left Column: Product Image -->
+        <div class="w-full lg:border-r lg:border-gray-200 pr-0 py-0">
+          {displayImages.length > 0 ? (
+            <div class="space-y-4">
+              <img
+                id="product-main-image"
+                src={displayImages[0].sourceUrl}
+                alt={displayImages[0].altText || product.name}
+                class="w-full h-auto"
+              />
+              {hasMultipleImages && (
+                <div class="flex justify-center gap-2">
+                  {displayImages.map((img, index) => (
+                    <button
+                      data-image-index={index}
+                      class={`w-2 h-2 rounded-full transition-opacity ${
+                        index === 0 ? 'bg-black' : 'bg-gray-300'
+                      } hover:opacity-70 cursor-pointer`}
+                      aria-label={`View image ${index + 1}`}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          ) : (
+            <div class="w-full aspect-square bg-gray-100 flex items-center justify-center">
+              <span class="text-gray-400">No image available</span>
             </div>
           )}
+        </div>
 
-          <div class="text-3xl font-bold text-primary-600 mb-6">
-            {formattedPrice}
-            {product.onSale && product.regularPrice && (
-              <span class="ml-3 text-lg text-gray-500 line-through">
-                {stripPriceHtml(product.regularPrice)}
-              </span>
-            )}
+        <!-- Right Column: Product Details -->
+        <div class="flex flex-col py-0 pl-8 pt-10">
+          <!-- Product Identifier -->
+          <div class="text-xl font-bold uppercase tracking-wide text-gray-700 pb-0">
+            <!-- <span class="text-black">■</span> -->
+             {product.name}
           </div>
 
-          {product.stockStatus && (
-            <div class="mb-4">
-              <span
-                class={`px-3 py-1 rounded-full text-sm font-medium ${
-                  product.stockStatus === 'IN_STOCK'
-                    ? 'bg-green-100 text-green-800'
-                    : 'bg-red-100 text-red-800'
-                }`}
-              >
-                {product.stockStatus === 'IN_STOCK' ? 'In Stock' : 'Out of Stock'}
-              </span>
-            </div>
-          )}
+          <!-- Price -->
+          <div class="space-y-1 border-t border-gray-200 pt-4">
+            <div class="text-base tracking-wide">{formattedPrice}</div>
+            <div class="text-xs text-gray-500">VAT EXCLUDED / EXCL. SHIPPING</div>
+          </div>
 
+          <!-- Add to Cart Button -->
           {product.stockStatus === 'IN_STOCK' && (
-            <div class="mt-6">
+            <div class="border-t border-gray-200 pt-4">
               <CartButton
                 client:load
                 productId={product.id}
@@ -111,27 +132,106 @@ const formattedPrice = product.price ? stripPriceHtml(product.price) : 'Price un
               />
             </div>
           )}
+
+          <!-- Short Description -->
+          {product.shortDescription && (
+            <div class="text-sm leading-relaxed border-t border-gray-200 pt-4">
+              <div set:html={product.shortDescription} />
+            </div>
+          )}
+
+          <!-- Product Features -->
+          {features.length > 0 && (
+            <div class="space-y-3 border-t border-gray-200 pt-4">
+              <div class="text-xs font-semibold uppercase tracking-wide mb-4">PRODUCT FEATURES</div>
+              <ul class="space-y-2 text-sm leading-relaxed">
+                {features.map((feature) => (
+                  <li class="flex items-start">
+                    <span class="mr-2 text-black">•</span>
+                    <span>{feature.options.map(opt => `${feature.name.toLowerCase()} ${opt}`).join(', ')}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          <!-- Full Description -->
+          {product.description && (
+            <div class="text-sm leading-relaxed border-t border-gray-200 pt-4">
+              <div set:html={product.description} />
+            </div>
+          )}
+
+          <!-- Details and Materials Section -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-8 border-t border-gray-200 pt-4">
+            <!-- Details Column -->
+            <div class="space-y-3">
+              <div class="text-xs font-semibold uppercase tracking-wide mb-4">
+                <span class="text-black">■</span> DETAILS
+              </div>
+              {colorAttribute && colorAttribute.options.length > 0 && (
+                <div class="text-sm">
+                  <span class="font-medium uppercase">COLOR:</span> {colorAttribute.options.join(', ').toUpperCase()}
+                </div>
+              )}
+              {sizeAttribute && sizeAttribute.options.length > 0 && (
+                <div class="text-sm">
+                  <span class="font-medium uppercase">SIZE:</span> {sizeAttribute.options.join(', ').toUpperCase()}
+                </div>
+              )}
+            </div>
+
+            <!-- Materials Column -->
+            <div class="space-y-3">
+              <div class="text-xs font-semibold uppercase tracking-wide mb-4">
+                <span class="text-black">■</span> MATERIALS
+              </div>
+              <div class="text-sm leading-relaxed">
+                {product.description && product.description.toLowerCase().includes('recycled') ? (
+                  <div set:html={product.description} />
+                ) : (
+                  <div>Product materials information available upon request.</div>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
-
-        {product.shortDescription && (
-          <div
-            class="prose prose-sm max-w-none"
-            set:html={product.shortDescription}
-          />
-        )}
-
-        {product.description && (
-          <details class="mt-6">
-            <summary class="cursor-pointer font-semibold text-lg mb-2">
-              Description
-            </summary>
-            <div
-              class="prose prose-sm max-w-none mt-2"
-              set:html={product.description}
-            />
-          </details>
-        )}
       </div>
     </div>
+
+    <!-- Border line before footer -->
+    <div class="border-t border-gray-200 -mx-8"></div>
+
+    <Footer />
   </main>
 </Layout>
+
+{hasMultipleImages && (
+  <script define:vars={{ images: displayImages.map(img => ({ url: img.sourceUrl, alt: img.altText || product.name })) }}>
+    (function() {
+      const mainImage = document.getElementById('product-main-image');
+      const imageButtons = document.querySelectorAll('[data-image-index]');
+
+      if (!mainImage || imageButtons.length === 0) return;
+
+      imageButtons.forEach((button, index) => {
+        button.addEventListener('click', () => {
+          // Update main image
+          mainImage.src = images[index].url;
+          mainImage.alt = images[index].alt;
+
+          // Update active dot
+          imageButtons.forEach((btn, i) => {
+            if (i === index) {
+              btn.classList.remove('bg-gray-300');
+              btn.classList.add('bg-black');
+            } else {
+              btn.classList.remove('bg-black');
+              btn.classList.add('bg-gray-300');
+            }
+          });
+        });
+      });
+    })();
+  </script>
+)}

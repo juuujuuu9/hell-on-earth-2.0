@@ -66,9 +66,9 @@ export default function CartButton({ productId, productName, stripeCheckoutUrl }
       <button
         onClick={handleCheckout}
         disabled={isLoading}
-        className="px-6 py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors cursor-pointer"
+        className="w-full px-6 py-4 bg-black text-white uppercase font-semibold hover:opacity-70 disabled:bg-gray-400 disabled:cursor-not-allowed transition-opacity cursor-pointer"
       >
-        {isLoading ? 'Loading...' : 'Buy Now'}
+        {isLoading ? 'Loading...' : '+ ADD TO CART'}
       </button>
     </div>
   );
