@@ -77,13 +77,13 @@ const hasMultipleImages = displayImages.length > 1;
     <div class="p-0">
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-0 max-w-[1920px] mx-auto">
         <!-- Left Column: Product Image -->
-        <div class="w-full lg:border-r lg:border-gray-200 py-0 pb-6 flex flex-col">
+        <div class="w-full lg:border-r lg:border-gray-200 py-0 pb-6 flex flex-col relative overflow-hidden">
           {displayImages.length > 0 ? (
             <div class="px-16 flex-1 flex flex-col">
               <div class="w-full aspect-square bg-white relative overflow-hidden group" style="min-height: 0;">
                 <div id="image-slider" class="relative h-full flex" style={`width: ${displayImages.length * 100}%; transition: transform 300ms cubic-bezier(0.4, 0, 0.2, 1);`}>
                   {displayImages.map((img, index) => (
-                    <div key={index} class="flex-shrink-0 h-full relative bg-white flex items-center justify-center" style={`width: ${100 / displayImages.length}%;`}>
+                    <div class="shrink-0 h-full relative bg-white flex items-center justify-center" style={`width: ${100 / displayImages.length}%;`}>
                       <img
                         data-image-index={index}
                         src={img.sourceUrl}
@@ -138,6 +138,38 @@ const hasMultipleImages = displayImages.length > 1;
           ) : (
             <div class="w-full aspect-square bg-gray-100 flex items-center justify-center">
               <span class="text-gray-400">No image available</span>
+            </div>
+          )}
+
+          <!-- Measurements Tray (Desktop Only) - Nested inside left column -->
+          {product.measurements && (
+            <div 
+              id="measurements-tray"
+              class="hidden lg:block absolute top-0 left-0 right-0 bottom-0 bg-white z-50 transform translate-x-full transition-transform duration-500 ease-in-out overflow-y-auto"
+              style="will-change: transform;"
+            >
+              <div class="p-16 h-full flex flex-col">
+                <!-- Close Button -->
+                <button
+                  id="measurements-close"
+                  class="absolute top-8 right-8 w-10 h-10 flex items-center justify-center hover:bg-gray-100 transition-colors cursor-pointer"
+                  aria-label="Close measurements"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+
+                <!-- Measurements Content -->
+                <div class="flex-1">
+                  <h2 class="text-2xl font-bold uppercase tracking-wide mb-8">
+                    <span class="text-black">■</span> MEASUREMENTS
+                  </h2>
+                  <div id="measurements-content" class="text-base leading-relaxed">
+                    {/* Measurements will be rendered here */}
+                  </div>
+                </div>
+              </div>
             </div>
           )}
         </div>
@@ -228,9 +260,17 @@ const hasMultipleImages = displayImages.length > 1;
                       <span class="font-medium uppercase">COLOR:</span> {colorAttribute.options.join(', ').toUpperCase()}
                     </div>
                   )}
-                  <div class="text-base">
-                    <a href="#" class="uppercase underline">MEASUREMENTS</a>
-                  </div>
+                  {product.measurements && (
+                    <div class="text-base">
+                      <button 
+                        id="measurements-toggle"
+                        class="uppercase underline hover:no-underline cursor-pointer"
+                        aria-label="View measurements"
+                      >
+                        MEASUREMENTS
+                      </button>
+                    </div>
+                  )}
                   {sizeAttribute && sizeAttribute.options.length > 0 && (
                     <div class="text-base">
                       <span class="font-medium uppercase">SIZE:</span> {sizeAttribute.options.join(', ').toUpperCase()}
@@ -348,6 +388,164 @@ const hasMultipleImages = displayImages.length > 1;
           updateImage(newIndex, 'next');
         });
       }
+    })();
+  </script>
+)}
+
+{product.measurements && (
+  <script define:vars={{ measurementsData: product.measurements }}>
+    (function() {
+      const measurementsToggle = document.getElementById('measurements-toggle');
+      const measurementsTray = document.getElementById('measurements-tray');
+      const measurementsClose = document.getElementById('measurements-close');
+      const measurementsContent = document.getElementById('measurements-content');
+      
+      if (!measurementsToggle || !measurementsTray || !measurementsClose || !measurementsContent) return;
+
+      // Parse measurements data (could be JSON or HTML)
+      function renderMeasurements(data) {
+        try {
+          // Try to parse as JSON first
+          const parsed = JSON.parse(data);
+          
+          // If it's an array of measurement objects, render as table
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            let html = '<div class="space-y-8">';
+            
+            parsed.forEach((measurementGroup, groupIndex) => {
+              if (measurementGroup.sizes && Array.isArray(measurementGroup.sizes)) {
+                const firstSize = measurementGroup.sizes[0];
+                
+                // Check if this is denim format (has waist, lowHip, lengths) or simple format (has measurements)
+                const isDenimFormat = firstSize.waist && firstSize.lowHip && firstSize.lengths;
+                
+                if (isDenimFormat) {
+                  // Denim format: complex table with waist, lowHip, and multiple lengths
+                  html += '<div class="mb-8">';
+                  if (measurementGroup.sizeRange) {
+                    html += `<h3 class="text-lg font-bold uppercase mb-4">${measurementGroup.sizeRange}</h3>`;
+                  }
+                  html += '<div class="overflow-x-auto">';
+                  html += '<table class="w-full border-collapse text-sm">';
+                  html += '<thead><tr class="border-b-2 border-black">';
+                  html += '<th class="text-left py-3 px-4 font-bold uppercase">Size</th>';
+                  html += '<th class="text-left py-3 px-4 font-bold uppercase">Waist</th>';
+                  html += '<th class="text-left py-3 px-4 font-bold uppercase">Low Hip</th>';
+                  html += '<th class="text-left py-3 px-4 font-bold uppercase">32" Length</th>';
+                  html += '<th class="text-left py-3 px-4 font-bold uppercase">30" Length</th>';
+                  html += '<th class="text-left py-3 px-4 font-bold uppercase">34" Length</th>';
+                  html += '</tr></thead><tbody>';
+                  
+                  measurementGroup.sizes.forEach(size => {
+                    html += '<tr class="border-b border-gray-200">';
+                    html += `<td class="py-3 px-4 font-medium">${size.size || ''}</td>`;
+                    html += `<td class="py-3 px-4">${size.waist?.inch || ''} (${size.waist?.cm || ''}cm)</td>`;
+                    html += `<td class="py-3 px-4">${size.lowHip?.inch || ''} (${size.lowHip?.cm || ''}cm)</td>`;
+                    html += `<td class="py-3 px-4">${size.lengths?.['32"']?.inch || ''} (${size.lengths?.['32"']?.cm || ''}cm)</td>`;
+                    html += `<td class="py-3 px-4">${size.lengths?.['30"']?.inch || ''} (${size.lengths?.['30"']?.cm || ''}cm)</td>`;
+                    html += `<td class="py-3 px-4">${size.lengths?.['34"']?.inch || ''} (${size.lengths?.['34"']?.cm || ''}cm)</td>`;
+                    html += '</tr>';
+                  });
+                  
+                  html += '</tbody></table>';
+                  html += '</div>';
+                  html += '</div>';
+                } else {
+                  // Simple format: flat measurements object (tee shirts, jackets)
+                  html += '<div class="overflow-x-auto">';
+                  if (measurementGroup.sizeRange) {
+                    html += `<h3 class="text-lg font-bold uppercase mb-4">${measurementGroup.sizeRange}</h3>`;
+                  }
+                  html += '<table class="w-full border-collapse text-sm">';
+                  html += '<thead><tr class="border-b-2 border-black">';
+                  
+                  html += '<th class="text-left py-3 px-4 font-bold uppercase">Size</th>';
+                  Object.keys(firstSize.measurements || {}).forEach(key => {
+                    html += `<th class="text-left py-3 px-4 font-bold uppercase">${key}</th>`;
+                  });
+                  
+                  html += '</tr></thead><tbody>';
+                  
+                  measurementGroup.sizes.forEach(size => {
+                    html += '<tr class="border-b border-gray-200">';
+                    html += `<td class="py-3 px-4 font-medium">${size.size || ''}</td>`;
+                    Object.values(size.measurements || {}).forEach(value => {
+                      html += `<td class="py-3 px-4">${value}</td>`;
+                    });
+                    html += '</tr>';
+                  });
+                  
+                  html += '</tbody></table>';
+                  html += '</div>';
+                }
+              }
+            });
+            
+            html += '</div>';
+            return html;
+          }
+        } catch (e) {
+          // Not JSON, treat as HTML
+        }
+        
+        // Fallback: render as HTML
+        return data;
+      }
+
+      // Set initial content
+      measurementsContent.innerHTML = renderMeasurements(measurementsData);
+
+      // Open tray
+      function openTray() {
+        measurementsTray.classList.remove('translate-x-full');
+        measurementsTray.classList.add('translate-x-0');
+      }
+
+      // Close tray
+      function closeTray() {
+        measurementsTray.classList.remove('translate-x-0');
+        measurementsTray.classList.add('translate-x-full');
+      }
+
+      // Check if tray is open
+      function isTrayOpen() {
+        return !measurementsTray.classList.contains('translate-x-full');
+      }
+
+      // Event listeners
+      measurementsToggle.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        openTray();
+      });
+
+      measurementsClose.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        closeTray();
+      });
+
+      // Close on Escape key
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && isTrayOpen()) {
+          closeTray();
+        }
+      });
+
+      // Close on click outside the tray
+      document.addEventListener('click', (e) => {
+        if (!isTrayOpen()) return;
+        
+        // If click is outside the tray, close it
+        if (!measurementsTray.contains(e.target) && e.target !== measurementsToggle) {
+          closeTray();
+        }
+      });
+
+      // Prevent clicks inside the tray from closing it
+      measurementsTray.addEventListener('click', (e) => {
+        e.stopPropagation();
+      });
     })();
   </script>
 )}
