@@ -19,7 +19,11 @@
     "create:products": "tsx scripts/create-products-from-images.ts",
     "update:image-urls": "tsx scripts/update-image-urls.ts",
     "create:categories": "tsx scripts/create-categories.ts",
-    "add:images": "tsx scripts/add-images-to-products.ts"
+    "add:images": "tsx scripts/add-images-to-products.ts",
+    "check:colors": "tsx scripts/check-product-colors.ts",
+    "add:colors": "tsx scripts/add-color-attributes.ts",
+    "check:bottoms": "tsx scripts/check-bottoms-category.ts",
+    "fix:blue-jeans": "tsx scripts/add-blue-jeans-to-bottoms.ts"
   },
   "dependencies": {
     "@astrojs/react": "^4.4.2",

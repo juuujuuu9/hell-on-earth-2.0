@@ -23,16 +23,59 @@ products.forEach(product => {
 });
 const sortedSizes = Array.from(sizes).sort();
 
-// Extract unique colors from product attributes
-const colors = new Set<string>();
+// Extract unique colors from product attributes and group by main color
+function getMainColor(colorName: string): string {
+  const lowerColor = colorName.toLowerCase().trim();
+  
+  // Special cases - check these first
+  if (lowerColor.includes('therma glow')) return 'black';
+  if (lowerColor.includes('camo')) return 'camo';
+  
+  // Handle combinations like "blackwhite" (no separator)
+  if (lowerColor.includes('blackwhite') || (lowerColor.includes('black') && lowerColor.includes('white') && !lowerColor.includes(' '))) {
+    return 'black';
+  }
+  
+  // For multi-word colors, split and take first word
+  const parts = lowerColor.split(/[\s-]+/);
+  if (parts.length > 1) {
+    return parts[0];
+  }
+  
+  // Single word colors return as-is
+  return lowerColor;
+}
+
+// Map of main color -> array of original color names
+const colorMap = new Map<string, string[]>();
+
+// Extract colors from product attributes
 products.forEach(product => {
-  product.attributes?.nodes.forEach(attr => {
-    if (attr.name.toLowerCase() === 'color') {
-      attr.options.forEach(option => colors.add(option));
-    }
-  });
+  if (product.attributes?.nodes) {
+    product.attributes.nodes.forEach(attr => {
+      // Check for color attribute (case-insensitive)
+      const attrName = attr.name.toLowerCase().trim();
+      if (attrName === 'color' && attr.options && Array.isArray(attr.options)) {
+        attr.options.forEach(option => {
+          if (option && typeof option === 'string' && option.trim()) {
+            const mainColor = getMainColor(option);
+            if (!colorMap.has(mainColor)) {
+              colorMap.set(mainColor, []);
+            }
+            // Only add if not already in the array for this main color
+            const originalColors = colorMap.get(mainColor)!;
+            if (!originalColors.includes(option)) {
+              originalColors.push(option);
+            }
+          }
+        });
+      }
+    });
+  }
 });
-const sortedColors = Array.from(colors).sort();
+
+// Get sorted unique main colors
+const sortedColors = Array.from(colorMap.keys()).sort();
 
 // Product types are the categories
 const productTypes = categories.map(cat => cat.name).sort();
@@ -115,6 +158,8 @@ const productTypes = categories.map(cat => cat.name).sort();
                     type="checkbox" 
                     value={color}
                     data-filter="color"
+                    data-main-color={color}
+                    data-original-colors={JSON.stringify(colorMap.get(color) || [])}
                     class="mr-3 cursor-pointer"
                   />
                   <span class="text-gray-600 uppercase text-sm group-hover:text-black transition-colors">{color}</span>
@@ -157,6 +202,16 @@ const productTypes = categories.map(cat => cat.name).sort();
         </li>
       </ul>
     </div>
+
+    <!-- Footer with Apply Button -->
+    <div class="border-t border-gray-200 p-6">
+      <button 
+        id="filter-tray-apply"
+        class="w-full bg-black text-white uppercase py-4 px-6 hover:opacity-90 transition-opacity cursor-pointer font-bold"
+      >
+        APPLY
+      </button>
+    </div>
   </div>
 </div>
 
@@ -175,6 +230,7 @@ const productTypes = categories.map(cat => cat.name).sort();
     const filterOverlay = document.getElementById('filter-tray-overlay') as HTMLElement | null;
     const filterTrayClose = document.getElementById('filter-tray-close') as HTMLElement | null;
     const filterTrayClear = document.getElementById('filter-tray-clear') as HTMLElement | null;
+    const filterTrayApply = document.getElementById('filter-tray-apply') as HTMLElement | null;
     const filterButtons = document.querySelectorAll('[data-filter-type]');
     
     if (!filterTray || !filterOverlay || !filterTrayClose) return;
@@ -226,9 +282,9 @@ const productTypes = categories.map(cat => cat.name).sort();
       'product-type': []
     };
 
-    function updateFilters() {
+    function collectFilters(): Record<string, string[]> {
       // Reset active filters
-      activeFilters = {
+      const filters: Record<string, string[]> = {
         size: [],
         color: [],
         'product-type': []
@@ -240,14 +296,38 @@ const productTypes = categories.map(cat => cat.name).sort();
         if (input.checked) {
           const filterType = input.getAttribute('data-filter');
           const value = input.value;
-          if (filterType && activeFilters[filterType as keyof typeof activeFilters]) {
-            activeFilters[filterType as keyof typeof activeFilters].push(value);
+          
+          if (filterType && filters[filterType as keyof typeof filters]) {
+            // For color filters, expand main color to original colors
+            if (filterType === 'color') {
+              const originalColorsAttr = input.getAttribute('data-original-colors');
+              if (originalColorsAttr) {
+                try {
+                  const originalColors = JSON.parse(originalColorsAttr) as string[];
+                  filters.color.push(...originalColors);
+                } catch (e) {
+                  // Fallback to main color if parsing fails
+                  filters.color.push(value);
+                }
+              } else {
+                filters.color.push(value);
+              }
+            } else {
+              filters[filterType as keyof typeof filters].push(value);
+            }
           }
         }
       });
 
+      return filters;
+    }
+
+    function applyFilters() {
+      activeFilters = collectFilters();
       // Trigger filter event
       window.dispatchEvent(new CustomEvent('filtersChanged', { detail: activeFilters }));
+      // Close the tray after applying
+      closeFilterTray();
     }
 
     // Clear all filters
@@ -256,13 +336,13 @@ const productTypes = categories.map(cat => cat.name).sort();
         const input = checkbox as HTMLInputElement;
         input.checked = false;
       });
-      updateFilters();
+      // Update active filters state but don't apply yet
+      activeFilters = {
+        size: [],
+        color: [],
+        'product-type': []
+      };
     }
-
-    // Add change listeners to checkboxes
-    filterCheckboxes.forEach((checkbox) => {
-      checkbox.addEventListener('change', updateFilters);
-    });
 
     // Close button handler
     filterTrayClose.addEventListener('click', closeFilterTray);
@@ -270,6 +350,11 @@ const productTypes = categories.map(cat => cat.name).sort();
     // Clear button handler
     if (filterTrayClear) {
       filterTrayClear.addEventListener('click', clearAllFilters);
+    }
+
+    // Apply button handler
+    if (filterTrayApply) {
+      filterTrayApply.addEventListener('click', applyFilters);
     }
 
     // Overlay click handler
@@ -286,7 +371,7 @@ const productTypes = categories.map(cat => cat.name).sort();
     window.openFilterTray = openFilterTray;
 
     // Expose filter state and clear function
-    window.getActiveFilters = () => activeFilters;
+    window.getActiveFilters = () => collectFilters();
     window.clearAllFilters = clearAllFilters;
   })();
 </script>
