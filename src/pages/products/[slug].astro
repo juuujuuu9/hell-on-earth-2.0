@@ -532,7 +532,11 @@ const hasMultipleImages = displayImages.length > 1;
       measurementsToggle.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
-        openTray();
+        if (isTrayOpen()) {
+          closeTray();
+        } else {
+          openTray();
+        }
       });
 
       measurementsClose.addEventListener('click', (e) => {
