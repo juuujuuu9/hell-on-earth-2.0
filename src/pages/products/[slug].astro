@@ -79,7 +79,7 @@ const hasMultipleImages = displayImages.length > 1;
         <!-- Left Column: Product Image -->
         <div class="w-full lg:border-r lg:border-gray-200 py-0 pb-6 flex flex-col relative overflow-hidden">
           {displayImages.length > 0 ? (
-            <div class="px-16 flex-1 flex flex-col">
+            <div class="sm:px-16 px-0 flex-1 flex flex-col">
               <div class="w-full aspect-square bg-white relative overflow-hidden group" style="min-height: 0;">
                 <div id="image-slider" class="relative h-full flex" style={`width: ${displayImages.length * 100}%; transition: transform 300ms cubic-bezier(0.4, 0, 0.2, 1);`}>
                   {displayImages.map((img, index) => (
@@ -177,7 +177,7 @@ const hasMultipleImages = displayImages.length > 1;
         <!-- Right Column: Product Details -->
         <div class="flex flex-col py-0 pt-4">
           <!-- Breadcrumbs -->
-          <nav class="text-sm text-gray-600 px-8 pb-8" aria-label="Breadcrumb">
+          <nav class="text-sm text-gray-600 sm:px-8 px-4 pb-8" aria-label="Breadcrumb">
             <ol class="flex items-center gap-2">
               <li>
                 <a href="/" class="hover:text-gray-900 transition-colors">HOME</a>
@@ -203,19 +203,19 @@ const hasMultipleImages = displayImages.length > 1;
           </nav>
 
           <!-- Product Identifier -->
-          <div class="text-xl font-bold uppercase tracking-wide text-gray-700 pb-0 px-8">
+          <div class="text-xl font-bold uppercase tracking-wide text-gray-700 pb-0 sm:px-8 px-4">
             <!-- <span class="text-black">■</span> -->
              {product.name}
           </div>
 
           <!-- Price -->
-          <div class="space-y-1 pt-4 px-8">
+          <div class="space-y-1 pt-4 sm:px-8 px-4">
             <div class="text-base tracking-wide">{formattedPrice}</div>
             <div class="text-xs text-gray-500">VAT EXCLUDED / EXCL. SHIPPING</div>
           </div>
 
           <!-- Add to Cart Button -->
-          <div class="pt-4 px-8 pb-4 min-h-[60px]" id="cart-button-wrapper">
+          <div class="pt-4 sm:px-8 px-4 pb-4 min-h-[60px]" id="cart-button-wrapper">
             {product.stockStatus === 'IN_STOCK' ? (
               <>
                 {/* Static fallback button - renders immediately, prevents flash */}
@@ -246,20 +246,20 @@ const hasMultipleImages = displayImages.length > 1;
 
           <!-- Short Description -->
           {product.shortDescription ? (
-            <div class="text-base leading-relaxed border-t border-gray-200 pt-6 px-8 pb-6">
+            <div class="text-base leading-relaxed border-t border-gray-200 pt-6 sm:px-8 px-4 pb-6">
               <div set:html={product.shortDescription} />
             </div>
           ) : null}
 
           <!-- Full Description -->
           {product.description ? (
-            <div class="text-base leading-relaxed border-t border-gray-200 pt-6 px-8 pb-6">
+            <div class="text-base leading-relaxed border-t border-gray-200 pt-6 sm:px-8 px-4 pb-6">
               <div set:html={product.description} />
             </div>
           ) : null}
 
           <!-- Details and Materials Section -->
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-8 border-t border-gray-200 pt-6 px-8 pb-6">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-8 border-t border-gray-200 pt-6 sm:px-8 px-4 pb-6">
             <!-- Details Column -->
             <div class="space-y-3">
               <div class="text-xs font-bold uppercase tracking-wide mb-4">
@@ -313,7 +313,7 @@ const hasMultipleImages = displayImages.length > 1;
 
           <!-- Product Features -->
           {(product.features || features.length > 0) && (
-            <div class="space-y-3 border-t border-gray-200 pt-8 px-8 pb-8">
+            <div class="space-y-3 border-t border-gray-200 pt-8 sm:px-8 px-4 pb-8">
               <div class="text-xs font-bold uppercase tracking-wide mb-4">
                 <span class="text-black">■</span> PRODUCT FEATURES
               </div>
@@ -340,6 +340,55 @@ const hasMultipleImages = displayImages.length > 1;
     <!-- Border line before footer -->
     <div class="border-t border-gray-200 -mx-8"></div>
 
+    <!-- Measurements Tray (Mobile Only) - Bottom Sheet -->
+    {product.measurements && (
+      <div 
+        id="measurements-tray-mobile"
+        class="lg:hidden fixed inset-0 z-50 pointer-events-none"
+      >
+        <!-- Backdrop -->
+        <div 
+          id="measurements-backdrop-mobile"
+          class="absolute inset-0 bg-black opacity-0 transition-opacity duration-300 pointer-events-none"
+        ></div>
+        
+        <!-- Tray -->
+        <div 
+          id="measurements-tray-content-mobile"
+          class="absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl shadow-2xl transform translate-y-full transition-transform duration-300 ease-out max-h-[90vh] flex flex-col pointer-events-auto"
+          style="will-change: transform;"
+        >
+          <!-- Drag Handle -->
+          <div class="flex justify-center pt-4 pb-2">
+            <div class="w-12 h-1 bg-gray-300 rounded-full"></div>
+          </div>
+          
+          <!-- Header -->
+          <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+            <h2 class="text-xl font-bold uppercase tracking-wide">
+              <span class="text-black">■</span> MEASUREMENTS
+            </h2>
+            <button
+              id="measurements-close-mobile"
+              class="w-8 h-8 flex items-center justify-center hover:bg-gray-100 transition-colors cursor-pointer rounded-full"
+              aria-label="Close measurements"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+
+          <!-- Measurements Content -->
+          <div class="flex-1 overflow-y-auto px-6 py-6">
+            <div id="measurements-content-mobile" class="text-base leading-relaxed">
+              {/* Measurements will be rendered here */}
+            </div>
+          </div>
+        </div>
+      </div>
+    )}
+
     <Footer />
   </main>
 </Layout>
@@ -351,8 +400,16 @@ const hasMultipleImages = displayImages.length > 1;
       const dotButtons = document.querySelectorAll('[data-dot-index]');
       const prevButton = document.getElementById('image-prev');
       const nextButton = document.getElementById('image-next');
+      const imageContainer = imageSlider?.parentElement;
       let currentIndex = 0;
       let isTransitioning = false;
+
+      // Touch/swipe state
+      let touchStartX = 0;
+      let touchStartY = 0;
+      let touchEndX = 0;
+      let touchEndY = 0;
+      const minSwipeDistance = 50; // Minimum distance in pixels for a swipe
 
       if (!imageSlider || dotButtons.length === 0) return;
 
@@ -404,6 +461,49 @@ const hasMultipleImages = displayImages.length > 1;
           updateImage(newIndex, 'next');
         });
       }
+
+      // Touch/swipe handlers for mobile
+      if (imageContainer) {
+        imageContainer.addEventListener('touchstart', (e) => {
+          touchStartX = e.touches[0].clientX;
+          touchStartY = e.touches[0].clientY;
+        }, { passive: true });
+
+        imageContainer.addEventListener('touchmove', (e) => {
+          // Allow vertical scrolling but track horizontal movement
+          touchEndX = e.touches[0].clientX;
+          touchEndY = e.touches[0].clientY;
+        }, { passive: true });
+
+        imageContainer.addEventListener('touchend', () => {
+          if (!touchStartX || !touchEndX) return;
+
+          const deltaX = touchStartX - touchEndX;
+          const deltaY = touchStartY - touchEndY;
+          const absDeltaX = Math.abs(deltaX);
+          const absDeltaY = Math.abs(deltaY);
+
+          // Only trigger swipe if horizontal movement is greater than vertical (more horizontal than vertical)
+          // and exceeds minimum distance
+          if (absDeltaX > absDeltaY && absDeltaX > minSwipeDistance) {
+            if (deltaX > 0) {
+              // Swiped left - go to next image
+              const newIndex = currentIndex === images.length - 1 ? 0 : currentIndex + 1;
+              updateImage(newIndex, 'next');
+            } else {
+              // Swiped right - go to previous image
+              const newIndex = currentIndex === 0 ? images.length - 1 : currentIndex - 1;
+              updateImage(newIndex, 'prev');
+            }
+          }
+
+          // Reset touch values
+          touchStartX = 0;
+          touchStartY = 0;
+          touchEndX = 0;
+          touchEndY = 0;
+        }, { passive: true });
+      }
     })();
   </script>
 )}
@@ -416,7 +516,14 @@ const hasMultipleImages = displayImages.length > 1;
       const measurementsClose = document.getElementById('measurements-close');
       const measurementsContent = document.getElementById('measurements-content');
       
-      if (!measurementsToggle || !measurementsTray || !measurementsClose || !measurementsContent) return;
+      // Mobile elements
+      const measurementsTrayMobile = document.getElementById('measurements-tray-mobile');
+      const measurementsTrayContentMobile = document.getElementById('measurements-tray-content-mobile');
+      const measurementsBackdropMobile = document.getElementById('measurements-backdrop-mobile');
+      const measurementsCloseMobile = document.getElementById('measurements-close-mobile');
+      const measurementsContentMobile = document.getElementById('measurements-content-mobile');
+      
+      if (!measurementsToggle) return;
 
       // Parse measurements data (could be JSON or HTML)
       function renderMeasurements(data) {
@@ -508,63 +615,245 @@ const hasMultipleImages = displayImages.length > 1;
         return data;
       }
 
-      // Set initial content
-      measurementsContent.innerHTML = renderMeasurements(measurementsData);
+      // Set initial content for both desktop and mobile
+      if (measurementsContent) {
+        measurementsContent.innerHTML = renderMeasurements(measurementsData);
+      }
+      if (measurementsContentMobile) {
+        measurementsContentMobile.innerHTML = renderMeasurements(measurementsData);
+      }
 
-      // Open tray
-      function openTray() {
+      // Desktop tray functions
+      function openTrayDesktop() {
+        if (!measurementsTray) return;
         measurementsTray.classList.remove('translate-x-full');
         measurementsTray.classList.add('translate-x-0');
       }
 
-      // Close tray
-      function closeTray() {
+      function closeTrayDesktop() {
+        if (!measurementsTray) return;
         measurementsTray.classList.remove('translate-x-0');
         measurementsTray.classList.add('translate-x-full');
       }
 
-      // Check if tray is open
-      function isTrayOpen() {
+      function isTrayOpenDesktop() {
+        if (!measurementsTray) return false;
         return !measurementsTray.classList.contains('translate-x-full');
       }
 
-      // Event listeners
+      // Mobile tray functions
+      function openTrayMobile() {
+        if (!measurementsTrayMobile || !measurementsTrayContentMobile || !measurementsBackdropMobile) return;
+        measurementsTrayMobile.classList.remove('pointer-events-none');
+        measurementsBackdropMobile.classList.remove('opacity-0');
+        measurementsBackdropMobile.classList.add('opacity-50');
+        measurementsBackdropMobile.classList.remove('pointer-events-none');
+        measurementsTrayContentMobile.classList.remove('translate-y-full');
+        measurementsTrayContentMobile.classList.add('translate-y-0');
+        measurementsTrayContentMobile.style.transform = 'translateY(0)';
+        // Prevent body scroll
+        document.body.style.overflow = 'hidden';
+      }
+
+      function closeTrayMobile() {
+        if (!measurementsTrayMobile || !measurementsTrayContentMobile || !measurementsBackdropMobile) return;
+        measurementsBackdropMobile.classList.remove('opacity-50');
+        measurementsBackdropMobile.classList.add('opacity-0');
+        measurementsTrayContentMobile.classList.remove('translate-y-0');
+        measurementsTrayContentMobile.classList.add('translate-y-full');
+        measurementsTrayContentMobile.style.transform = '';
+        // Re-enable body scroll
+        document.body.style.overflow = '';
+        // Reset pointer events after animation
+        setTimeout(() => {
+          measurementsTrayMobile.classList.add('pointer-events-none');
+          measurementsBackdropMobile.classList.add('pointer-events-none');
+        }, 300);
+      }
+
+      function isTrayOpenMobile() {
+        if (!measurementsTrayContentMobile) return false;
+        return !measurementsTrayContentMobile.classList.contains('translate-y-full');
+      }
+
+      // Swipe-down functionality for mobile tray
+      if (measurementsTrayContentMobile) {
+        let swipeStartY = 0;
+        let swipeCurrentY = 0;
+        let swipeStartTime = 0;
+        let isSwiping = false;
+        let contentScrollTop = 0;
+        const swipeThreshold = 100; // Minimum pixels to swipe before closing
+        const swipeVelocityThreshold = 0.5; // Minimum velocity (px/ms) to close
+
+        // Get the scrollable content area
+        const scrollableContent = measurementsTrayContentMobile.querySelector('.overflow-y-auto');
+
+        measurementsTrayContentMobile.addEventListener('touchstart', (e) => {
+          if (!isTrayOpenMobile()) return;
+          
+          swipeStartY = e.touches[0].clientY;
+          swipeCurrentY = swipeStartY;
+          swipeStartTime = Date.now();
+          isSwiping = false;
+          
+          // Check if content is scrolled - if so, only allow swipe from top area
+          if (scrollableContent) {
+            contentScrollTop = scrollableContent.scrollTop;
+          }
+          
+          // Only start swiping if:
+          // 1. Content is at the top (scrollTop === 0), OR
+          // 2. Touch started in the header area (first 100px)
+          const touchY = e.touches[0].clientY;
+          const trayRect = measurementsTrayContentMobile.getBoundingClientRect();
+          const relativeY = touchY - trayRect.top;
+          
+          if (contentScrollTop === 0 || relativeY < 100) {
+            isSwiping = true;
+            // Disable transition during swipe for smooth dragging
+            measurementsTrayContentMobile.style.transition = 'none';
+            measurementsBackdropMobile.style.transition = 'none';
+          }
+        }, { passive: true });
+
+        measurementsTrayContentMobile.addEventListener('touchmove', (e) => {
+          if (!isSwiping || !isTrayOpenMobile()) return;
+          
+          swipeCurrentY = e.touches[0].clientY;
+          const deltaY = swipeCurrentY - swipeStartY;
+          
+          // Only allow downward swipes (positive deltaY)
+          if (deltaY > 0) {
+            // Prevent default scrolling while swiping
+            e.preventDefault();
+            
+            // Apply transform to drag the tray down
+            measurementsTrayContentMobile.style.transform = `translateY(${deltaY}px)`;
+            
+            // Update backdrop opacity based on drag distance
+            const maxHeight = measurementsTrayContentMobile.offsetHeight;
+            const opacity = Math.max(0, 0.5 * (1 - deltaY / maxHeight));
+            measurementsBackdropMobile.style.opacity = opacity.toString();
+          }
+        }, { passive: false });
+
+        measurementsTrayContentMobile.addEventListener('touchend', () => {
+          if (!isSwiping || !isTrayOpenMobile()) return;
+          
+          const deltaY = swipeCurrentY - swipeStartY;
+          const swipeDuration = Date.now() - swipeStartTime;
+          const swipeVelocity = deltaY / Math.max(swipeDuration, 1);
+          
+          // Re-enable transition
+          measurementsTrayContentMobile.style.transition = '';
+          measurementsBackdropMobile.style.transition = '';
+          
+          // Close if:
+          // 1. Swiped down more than threshold, OR
+          // 2. Swiped with sufficient velocity downward
+          if (deltaY > swipeThreshold || (deltaY > 50 && swipeVelocity > swipeVelocityThreshold)) {
+            closeTrayMobile();
+          } else {
+            // Snap back to open position
+            measurementsTrayContentMobile.style.transform = 'translateY(0)';
+            measurementsBackdropMobile.style.opacity = '0.5';
+          }
+          
+          // Reset swipe state
+          isSwiping = false;
+          swipeStartY = 0;
+          swipeCurrentY = 0;
+          swipeStartTime = 0;
+        }, { passive: true });
+      }
+
+      // Check if mobile or desktop
+      function isMobile() {
+        return window.innerWidth < 1024; // lg breakpoint
+      }
+
+      // Toggle handler - opens appropriate tray based on screen size
       measurementsToggle.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
-        if (isTrayOpen()) {
-          closeTray();
+        
+        if (isMobile()) {
+          if (isTrayOpenMobile()) {
+            closeTrayMobile();
+          } else {
+            openTrayMobile();
+          }
         } else {
-          openTray();
+          if (isTrayOpenDesktop()) {
+            closeTrayDesktop();
+          } else {
+            openTrayDesktop();
+          }
         }
       });
 
-      measurementsClose.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        closeTray();
-      });
+      // Desktop close handler
+      if (measurementsClose) {
+        measurementsClose.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          closeTrayDesktop();
+        });
+      }
+
+      // Mobile close handlers
+      if (measurementsCloseMobile) {
+        measurementsCloseMobile.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          closeTrayMobile();
+        });
+      }
+
+      if (measurementsBackdropMobile) {
+        measurementsBackdropMobile.addEventListener('click', () => {
+          closeTrayMobile();
+        });
+      }
 
       // Close on Escape key
       document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && isTrayOpen()) {
-          closeTray();
+        if (e.key === 'Escape') {
+          if (isMobile() && isTrayOpenMobile()) {
+            closeTrayMobile();
+          } else if (!isMobile() && isTrayOpenDesktop()) {
+            closeTrayDesktop();
+          }
         }
       });
 
-      // Close on click outside the tray
-      document.addEventListener('click', (e) => {
-        if (!isTrayOpen()) return;
-        
-        // If click is outside the tray, close it
-        if (!measurementsTray.contains(e.target) && e.target !== measurementsToggle) {
-          closeTray();
-        }
-      });
+      // Desktop: Close on click outside the tray
+      if (measurementsTray) {
+        document.addEventListener('click', (e) => {
+          if (!isTrayOpenDesktop() || isMobile()) return;
+          
+          // If click is outside the tray, close it
+          if (!measurementsTray.contains(e.target) && e.target !== measurementsToggle) {
+            closeTrayDesktop();
+          }
+        });
 
-      // Prevent clicks inside the tray from closing it
-      measurementsTray.addEventListener('click', (e) => {
-        e.stopPropagation();
+        // Prevent clicks inside the tray from closing it
+        measurementsTray.addEventListener('click', (e) => {
+          e.stopPropagation();
+        });
+      }
+
+      // Handle window resize - close mobile tray if switching to desktop
+      let resizeTimeout;
+      window.addEventListener('resize', () => {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(() => {
+          if (!isMobile() && isTrayOpenMobile()) {
+            closeTrayMobile();
+          }
+        }, 100);
       });
     })();
   </script>
