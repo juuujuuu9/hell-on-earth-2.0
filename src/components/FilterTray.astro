@@ -264,6 +264,8 @@ const productTypes = categories.map(cat => cat.name).sort();
     }
     function closeTrayMobile(): void {
       if (!filterTrayMobile || !filterTrayContentMobile || !filterBackdropMobile) return;
+      filterBackdropMobile.style.opacity = '';
+      filterBackdropMobile.style.transition = '';
       filterBackdropMobile.classList.remove('opacity-50');
       filterBackdropMobile.classList.add('opacity-0');
       filterTrayContentMobile.classList.remove('translate-y-0');
