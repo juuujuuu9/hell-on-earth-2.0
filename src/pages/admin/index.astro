@@ -1,0 +1,150 @@
+---
+export const prerender = false;
+
+import '../../styles/global.css';
+import { db } from '@lib/db';
+import { products } from '@lib/db/schema';
+import { isAdminAuthenticated, createSessionCookie } from '@lib/admin-auth';
+
+const request = Astro.request;
+const auth = isAdminAuthenticated(request);
+
+if (auth === false) {
+  return new Response('Unauthorized', {
+    status: 401,
+    headers: { 'WWW-Authenticate': 'Basic realm="Admin"' },
+  });
+}
+
+if (auth && typeof auth === 'object' && auth.setCookie) {
+  const { name, value, options } = createSessionCookie();
+  Astro.response.headers.set('Set-Cookie', `${name}=${value}; ${options}`);
+}
+
+const productRows = await db.select({
+  id: products.id,
+  name: products.name,
+  slug: products.slug,
+  price: products.price,
+  regularPrice: products.regularPrice,
+  salePrice: products.salePrice,
+  onSale: products.onSale,
+  stockStatus: products.stockStatus,
+  stockQuantity: products.stockQuantity,
+}).from(products).orderBy(products.name);
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="robots" content="noindex" />
+    <title>Admin – Products</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+  </head>
+  <body class="bg-gray-100 min-h-screen p-6 font-sans">
+    <div class="max-w-[1400px] mx-auto">
+      <header class="mb-6 flex items-center justify-between">
+        <h1 class="text-xl font-semibold text-gray-800">Admin – Products</h1>
+        <a href="/" class="text-sm text-gray-600 hover:text-gray-900">← Back to site</a>
+      </header>
+
+      <p class="text-sm text-gray-500 mb-4">Edit a row and click Save to update. Cookie session lasts 24h.</p>
+
+      <div class="bg-white rounded-lg border border-gray-200 overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="border-b border-gray-200 bg-gray-50">
+              <th class="p-2 text-xs font-medium text-gray-600">Name</th>
+              <th class="p-2 text-xs font-medium text-gray-600">Slug</th>
+              <th class="p-2 text-xs font-medium text-gray-600">Price</th>
+              <th class="p-2 text-xs font-medium text-gray-600">Regular</th>
+              <th class="p-2 text-xs font-medium text-gray-600">Sale</th>
+              <th class="p-2 text-xs font-medium text-gray-600">On sale</th>
+              <th class="p-2 text-xs font-medium text-gray-600">Stock</th>
+              <th class="p-2 text-xs font-medium text-gray-600">Qty</th>
+              <th class="p-2 text-xs font-medium text-gray-600 w-20"></th>
+            </tr>
+          </thead>
+          <tbody>
+            {productRows.map((row) => (
+              <tr class="border-b border-gray-100 hover:bg-gray-50/50" data-product-id={row.id}>
+                <td class="p-2"><input name="name" value={row.name ?? ''} class="w-full min-w-[120px] px-2 py-1 text-sm border border-gray-200 rounded" /></td>
+                <td class="p-2"><input name="slug" value={row.slug ?? ''} class="w-full min-w-[120px] px-2 py-1 text-sm border border-gray-200 rounded" /></td>
+                <td class="p-2"><input name="price" value={row.price ?? ''} type="text" class="w-20 px-2 py-1 text-sm border border-gray-200 rounded" /></td>
+                <td class="p-2"><input name="regularPrice" value={row.regularPrice ?? ''} type="text" class="w-20 px-2 py-1 text-sm border border-gray-200 rounded" /></td>
+                <td class="p-2"><input name="salePrice" value={row.salePrice ?? ''} type="text" class="w-20 px-2 py-1 text-sm border border-gray-200 rounded" /></td>
+                <td class="p-2">
+                  <select name="onSale" class="px-2 py-1 text-sm border border-gray-200 rounded">
+                    <option value="false" selected={!row.onSale}>No</option>
+                    <option value="true" selected={row.onSale ?? false}>Yes</option>
+                  </select>
+                </td>
+                <td class="p-2">
+                  <select name="stockStatus" class="px-2 py-1 text-sm border border-gray-200 rounded">
+                    <option value="IN_STOCK" selected={row.stockStatus === 'IN_STOCK'}>In stock</option>
+                    <option value="OUT_OF_STOCK" selected={row.stockStatus === 'OUT_OF_STOCK'}>Out of stock</option>
+                    <option value="ON_BACKORDER" selected={row.stockStatus === 'ON_BACKORDER'}>Backorder</option>
+                  </select>
+                </td>
+                <td class="p-2"><input name="stockQuantity" value={row.stockQuantity ?? ''} type="number" min="0" class="w-16 px-2 py-1 text-sm border border-gray-200 rounded" /></td>
+                <td class="p-2">
+                  <button type="button" class="save-row px-2 py-1 text-sm bg-gray-800 text-white rounded hover:bg-gray-700">Save</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {productRows.length === 0 && <p class="text-gray-500 py-8 text-center">No products.</p>}
+    </div>
+
+    <script is:inline>
+      document.querySelectorAll('.save-row').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+          const tr = btn.closest('tr');
+          if (!tr) return;
+          const id = tr.dataset.productId;
+          const get = (name) => tr.querySelector(`[name="${name}"]`);
+          const getVal = (name) => {
+            const el = get(name);
+            if (!el) return undefined;
+            if (el.tagName === 'SELECT') return el.value;
+            return el.value;
+          };
+          const payload = {
+            name: getVal('name'),
+            slug: getVal('slug'),
+            price: getVal('price') || null,
+            regularPrice: getVal('regularPrice') || null,
+            salePrice: getVal('salePrice') || null,
+            onSale: getVal('onSale') === 'true',
+            stockStatus: getVal('stockStatus'),
+            stockQuantity: getVal('stockQuantity') ? parseInt(getVal('stockQuantity'), 10) : null,
+          };
+          btn.textContent = '…';
+          btn.disabled = true;
+          try {
+            const res = await fetch(`/api/admin/product/${id}`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              credentials: 'include',
+              body: JSON.stringify(payload),
+            });
+            if (!res.ok) {
+              const err = await res.json().catch(() => ({}));
+              alert(err.error || `Save failed: ${res.status}`);
+            }
+          } catch (e) {
+            alert('Network error');
+          } finally {
+            btn.textContent = 'Save';
+            btn.disabled = false;
+          }
+        });
+      });
+    </script>
+  </body>
+</html>
