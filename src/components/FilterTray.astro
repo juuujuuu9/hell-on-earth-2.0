@@ -81,142 +81,120 @@ const sortedColors = Array.from(colorMap.keys()).sort();
 const productTypes = categories.map(cat => cat.name).sort();
 ---
 
-<div id="filter-tray-overlay" class="fixed inset-0 bg-black pointer-events-none transition-opacity duration-300 z-40 hidden" style="opacity: 0;">
-</div>
+<!-- Overlay for desktop tray -->
+<div id="filter-tray-overlay" class="fixed inset-0 bg-black pointer-events-none transition-opacity duration-300 z-40 hidden" style="opacity: 0;" aria-hidden="true"></div>
 
-<div id="filter-tray" class="fixed top-0 right-0 h-full w-80 bg-white shadow-2xl transform translate-x-full transition-transform duration-300 ease-in-out z-50">
+<!-- Desktop: right-side tray (lg and up) -->
+<div id="filter-tray" class="hidden lg:flex fixed top-0 right-0 h-full w-80 bg-white shadow-2xl transform translate-x-full transition-transform duration-300 ease-in-out z-50 flex-col">
   <div class="flex flex-col h-full">
-    <!-- Header -->
     <div class="flex items-center justify-between p-6 border-b border-gray-200">
       <h2 class="text-lg font-bold uppercase text-black">FILTERS</h2>
       <div class="flex items-center gap-4">
-        <button 
-          id="filter-tray-clear"
-          class="text-sm text-gray-400 uppercase hover:text-black transition-colors cursor-pointer"
-        >
-          CLEAR ALL
-        </button>
-        <button 
-          id="filter-tray-close"
-          class="text-black hover:opacity-70 transition-opacity cursor-pointer"
-          aria-label="Close filters"
-        >
-          ✕
-        </button>
+        <button id="filter-tray-clear" class="text-sm text-gray-400 uppercase hover:text-black transition-colors cursor-pointer">CLEAR ALL</button>
+        <button id="filter-tray-close" class="text-black hover:opacity-70 transition-opacity cursor-pointer" aria-label="Close filters">✕</button>
       </div>
     </div>
-
-    <!-- Filter Options -->
     <div class="flex-1 overflow-y-auto p-6">
-      <ul class="space-y-6">
-        <!-- SIZE Filter -->
+      <ul class="space-y-6" data-filter-tray="desktop">
         <li>
-          <button 
-            class="w-full flex items-center justify-between text-left text-gray-400 uppercase hover:opacity-70 transition-opacity cursor-pointer"
-            data-filter-type="size"
-            aria-expanded="false"
-            aria-controls="filter-size-options"
-          >
-            <span>SIZE</span>
-            <span>→</span>
-          </button>
+          <button class="w-full flex items-center justify-between text-left text-gray-400 uppercase hover:opacity-70 transition-opacity cursor-pointer" data-filter-type="size" aria-expanded="false" aria-controls="filter-size-options"><span>SIZE</span><span>→</span></button>
           <div id="filter-size-options" class="hidden mt-4 pl-4 space-y-3">
-            {sortedSizes.length > 0 ? (
-              sortedSizes.map((size) => (
-                <label class="flex items-center cursor-pointer group">
-                  <input 
-                    type="checkbox" 
-                    value={size}
-                    data-filter="size"
-                    class="mr-3 cursor-pointer"
-                  />
-                  <span class="text-gray-600 uppercase text-sm group-hover:text-black transition-colors">{size}</span>
-                </label>
-              ))
-            ) : (
-              <p class="text-gray-400 text-sm italic">No sizes available</p>
-            )}
+            {sortedSizes.length > 0 ? sortedSizes.map((size) => (
+              <label class="flex items-center cursor-pointer group">
+                <input type="checkbox" value={size} data-filter="size" data-tray="desktop" class="mr-3 cursor-pointer" />
+                <span class="text-gray-600 uppercase text-sm group-hover:text-black transition-colors">{size}</span>
+              </label>
+            )) : <p class="text-gray-400 text-sm italic">No sizes available</p>}
           </div>
         </li>
-
-        <!-- COLOR Filter -->
         <li>
-          <button 
-            class="w-full flex items-center justify-between text-left text-gray-400 uppercase hover:opacity-70 transition-opacity cursor-pointer"
-            data-filter-type="color"
-            aria-expanded="false"
-            aria-controls="filter-color-options"
-          >
-            <span>COLOR</span>
-            <span>→</span>
-          </button>
+          <button class="w-full flex items-center justify-between text-left text-gray-400 uppercase hover:opacity-70 transition-opacity cursor-pointer" data-filter-type="color" aria-expanded="false" aria-controls="filter-color-options"><span>COLOR</span><span>→</span></button>
           <div id="filter-color-options" class="hidden mt-4 pl-4 space-y-3">
-            {sortedColors.length > 0 ? (
-              sortedColors.map((color) => (
-                <label class="flex items-center cursor-pointer group">
-                  <input 
-                    type="checkbox" 
-                    value={color}
-                    data-filter="color"
-                    data-main-color={color}
-                    data-original-colors={JSON.stringify(colorMap.get(color) || [])}
-                    class="mr-3 cursor-pointer"
-                  />
-                  <span class="text-gray-600 uppercase text-sm group-hover:text-black transition-colors">{color}</span>
-                </label>
-              ))
-            ) : (
-              <p class="text-gray-400 text-sm italic">No colors available</p>
-            )}
+            {sortedColors.length > 0 ? sortedColors.map((color) => (
+              <label class="flex items-center cursor-pointer group">
+                <input type="checkbox" value={color} data-filter="color" data-tray="desktop" data-main-color={color} data-original-colors={JSON.stringify(colorMap.get(color) || [])} class="mr-3 cursor-pointer" />
+                <span class="text-gray-600 uppercase text-sm group-hover:text-black transition-colors">{color}</span>
+              </label>
+            )) : <p class="text-gray-400 text-sm italic">No colors available</p>}
           </div>
         </li>
-
-        <!-- PRODUCT TYPE Filter -->
         <li>
-          <button 
-            class="w-full flex items-center justify-between text-left text-gray-400 uppercase hover:opacity-70 transition-opacity cursor-pointer"
-            data-filter-type="product-type"
-            aria-expanded="false"
-            aria-controls="filter-product-type-options"
-          >
-            <span>PRODUCT TYPE</span>
-            <span>→</span>
-          </button>
+          <button class="w-full flex items-center justify-between text-left text-gray-400 uppercase hover:opacity-70 transition-opacity cursor-pointer" data-filter-type="product-type" aria-expanded="false" aria-controls="filter-product-type-options"><span>PRODUCT TYPE</span><span>→</span></button>
           <div id="filter-product-type-options" class="hidden mt-4 pl-4 space-y-3">
-            {productTypes.length > 0 ? (
-              productTypes.map((type) => (
-                <label class="flex items-center cursor-pointer group">
-                  <input 
-                    type="checkbox" 
-                    value={type}
-                    data-filter="product-type"
-                    class="mr-3 cursor-pointer"
-                  />
-                  <span class="text-gray-600 uppercase text-sm group-hover:text-black transition-colors">{type}</span>
-                </label>
-              ))
-            ) : (
-              <p class="text-gray-400 text-sm italic">No product types available</p>
-            )}
+            {productTypes.length > 0 ? productTypes.map((type) => (
+              <label class="flex items-center cursor-pointer group">
+                <input type="checkbox" value={type} data-filter="product-type" data-tray="desktop" class="mr-3 cursor-pointer" />
+                <span class="text-gray-600 uppercase text-sm group-hover:text-black transition-colors">{type}</span>
+              </label>
+            )) : <p class="text-gray-400 text-sm italic">No product types available</p>}
           </div>
         </li>
       </ul>
     </div>
-
-    <!-- Footer with Apply Button -->
     <div class="border-t border-gray-200 p-6">
-      <button 
-        id="filter-tray-apply"
-        class="w-full bg-black text-white uppercase py-4 px-6 hover:opacity-90 transition-opacity cursor-pointer font-bold"
-      >
-        APPLY
-      </button>
+      <button id="filter-tray-apply" class="w-full bg-black text-white uppercase py-4 px-6 hover:opacity-90 transition-opacity cursor-pointer font-bold" data-tray="desktop">APPLY</button>
+    </div>
+  </div>
+</div>
+
+<!-- Mobile: bottom sheet (below lg) -->
+<div id="filter-tray-mobile" class="lg:hidden fixed inset-0 z-50 pointer-events-none" aria-hidden="true">
+  <div id="filter-backdrop-mobile" class="absolute inset-0 bg-black opacity-0 transition-opacity duration-300 pointer-events-none"></div>
+  <div id="filter-tray-content-mobile" class="absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl shadow-2xl transform translate-y-full transition-transform duration-300 ease-out max-h-[90vh] flex flex-col pointer-events-auto" style="will-change: transform;">
+    <div class="flex justify-center pt-4 pb-2 shrink-0">
+      <div class="w-12 h-1 bg-gray-300 rounded-full" aria-hidden="true"></div>
+    </div>
+    <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 shrink-0">
+      <h2 class="text-lg font-bold uppercase text-black">FILTERS</h2>
+      <div class="flex items-center gap-4">
+        <button id="filter-tray-clear-mobile" class="text-sm text-gray-400 uppercase hover:text-black transition-colors cursor-pointer">CLEAR ALL</button>
+        <button id="filter-tray-close-mobile" class="text-black hover:opacity-70 transition-opacity cursor-pointer" aria-label="Close filters">✕</button>
+      </div>
+    </div>
+    <div class="flex-1 overflow-y-auto p-6 min-h-0">
+      <ul class="space-y-6" data-filter-tray="mobile">
+        <li>
+          <button class="w-full flex items-center justify-between text-left text-gray-400 uppercase hover:opacity-70 transition-opacity cursor-pointer" data-filter-type-mobile="size" aria-expanded="false" aria-controls="filter-size-options-mobile"><span>SIZE</span><span>→</span></button>
+          <div id="filter-size-options-mobile" class="hidden mt-4 pl-4 space-y-3">
+            {sortedSizes.length > 0 ? sortedSizes.map((size) => (
+              <label class="flex items-center cursor-pointer group">
+                <input type="checkbox" value={size} data-filter="size" data-tray="mobile" class="mr-3 cursor-pointer" />
+                <span class="text-gray-600 uppercase text-sm group-hover:text-black transition-colors">{size}</span>
+              </label>
+            )) : <p class="text-gray-400 text-sm italic">No sizes available</p>}
+          </div>
+        </li>
+        <li>
+          <button class="w-full flex items-center justify-between text-left text-gray-400 uppercase hover:opacity-70 transition-opacity cursor-pointer" data-filter-type-mobile="color" aria-expanded="false" aria-controls="filter-color-options-mobile"><span>COLOR</span><span>→</span></button>
+          <div id="filter-color-options-mobile" class="hidden mt-4 pl-4 space-y-3">
+            {sortedColors.length > 0 ? sortedColors.map((color) => (
+              <label class="flex items-center cursor-pointer group">
+                <input type="checkbox" value={color} data-filter="color" data-tray="mobile" data-main-color={color} data-original-colors={JSON.stringify(colorMap.get(color) || [])} class="mr-3 cursor-pointer" />
+                <span class="text-gray-600 uppercase text-sm group-hover:text-black transition-colors">{color}</span>
+              </label>
+            )) : <p class="text-gray-400 text-sm italic">No colors available</p>}
+          </div>
+        </li>
+        <li>
+          <button class="w-full flex items-center justify-between text-left text-gray-400 uppercase hover:opacity-70 transition-opacity cursor-pointer" data-filter-type-mobile="product-type" aria-expanded="false" aria-controls="filter-product-type-options-mobile"><span>PRODUCT TYPE</span><span>→</span></button>
+          <div id="filter-product-type-options-mobile" class="hidden mt-4 pl-4 space-y-3">
+            {productTypes.length > 0 ? productTypes.map((type) => (
+              <label class="flex items-center cursor-pointer group">
+                <input type="checkbox" value={type} data-filter="product-type" data-tray="mobile" class="mr-3 cursor-pointer" />
+                <span class="text-gray-600 uppercase text-sm group-hover:text-black transition-colors">{type}</span>
+              </label>
+            )) : <p class="text-gray-400 text-sm italic">No product types available</p>}
+          </div>
+        </li>
+      </ul>
+    </div>
+    <div class="border-t border-gray-200 p-6 shrink-0">
+      <button id="filter-tray-apply-mobile" class="w-full bg-black text-white uppercase py-4 px-6 hover:opacity-90 transition-opacity cursor-pointer font-bold" data-tray="mobile">APPLY</button>
     </div>
   </div>
 </div>
 
 <script>
-  // Type declarations for window properties
   declare global {
     interface Window {
       openFilterTray?: () => void;
@@ -231,147 +209,251 @@ const productTypes = categories.map(cat => cat.name).sort();
     const filterTrayClose = document.getElementById('filter-tray-close') as HTMLElement | null;
     const filterTrayClear = document.getElementById('filter-tray-clear') as HTMLElement | null;
     const filterTrayApply = document.getElementById('filter-tray-apply') as HTMLElement | null;
-    const filterButtons = document.querySelectorAll('[data-filter-type]');
-    
+
+    const filterTrayMobile = document.getElementById('filter-tray-mobile') as HTMLElement | null;
+    const filterBackdropMobile = document.getElementById('filter-backdrop-mobile') as HTMLElement | null;
+    const filterTrayContentMobile = document.getElementById('filter-tray-content-mobile') as HTMLElement | null;
+    const filterTrayCloseMobile = document.getElementById('filter-tray-close-mobile') as HTMLElement | null;
+    const filterTrayClearMobile = document.getElementById('filter-tray-clear-mobile') as HTMLElement | null;
+    const filterTrayApplyMobile = document.getElementById('filter-tray-apply-mobile') as HTMLElement | null;
+
     if (!filterTray || !filterOverlay || !filterTrayClose) return;
 
-    // Open filter tray
-    function openFilterTray() {
-      if (!filterTray || !filterOverlay) return;
-      filterTray.classList.remove('translate-x-full');
-      filterOverlay.classList.remove('hidden', 'pointer-events-none');
-      filterOverlay.classList.add('pointer-events-auto');
-      filterOverlay.style.opacity = '0.4';
-      document.body.style.overflow = 'hidden';
+    type TrayScope = 'desktop' | 'mobile';
+    let activeFilters: Record<string, string[]> = { size: [], color: [], 'product-type': [] };
+
+    function isMobile(): boolean {
+      return typeof window !== 'undefined' && window.innerWidth < 1024;
     }
 
-    // Close filter tray
-    function closeFilterTray() {
+    function isTrayOpenDesktop(): boolean {
+      return filterTray ? !filterTray.classList.contains('translate-x-full') : false;
+    }
+    function isTrayOpenMobile(): boolean {
+      return filterTrayContentMobile ? !filterTrayContentMobile.classList.contains('translate-y-full') : false;
+    }
+
+    function openTrayDesktop(): void {
+      if (!filterTray || !filterOverlay) return;
+      filterOverlay.classList.remove('hidden');
+      filterOverlay.classList.remove('pointer-events-none');
+      filterOverlay.classList.add('pointer-events-auto');
+      filterOverlay.style.opacity = '0.4';
+      filterTray.classList.remove('translate-x-full');
+      document.body.style.overflow = 'hidden';
+    }
+    function closeTrayDesktop(): void {
       if (!filterTray || !filterOverlay) return;
       filterTray.classList.add('translate-x-full');
       filterOverlay.classList.remove('pointer-events-auto');
-      filterOverlay.classList.add('pointer-events-none', 'hidden');
+      filterOverlay.classList.add('pointer-events-none');
       filterOverlay.style.opacity = '0';
+      filterOverlay.classList.add('hidden');
       document.body.style.overflow = '';
     }
 
-    // Toggle filter options
-    filterButtons.forEach(button => {
+    function openTrayMobile(): void {
+      if (!filterTrayMobile || !filterTrayContentMobile || !filterBackdropMobile) return;
+      filterTrayMobile.classList.remove('pointer-events-none');
+      filterBackdropMobile.classList.remove('opacity-0', 'pointer-events-none');
+      filterBackdropMobile.classList.add('opacity-50');
+      filterTrayContentMobile.classList.remove('translate-y-full');
+      filterTrayContentMobile.classList.add('translate-y-0');
+      filterTrayContentMobile.style.transform = 'translateY(0)';
+      document.body.style.overflow = 'hidden';
+    }
+    function closeTrayMobile(): void {
+      if (!filterTrayMobile || !filterTrayContentMobile || !filterBackdropMobile) return;
+      filterBackdropMobile.classList.remove('opacity-50');
+      filterBackdropMobile.classList.add('opacity-0');
+      filterTrayContentMobile.classList.remove('translate-y-0');
+      filterTrayContentMobile.classList.add('translate-y-full');
+      filterTrayContentMobile.style.transform = '';
+      document.body.style.overflow = '';
+      setTimeout(() => {
+        filterTrayMobile.classList.add('pointer-events-none');
+        filterBackdropMobile.classList.add('pointer-events-none');
+      }, 300);
+    }
+
+    function openFilterTray(): void {
+      if (isMobile()) {
+        openTrayMobile();
+        setFiltersFromState('mobile');
+      } else {
+        openTrayDesktop();
+        setFiltersFromState('desktop');
+      }
+    }
+
+    function closeFilterTray(): void {
+      if (isTrayOpenMobile()) closeTrayMobile();
+      else if (isTrayOpenDesktop()) closeTrayDesktop();
+    }
+
+    function setFiltersFromState(scope: TrayScope): void {
+      const container = scope === 'mobile' ? document.querySelector('[data-filter-tray="mobile"]') : document.querySelector('[data-filter-tray="desktop"]');
+      if (!container) return;
+      const inputs = container.querySelectorAll<HTMLInputElement>('input[data-filter]');
+      inputs.forEach((input) => {
+        const type = input.getAttribute('data-filter') as keyof typeof activeFilters;
+        if (type === 'color') {
+          const originalColorsAttr = input.getAttribute('data-original-colors');
+          if (originalColorsAttr) {
+            try {
+              const originalColors = JSON.parse(originalColorsAttr) as string[];
+              input.checked = originalColors.some((c) => activeFilters.color.includes(c));
+            } catch {
+              input.checked = activeFilters.color.includes(input.value);
+            }
+          } else {
+            input.checked = activeFilters.color.includes(input.value);
+          }
+        } else if (type && activeFilters[type]) {
+          input.checked = activeFilters[type].includes(input.value);
+        }
+      });
+    }
+
+    function collectFilters(scope: TrayScope): Record<string, string[]> {
+      const filters: Record<string, string[]> = { size: [], color: [], 'product-type': [] };
+      const container = scope === 'mobile' ? document.querySelector('[data-filter-tray="mobile"]') : document.querySelector('[data-filter-tray="desktop"]');
+      if (!container) return filters;
+      const checkboxes = container.querySelectorAll<HTMLInputElement>('input[data-filter]:checked');
+      checkboxes.forEach((input) => {
+        const filterType = input.getAttribute('data-filter') as keyof typeof filters;
+        if (filterType === 'color') {
+          const originalColorsAttr = input.getAttribute('data-original-colors');
+          if (originalColorsAttr) {
+            try {
+              filters.color.push(...(JSON.parse(originalColorsAttr) as string[]));
+            } catch {
+              filters.color.push(input.value);
+            }
+          } else {
+            filters.color.push(input.value);
+          }
+        } else if (filterType && filters[filterType]) {
+          filters[filterType].push(input.value);
+        }
+      });
+      return filters;
+    }
+
+    function applyFilters(): void {
+      const scope: TrayScope = isTrayOpenMobile() ? 'mobile' : 'desktop';
+      activeFilters = collectFilters(scope);
+      window.dispatchEvent(new CustomEvent('filtersChanged', { detail: activeFilters }));
+      closeFilterTray();
+    }
+
+    function clearAllFilters(): void {
+      document.querySelectorAll<HTMLInputElement>('input[data-filter]').forEach((input) => {
+        input.checked = false;
+      });
+      activeFilters = { size: [], color: [], 'product-type': [] };
+    }
+
+    // Desktop toggle buttons
+    document.querySelectorAll('[data-filter-type]').forEach((button) => {
       button.addEventListener('click', () => {
         const filterType = button.getAttribute('data-filter-type');
         const optionsPanel = document.getElementById(`filter-${filterType}-options`);
         const isExpanded = button.getAttribute('aria-expanded') === 'true';
-        
         if (optionsPanel) {
-          if (isExpanded) {
-            optionsPanel.classList.add('hidden');
-            button.setAttribute('aria-expanded', 'false');
-          } else {
-            optionsPanel.classList.remove('hidden');
-            button.setAttribute('aria-expanded', 'true');
-          }
+          optionsPanel.classList.toggle('hidden', isExpanded);
+          button.setAttribute('aria-expanded', String(!isExpanded));
+        }
+      });
+    });
+    // Mobile toggle buttons
+    document.querySelectorAll('[data-filter-type-mobile]').forEach((button) => {
+      button.addEventListener('click', () => {
+        const filterType = button.getAttribute('data-filter-type-mobile');
+        const optionsPanel = document.getElementById(`filter-${filterType}-options-mobile`);
+        const isExpanded = button.getAttribute('aria-expanded') === 'true';
+        if (optionsPanel) {
+          optionsPanel.classList.toggle('hidden', isExpanded);
+          button.setAttribute('aria-expanded', String(!isExpanded));
         }
       });
     });
 
-    // Filter functionality
-    const filterCheckboxes = document.querySelectorAll('[data-filter]');
-    let activeFilters: Record<string, string[]> = {
-      size: [],
-      color: [],
-      'product-type': []
-    };
-
-    function collectFilters(): Record<string, string[]> {
-      // Reset active filters
-      const filters: Record<string, string[]> = {
-        size: [],
-        color: [],
-        'product-type': []
-      };
-
-      // Collect checked filters
-      filterCheckboxes.forEach((checkbox) => {
-        const input = checkbox as HTMLInputElement;
-        if (input.checked) {
-          const filterType = input.getAttribute('data-filter');
-          const value = input.value;
-          
-          if (filterType && filters[filterType as keyof typeof filters]) {
-            // For color filters, expand main color to original colors
-            if (filterType === 'color') {
-              const originalColorsAttr = input.getAttribute('data-original-colors');
-              if (originalColorsAttr) {
-                try {
-                  const originalColors = JSON.parse(originalColorsAttr) as string[];
-                  filters.color.push(...originalColors);
-                } catch (e) {
-                  // Fallback to main color if parsing fails
-                  filters.color.push(value);
-                }
-              } else {
-                filters.color.push(value);
-              }
-            } else {
-              filters[filterType as keyof typeof filters].push(value);
-            }
-          }
-        }
-      });
-
-      return filters;
-    }
-
-    function applyFilters() {
-      activeFilters = collectFilters();
-      // Trigger filter event
-      window.dispatchEvent(new CustomEvent('filtersChanged', { detail: activeFilters }));
-      // Close the tray after applying
-      closeFilterTray();
-    }
-
-    // Clear all filters
-    function clearAllFilters() {
-      filterCheckboxes.forEach((checkbox) => {
-        const input = checkbox as HTMLInputElement;
-        input.checked = false;
-      });
-      // Update active filters state but don't apply yet
-      activeFilters = {
-        size: [],
-        color: [],
-        'product-type': []
-      };
-    }
-
-    // Close button handler
     filterTrayClose.addEventListener('click', closeFilterTray);
+    if (filterTrayClear) filterTrayClear.addEventListener('click', clearAllFilters);
+    if (filterTrayApply) filterTrayApply.addEventListener('click', applyFilters);
 
-    // Clear button handler
-    if (filterTrayClear) {
-      filterTrayClear.addEventListener('click', clearAllFilters);
-    }
+    if (filterTrayCloseMobile) filterTrayCloseMobile.addEventListener('click', closeFilterTray);
+    if (filterTrayClearMobile) filterTrayClearMobile.addEventListener('click', clearAllFilters);
+    if (filterTrayApplyMobile) filterTrayApplyMobile.addEventListener('click', applyFilters);
+    if (filterBackdropMobile) filterBackdropMobile.addEventListener('click', closeFilterTray);
 
-    // Apply button handler
-    if (filterTrayApply) {
-      filterTrayApply.addEventListener('click', applyFilters);
-    }
-
-    // Overlay click handler
     filterOverlay.addEventListener('click', closeFilterTray);
 
-    // ESC key handler
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && !filterTray.classList.contains('translate-x-full')) {
-        closeFilterTray();
-      }
+      if (e.key !== 'Escape') return;
+      if (isTrayOpenMobile()) closeTrayMobile();
+      else if (isTrayOpenDesktop()) closeTrayDesktop();
     });
 
-    // Expose open function globally for the FILTERS button
-    window.openFilterTray = openFilterTray;
+    // Swipe-down to close mobile tray
+    if (filterTrayContentMobile && filterBackdropMobile) {
+      let swipeStartY = 0, swipeCurrentY = 0, swipeStartTime = 0, isSwiping = false, contentScrollTop = 0;
+      const swipeThreshold = 100;
+      const swipeVelocityThreshold = 0.5;
+      const scrollableContent = filterTrayContentMobile.querySelector('.overflow-y-auto');
 
-    // Expose filter state and clear function
-    window.getActiveFilters = () => collectFilters();
+      filterTrayContentMobile.addEventListener('touchstart', (e) => {
+        if (!isTrayOpenMobile()) return;
+        swipeStartY = e.touches[0].clientY;
+        swipeCurrentY = swipeStartY;
+        swipeStartTime = Date.now();
+        isSwiping = false;
+        if (scrollableContent) contentScrollTop = (scrollableContent as HTMLElement).scrollTop;
+        const touchY = e.touches[0].clientY;
+        const trayRect = filterTrayContentMobile.getBoundingClientRect();
+        const relativeY = touchY - trayRect.top;
+        if (contentScrollTop === 0 || relativeY < 100) {
+          isSwiping = true;
+          filterTrayContentMobile.style.transition = 'none';
+          filterBackdropMobile.style.transition = 'none';
+        }
+      }, { passive: true });
+
+      filterTrayContentMobile.addEventListener('touchmove', (e) => {
+        if (!isSwiping || !isTrayOpenMobile()) return;
+        swipeCurrentY = e.touches[0].clientY;
+        const deltaY = swipeCurrentY - swipeStartY;
+        if (deltaY > 0) {
+          e.preventDefault();
+          filterTrayContentMobile.style.transform = `translateY(${deltaY}px)`;
+          const opacity = Math.max(0, 0.5 * (1 - deltaY / filterTrayContentMobile.offsetHeight));
+          filterBackdropMobile.style.opacity = String(opacity);
+        }
+      }, { passive: false });
+
+      filterTrayContentMobile.addEventListener('touchend', () => {
+        if (!isSwiping || !isTrayOpenMobile()) return;
+        const deltaY = swipeCurrentY - swipeStartY;
+        const swipeVelocity = deltaY / Math.max(Date.now() - swipeStartTime, 1);
+        filterTrayContentMobile.style.transition = '';
+        filterBackdropMobile.style.transition = '';
+        if (deltaY > swipeThreshold || (deltaY > 50 && swipeVelocity > swipeVelocityThreshold)) {
+          closeTrayMobile();
+        } else {
+          filterTrayContentMobile.style.transform = 'translateY(0)';
+          filterBackdropMobile.style.opacity = '0.5';
+        }
+        isSwiping = false;
+      }, { passive: true });
+    }
+
+    window.addEventListener('resize', () => {
+      if (!isMobile() && isTrayOpenMobile()) closeTrayMobile();
+    });
+
+    window.openFilterTray = openFilterTray;
+    window.getActiveFilters = () => (isTrayOpenMobile() ? collectFilters('mobile') : collectFilters('desktop'));
     window.clearAllFilters = clearAllFilters;
   })();
 </script>
