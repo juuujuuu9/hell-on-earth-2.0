@@ -2,6 +2,8 @@
  * PATCH /api/admin/product/[id] – update product (admin only).
  */
 
+export const prerender = false;
+
 import type { APIRoute } from 'astro';
 import { db } from '@lib/db';
 import { products } from '@lib/db/schema';
