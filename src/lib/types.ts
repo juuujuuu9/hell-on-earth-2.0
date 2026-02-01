@@ -44,6 +44,8 @@ export interface Product {
       options: string[];
     }>;
   };
+  /** Size variations with updatable quantity (labels only, no measurements) */
+  sizes?: Array<{ size: string; quantity: number }>;
 }
 
 export interface ProductCategory {

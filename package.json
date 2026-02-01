@@ -23,7 +23,11 @@
     "check:colors": "tsx scripts/check-product-colors.ts",
     "add:colors": "tsx scripts/add-color-attributes.ts",
     "check:bottoms": "tsx scripts/check-bottoms-category.ts",
-    "fix:blue-jeans": "tsx scripts/add-blue-jeans-to-bottoms.ts"
+    "fix:blue-jeans": "tsx scripts/add-blue-jeans-to-bottoms.ts",
+    "migrate:size-inventory": "tsx scripts/apply-size-inventory-migration.ts",
+    "add:sizes": "tsx scripts/add-product-sizes.ts",
+    "add:thermo-description": "tsx scripts/add-thermo-jacket-description.ts",
+    "add:thermo-materials-features": "tsx scripts/add-thermo-jacket-materials-features.ts"
   },
   "dependencies": {
     "@astrojs/react": "^4.4.2",

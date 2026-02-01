@@ -94,6 +94,9 @@ async function main(): Promise<void> {
       let skipped = 0;
 
       for (const attribute of blueAttributes) {
+        // Do not copy Color — each jacket keeps its own color (Black/BlackWhite must not get Blue)
+        if (attribute.name.toLowerCase() === 'color') continue;
+
         // Check if attribute already exists
         const existingAttributes = await db
           .select()

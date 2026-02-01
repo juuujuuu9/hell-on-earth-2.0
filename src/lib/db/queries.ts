@@ -6,9 +6,9 @@
 
 import { eq, and, desc, asc, inArray, sql } from 'drizzle-orm';
 import { db } from './index';
-import { products, categories, productImages, productCategories, productAttributes } from './schema';
+import { products, categories, productImages, productCategories, productAttributes, productSizeInventory } from './schema';
 import type { Product, ProductCategory } from '../types';
-import type { Product as DBProduct, ProductImage, ProductAttribute } from './schema';
+import type { Product as DBProduct, ProductImage, ProductAttribute, ProductSizeInventory } from './schema';
 import type { Category } from './schema';
 
 interface ProductQueryResult {
@@ -17,6 +17,7 @@ interface ProductQueryResult {
   category: Category | null;
   productCategory: { id: string; productId: string; categoryId: string } | null;
   attribute: ProductAttribute | null;
+  sizeInventory: ProductSizeInventory | null;
 }
 
 interface CategoryInfo {
@@ -38,6 +39,38 @@ function encodeImageUrl(url: string): string {
   return url;
 }
 
+/** Letter size order (smallest to largest) for apparel sizing */
+const LETTER_SIZE_ORDER: Record<string, number> = {
+  'XXS': 0, 'XS': 1, 'S': 2, 'M': 3, 'L': 4, 'XL': 5,
+  'XXL': 6, '2XL': 6, '3XL': 7, '4XL': 8,
+};
+
+/** Sort size strings smallest to largest (numeric, letter, then One Size) */
+function sortSizesByOrder(
+  list: { size: string; quantity: number }[]
+): { size: string; quantity: number }[] {
+  return [...list].sort((a, b) => {
+    const sa = a.size.trim();
+    const sb = b.size.trim();
+    if (sa.toLowerCase() === 'one size' && sb.toLowerCase() !== 'one size') return 1;
+    if (sb.toLowerCase() === 'one size' && sa.toLowerCase() !== 'one size') return -1;
+    if (sa.toLowerCase() === 'one size' && sb.toLowerCase() === 'one size') return 0;
+
+    const numA = parseFloat(sa.replace(/[^\d.]/g, ''));
+    const numB = parseFloat(sb.replace(/[^\d.]/g, ''));
+    const aIsNum = !Number.isNaN(numA) && sa.match(/\d/);
+    const bIsNum = !Number.isNaN(numB) && sb.match(/\d/);
+
+    if (aIsNum && bIsNum) return numA - numB;
+    if (aIsNum && !bIsNum) return -1;
+    if (!aIsNum && bIsNum) return 1;
+
+    const orderA = LETTER_SIZE_ORDER[sa.toUpperCase()] ?? 999;
+    const orderB = LETTER_SIZE_ORDER[sb.toUpperCase()] ?? 999;
+    return orderA - orderB;
+  });
+}
+
 /**
  * Format database product to application Product type
  */
@@ -45,7 +78,8 @@ function formatProduct(
   dbProduct: DBProduct,
   images: ProductImage[],
   categories: CategoryInfo[],
-  attributes: ProductAttribute[]
+  attributes: ProductAttribute[],
+  sizeInventoryList: ProductSizeInventory[]
 ): Product {
   const primaryImage = images.find(img => img.isPrimary) || images[0];
   
@@ -91,6 +125,9 @@ function formatProduct(
         options: JSON.parse(attr.options || '[]'),
       })),
     } : undefined,
+    sizes: sizeInventoryList.length > 0
+      ? sortSizesByOrder(sizeInventoryList.map(si => ({ size: si.size, quantity: si.quantity })))
+      : undefined,
   };
 }
 
@@ -138,12 +175,14 @@ export async function getAllProducts(categorySlug?: string): Promise<Product[]> 
       category: categories,
       productCategory: productCategories,
       attribute: productAttributes,
+      sizeInventory: productSizeInventory,
     })
     .from(products)
     .leftJoin(productImages, eq(products.id, productImages.productId))
     .leftJoin(productCategories, eq(products.id, productCategories.productId))
     .leftJoin(categories, eq(productCategories.categoryId, categories.id))
-    .leftJoin(productAttributes, eq(products.id, productAttributes.productId));
+    .leftJoin(productAttributes, eq(products.id, productAttributes.productId))
+    .leftJoin(productSizeInventory, eq(products.id, productSizeInventory.productId));
 
   // Apply category filter if provided (filter by product IDs)
   const results: ProductQueryResult[] = categorySlug && productIdsInCategory
@@ -156,6 +195,7 @@ export async function getAllProducts(categorySlug?: string): Promise<Product[]> 
     images: ProductImage[];
     categories: CategoryInfo[];
     attributes: ProductAttribute[];
+    sizeInventory: ProductSizeInventory[];
   }>();
 
   for (const row of results) {
@@ -167,6 +207,7 @@ export async function getAllProducts(categorySlug?: string): Promise<Product[]> 
         images: [],
         categories: [],
         attributes: [],
+        sizeInventory: [],
       });
     }
 
@@ -187,11 +228,15 @@ export async function getAllProducts(categorySlug?: string): Promise<Product[]> 
     if (row.attribute && !entry.attributes.find(attr => attr.id === row.attribute!.id)) {
       entry.attributes.push(row.attribute);
     }
+
+    if (row.sizeInventory && !entry.sizeInventory.find(si => si.id === row.sizeInventory!.id)) {
+      entry.sizeInventory.push(row.sizeInventory);
+    }
   }
 
   // Convert to products array
-  const productsList = Array.from(productMap.values()).map(({ product, images, categories, attributes }) =>
-    formatProduct(product, images, categories, attributes)
+  const productsList = Array.from(productMap.values()).map(({ product, images, categories, attributes, sizeInventory }) =>
+    formatProduct(product, images, categories, attributes, sizeInventory)
   );
 
   // Sort products by type order: jackets, hoodies, logo tees, other tees, denims, beanies, masks
@@ -264,13 +309,15 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
       category: categories,
       productCategory: productCategories,
       attribute: productAttributes,
+      sizeInventory: productSizeInventory,
     })
     .from(products)
     .where(eq(products.slug, slug))
     .leftJoin(productImages, eq(products.id, productImages.productId))
     .leftJoin(productCategories, eq(products.id, productCategories.productId))
     .leftJoin(categories, eq(productCategories.categoryId, categories.id))
-    .leftJoin(productAttributes, eq(products.id, productAttributes.productId));
+    .leftJoin(productAttributes, eq(products.id, productAttributes.productId))
+    .leftJoin(productSizeInventory, eq(products.id, productSizeInventory.productId));
 
   if (results.length === 0) {
     return null;
@@ -281,6 +328,7 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
   const images: ProductImage[] = [];
   const categoryInfos: CategoryInfo[] = [];
   const attributeList: ProductAttribute[] = [];
+  const sizeInventoryList: ProductSizeInventory[] = [];
 
   for (const row of results) {
     if (row.image && !images.find(img => img.id === row.image!.id)) {
@@ -296,9 +344,12 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
     if (row.attribute && !attributeList.find(attr => attr.id === row.attribute!.id)) {
       attributeList.push(row.attribute);
     }
+    if (row.sizeInventory && !sizeInventoryList.find(si => si.id === row.sizeInventory!.id)) {
+      sizeInventoryList.push(row.sizeInventory);
+    }
   }
 
-  return formatProduct(product, images, categoryInfos, attributeList);
+  return formatProduct(product, images, categoryInfos, attributeList, sizeInventoryList);
 }
 
 /**

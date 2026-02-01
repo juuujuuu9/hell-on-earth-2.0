@@ -175,7 +175,7 @@ const hasMultipleImages = displayImages.length > 1;
         </div>
 
         <!-- Right Column: Product Details -->
-        <div class="flex flex-col py-0 pt-4">
+        <div class="flex flex-col py-0 pt-0 lg:pt-4">
           <!-- Breadcrumbs -->
           <nav class="text-sm text-gray-600 sm:px-8 px-4 pb-8" aria-label="Breadcrumb">
             <ol class="flex items-center gap-2">
@@ -214,6 +214,28 @@ const hasMultipleImages = displayImages.length > 1;
             <div class="text-xs text-gray-500">VAT EXCLUDED / EXCL. SHIPPING</div>
           </div>
 
+          <!-- Size selector (when product has size inventory) -->
+          {product.sizes && product.sizes.length > 0 && (
+            <div class="pt-4 sm:px-8 px-4">
+              <div class="text-xs font-bold uppercase tracking-wide text-gray-600 mb-2">Size</div>
+              <div class="flex flex-wrap gap-2" id="size-selector" role="group" aria-label="Select size">
+                {product.sizes.map(({ size, quantity }) => (
+                  <button
+                    type="button"
+                    data-size={size}
+                    data-quantity={quantity}
+                    disabled={quantity === 0}
+                    class="size-option min-w-[3rem] px-3 py-2 text-sm border border-gray-300 rounded hover:border-gray-800 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:line-through"
+                    aria-pressed="false"
+                    aria-label={`Size ${size}${quantity === 0 ? ', out of stock' : `, ${quantity} available`}`}
+                  >
+                    {size}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           <!-- Add to Cart Button -->
           <div class="pt-4 sm:px-8 px-4 pb-4 min-h-[60px]" id="cart-button-wrapper">
             {product.stockStatus === 'IN_STOCK' ? (
@@ -222,11 +244,13 @@ const hasMultipleImages = displayImages.length > 1;
                 <div id="cart-button-fallback" class="min-h-[52px]">
                   <button
                     id="cart-button-fallback-btn"
-                    class="w-full px-6 py-4 bg-black text-white uppercase font-semibold hover:opacity-70 transition-opacity cursor-pointer"
+                    class="w-full px-6 py-4 bg-black text-white uppercase font-semibold hover:opacity-70 transition-opacity cursor-pointer disabled:bg-gray-400 disabled:cursor-not-allowed"
                     data-stripe-url={product.stripeCheckoutUrl || ''}
                     data-product-id={product.id}
+                    data-has-sizes={product.sizes && product.sizes.length > 0 ? 'true' : 'false'}
+                    {...(product.sizes && product.sizes.length > 0 ? { disabled: true } : {})}
                   >
-                    + ADD TO CART
+                    {product.sizes && product.sizes.length > 0 ? 'SELECT SIZE' : '+ ADD TO CART'}
                   </button>
                 </div>
                 {/* React component - replaces fallback when hydrated */}
@@ -236,6 +260,7 @@ const hasMultipleImages = displayImages.length > 1;
                     productId={product.id}
                     productName={product.name}
                     stripeCheckoutUrl={product.stripeCheckoutUrl}
+                    sizes={product.sizes}
                   />
                 </div>
               </>
@@ -311,8 +336,8 @@ const hasMultipleImages = displayImages.length > 1;
             </div>
           </div>
 
-          <!-- Product Features -->
-          {(product.features || features.length > 0) && (
+          <!-- Product Features (hidden for shell jackets without product.features; thermo jackets have it) -->
+          {(product.features || (features.length > 0 && !product.name.toLowerCase().includes('shell jacket'))) && (
             <div class="space-y-3 border-t border-gray-200 pt-8 sm:px-8 px-4 pb-8">
               <div class="text-xs font-bold uppercase tracking-wide mb-4">
                 <span class="text-black">■</span> PRODUCT FEATURES
@@ -504,6 +529,41 @@ const hasMultipleImages = displayImages.length > 1;
           touchEndY = 0;
         }, { passive: true });
       }
+    })();
+  </script>
+)}
+
+{product.sizes && product.sizes.length > 0 && (
+  <script is:inline>
+    (function() {
+      const wrapper = document.getElementById('cart-button-wrapper');
+      const fallbackBtn = document.getElementById('cart-button-fallback-btn');
+      const sizeOptions = document.querySelectorAll('#size-selector .size-option:not([disabled])');
+      if (!wrapper || !fallbackBtn || sizeOptions.length === 0) return;
+
+      function setSelectedSize(size) {
+        wrapper.setAttribute('data-selected-size', size);
+        fallbackBtn.disabled = false;
+        fallbackBtn.textContent = '+ ADD TO CART';
+        try { wrapper.dispatchEvent(new CustomEvent('size-selected', { detail: { size } })); } catch (e) {}
+        document.querySelectorAll('#size-selector .size-option').forEach(function(btn) {
+          btn.classList.remove('border-black', 'bg-black', 'text-white');
+          btn.classList.add('border-gray-300');
+          btn.setAttribute('aria-pressed', 'false');
+          if (btn.getAttribute('data-size') === size) {
+            btn.classList.add('border-black', 'bg-black', 'text-white');
+            btn.classList.remove('border-gray-300');
+            btn.setAttribute('aria-pressed', 'true');
+          }
+        });
+      }
+
+      sizeOptions.forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var size = this.getAttribute('data-size');
+          if (size) setSelectedSize(size);
+        });
+      });
     })();
   </script>
 )}

@@ -43,7 +43,7 @@ const productRows = await db.select({
     <title>Admin – Products</title>
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
   </head>
-  <body class="bg-gray-100 min-h-screen p-6 font-sans">
+  <body class="bg-gray-100 min-h-screen px-2 py-6 sm:p-6 font-sans">
     <div class="max-w-[1400px] mx-auto">
       <header class="mb-6 flex items-center justify-between">
         <h1 class="text-xl font-semibold text-gray-800">Admin – Products</h1>
@@ -52,7 +52,32 @@ const productRows = await db.select({
 
       <p class="text-sm text-gray-500 mb-4">Edit a row and click Save to update. Cookie session lasts 24h.</p>
 
-      <div class="bg-white rounded-lg border border-gray-200 overflow-x-auto">
+      {/* Mobile list: checkbox, name, edit */}
+      <div class="md:hidden bg-white rounded-lg border border-gray-200 divide-y divide-gray-100">
+        {productRows.map((row) => (
+          <div
+            class="flex items-center gap-3 p-3 hover:bg-gray-50/50 admin-mobile-row"
+            data-product-id={row.id}
+            data-name={row.name ?? ''}
+            data-slug={row.slug ?? ''}
+            data-price={row.price ?? ''}
+            data-regular-price={row.regularPrice ?? ''}
+            data-sale-price={row.salePrice ?? ''}
+            data-on-sale={row.onSale ?? false}
+            data-stock-status={row.stockStatus ?? 'IN_STOCK'}
+            data-stock-quantity={row.stockQuantity ?? ''}
+          >
+            <label class="flex flex-1 min-w-0 items-center gap-2 cursor-pointer">
+              <input type="checkbox" class="admin-row-select rounded border-gray-300" value={String(row.id)} aria-label="Select product" />
+              <span class="truncate text-sm text-gray-800">{row.name ?? 'Untitled'}</span>
+            </label>
+            <button type="button" class="admin-edit-btn shrink-0 px-3 py-1.5 text-sm bg-gray-800 text-white rounded hover:bg-gray-700" data-product-id={row.id}>Edit</button>
+          </div>
+        ))}
+      </div>
+
+      {/* Desktop table */}
+      <div class="hidden md:block bg-white rounded-lg border border-gray-200 overflow-x-auto">
         <table class="w-full text-left border-collapse">
           <thead>
             <tr class="border-b border-gray-200 bg-gray-50">
@@ -99,6 +124,73 @@ const productRows = await db.select({
       </div>
 
       {productRows.length === 0 && <p class="text-gray-500 py-8 text-center">No products.</p>}
+
+      {/* Mobile edit modal */}
+      <div id="admin-edit-modal" class="fixed inset-0 z-50 hidden md:hidden" aria-hidden="true">
+        <div class="absolute inset-0 bg-black/50" id="admin-edit-modal-backdrop"></div>
+        <div class="absolute inset-x-2 top-1/2 -translate-y-1/2 max-h-[90vh] overflow-y-auto bg-white rounded-lg shadow-xl p-4">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-lg font-semibold text-gray-800">Edit product</h2>
+            <button type="button" id="admin-edit-modal-close" class="p-2 text-gray-500 hover:text-gray-800" aria-label="Close">✕</button>
+          </div>
+          <form id="admin-edit-form" class="space-y-3">
+            <input type="hidden" name="id" id="admin-edit-id" />
+            <div>
+              <label class="block text-xs font-medium text-gray-600 mb-1">Name</label>
+              <input name="name" id="admin-edit-name" class="w-full px-2 py-1.5 text-sm border border-gray-200 rounded" />
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-600 mb-1">Slug</label>
+              <input name="slug" id="admin-edit-slug" class="w-full px-2 py-1.5 text-sm border border-gray-200 rounded" />
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="block text-xs font-medium text-gray-600 mb-1">Price</label>
+                <input name="price" id="admin-edit-price" type="text" class="w-full px-2 py-1.5 text-sm border border-gray-200 rounded" />
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-gray-600 mb-1">Regular</label>
+                <input name="regularPrice" id="admin-edit-regularPrice" type="text" class="w-full px-2 py-1.5 text-sm border border-gray-200 rounded" />
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="block text-xs font-medium text-gray-600 mb-1">Sale</label>
+                <input name="salePrice" id="admin-edit-salePrice" type="text" class="w-full px-2 py-1.5 text-sm border border-gray-200 rounded" />
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-gray-600 mb-1">On sale</label>
+                <select name="onSale" id="admin-edit-onSale" class="w-full px-2 py-1.5 text-sm border border-gray-200 rounded">
+                  <option value="false">No</option>
+                  <option value="true">Yes</option>
+                </select>
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="block text-xs font-medium text-gray-600 mb-1">Stock</label>
+                <select name="stockStatus" id="admin-edit-stockStatus" class="w-full px-2 py-1.5 text-sm border border-gray-200 rounded">
+                  <option value="IN_STOCK">In stock</option>
+                  <option value="OUT_OF_STOCK">Out of stock</option>
+                  <option value="ON_BACKORDER">Backorder</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-gray-600 mb-1">Qty</label>
+                <input name="stockQuantity" id="admin-edit-stockQuantity" type="number" min="0" class="w-full px-2 py-1.5 text-sm border border-gray-200 rounded" />
+              </div>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-600 mb-1">Size quantities</label>
+              <div id="admin-edit-sizes" class="space-y-2 max-h-40 overflow-y-auto border border-gray-200 rounded p-2 bg-gray-50"></div>
+            </div>
+            <div class="flex gap-2 pt-2">
+              <button type="button" id="admin-edit-modal-cancel" class="flex-1 px-3 py-2 text-sm border border-gray-300 rounded text-gray-700 hover:bg-gray-50">Cancel</button>
+              <button type="submit" id="admin-edit-save" class="flex-1 px-3 py-2 text-sm bg-gray-800 text-white rounded hover:bg-gray-700">Save</button>
+            </div>
+          </form>
+        </div>
+      </div>
     </div>
 
     <script is:inline>
@@ -145,6 +237,136 @@ const productRows = await db.select({
           }
         });
       });
+
+      (function mobileEditModal() {
+        const modal = document.getElementById('admin-edit-modal');
+        const form = document.getElementById('admin-edit-form');
+        const closeBtn = document.getElementById('admin-edit-modal-close');
+        const cancelBtn = document.getElementById('admin-edit-modal-cancel');
+        const backdrop = document.getElementById('admin-edit-modal-backdrop');
+        const saveBtn = document.getElementById('admin-edit-save');
+        if (!modal || !form || !closeBtn || !cancelBtn || !backdrop || !saveBtn) return;
+
+        function openModal(row) {
+          const id = row.dataset.productId;
+          document.getElementById('admin-edit-id').value = id;
+          document.getElementById('admin-edit-name').value = row.dataset.name ?? '';
+          document.getElementById('admin-edit-slug').value = row.dataset.slug ?? '';
+          document.getElementById('admin-edit-price').value = row.dataset.price ?? '';
+          document.getElementById('admin-edit-regularPrice').value = row.dataset.regularPrice ?? '';
+          document.getElementById('admin-edit-salePrice').value = row.dataset.salePrice ?? '';
+          document.getElementById('admin-edit-onSale').value = row.dataset.onSale === 'true' ? 'true' : 'false';
+          document.getElementById('admin-edit-stockStatus').value = row.dataset.stockStatus ?? 'IN_STOCK';
+          document.getElementById('admin-edit-stockQuantity').value = row.dataset.stockQuantity ?? '';
+          var sizesEl = document.getElementById('admin-edit-sizes');
+          if (sizesEl) {
+            sizesEl.innerHTML = '<span class="text-xs text-gray-500">Loading sizes…</span>';
+            fetch('/api/admin/product/' + id + '/sizes', { credentials: 'include' })
+              .then(function(r) { return r.json(); })
+              .then(function(data) {
+                sizesEl.innerHTML = '';
+                if (data.sizes && data.sizes.length) {
+                  data.sizes.forEach(function(s) {
+                    var div = document.createElement('div');
+                    div.className = 'flex items-center gap-2';
+                    var label = document.createElement('span');
+                    label.className = 'text-sm w-16 shrink-0';
+                    label.textContent = s.size;
+                    var input = document.createElement('input');
+                    input.type = 'number';
+                    input.min = 0;
+                    input.setAttribute('data-size', s.size);
+                    input.value = s.quantity;
+                    input.className = 'w-20 px-2 py-1 text-sm border border-gray-200 rounded';
+                    div.appendChild(label);
+                    div.appendChild(input);
+                    sizesEl.appendChild(div);
+                  });
+                } else {
+                  sizesEl.innerHTML = '<span class="text-xs text-gray-500">No sizes for this product.</span>';
+                }
+              })
+              .catch(function() {
+                sizesEl.innerHTML = '<span class="text-xs text-red-500">Failed to load sizes.</span>';
+              });
+          }
+          modal.classList.remove('hidden');
+          modal.setAttribute('aria-hidden', 'false');
+        }
+
+        function closeModal() {
+          modal.classList.add('hidden');
+          modal.setAttribute('aria-hidden', 'true');
+        }
+
+        document.querySelectorAll('.admin-edit-btn').forEach((btn) => {
+          btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            const row = btn.closest('.admin-mobile-row');
+            if (row) openModal(row);
+          });
+        });
+
+        closeBtn.addEventListener('click', closeModal);
+        cancelBtn.addEventListener('click', closeModal);
+        backdrop.addEventListener('click', closeModal);
+
+        form.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const id = document.getElementById('admin-edit-id').value;
+          var sizeInputs = document.querySelectorAll('#admin-edit-sizes input[data-size]');
+          var sizeInventory = [];
+          sizeInputs.forEach(function(input) {
+            var s = input.getAttribute('data-size');
+            if (s) sizeInventory.push({ size: s, quantity: parseInt(input.value, 10) || 0 });
+          });
+          const payload = {
+            name: document.getElementById('admin-edit-name').value,
+            slug: document.getElementById('admin-edit-slug').value,
+            price: document.getElementById('admin-edit-price').value || null,
+            regularPrice: document.getElementById('admin-edit-regularPrice').value || null,
+            salePrice: document.getElementById('admin-edit-salePrice').value || null,
+            onSale: document.getElementById('admin-edit-onSale').value === 'true',
+            stockStatus: document.getElementById('admin-edit-stockStatus').value,
+            stockQuantity: document.getElementById('admin-edit-stockQuantity').value ? parseInt(document.getElementById('admin-edit-stockQuantity').value, 10) : null,
+            sizeInventory: sizeInventory.length ? sizeInventory : undefined,
+          };
+          saveBtn.textContent = '…';
+          saveBtn.disabled = true;
+          try {
+            const res = await fetch('/api/admin/product/' + id, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              credentials: 'include',
+              body: JSON.stringify(payload),
+            });
+            if (!res.ok) {
+              const err = await res.json().catch(() => ({}));
+              alert(err.error || 'Save failed: ' + res.status);
+            } else {
+              const row = document.querySelector('.admin-mobile-row[data-product-id="' + id + '"]');
+              if (row) {
+                row.dataset.name = payload.name;
+                row.dataset.slug = payload.slug;
+                row.dataset.price = payload.price ?? '';
+                row.dataset.regularPrice = payload.regularPrice ?? '';
+                row.dataset.salePrice = payload.salePrice ?? '';
+                row.dataset.onSale = payload.onSale;
+                row.dataset.stockStatus = payload.stockStatus;
+                row.dataset.stockQuantity = String(payload.stockQuantity ?? '');
+                const nameEl = row.querySelector('label span');
+                if (nameEl) nameEl.textContent = payload.name || 'Untitled';
+              }
+              closeModal();
+            }
+          } catch (err) {
+            alert('Network error');
+          } finally {
+            saveBtn.textContent = 'Save';
+            saveBtn.disabled = false;
+          }
+        });
+      })();
     </script>
   </body>
 </html>

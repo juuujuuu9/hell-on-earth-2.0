@@ -4,7 +4,7 @@
  * Using Drizzle ORM with Neon DB (PostgreSQL)
  */
 
-import { pgTable, text, integer, decimal, boolean, timestamp, pgEnum } from 'drizzle-orm/pg-core';
+import { pgTable, text, integer, decimal, boolean, timestamp, pgEnum, unique } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
 // Enums
@@ -73,6 +73,22 @@ export const productAttributes = pgTable('product_attributes', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
+// Product size inventory: per-product size labels with updatable quantity (no measurements stored here)
+export const productSizeInventory = pgTable(
+  'product_size_inventory',
+  {
+    id: text('id').primaryKey(),
+    productId: text('product_id').notNull().references(() => products.id, { onDelete: 'cascade' }),
+    size: text('size').notNull(), // e.g. "S", "M", "L", "28\"", "One Size"
+    quantity: integer('quantity').default(0).notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (table) => ({
+    productSizeUnique: unique().on(table.productId, table.size),
+  })
+);
+
 // Relations
 export const categoriesRelations = relations(categories, ({ many }) => ({
   productCategories: many(productCategories),
@@ -82,6 +98,7 @@ export const productsRelations = relations(products, ({ many }) => ({
   images: many(productImages),
   productCategories: many(productCategories),
   attributes: many(productAttributes),
+  sizeInventory: many(productSizeInventory),
 }));
 
 export const productImagesRelations = relations(productImages, ({ one }) => ({
@@ -109,6 +126,13 @@ export const productAttributesRelations = relations(productAttributes, ({ one })
   }),
 }));
 
+export const productSizeInventoryRelations = relations(productSizeInventory, ({ one }) => ({
+  product: one(products, {
+    fields: [productSizeInventory.productId],
+    references: [products.id],
+  }),
+}));
+
 // Type exports for use in application code
 export type Category = typeof categories.$inferSelect;
 export type NewCategory = typeof categories.$inferInsert;
@@ -120,3 +144,5 @@ export type ProductCategory = typeof productCategories.$inferSelect;
 export type NewProductCategory = typeof productCategories.$inferInsert;
 export type ProductAttribute = typeof productAttributes.$inferSelect;
 export type NewProductAttribute = typeof productAttributes.$inferInsert;
+export type ProductSizeInventory = typeof productSizeInventory.$inferSelect;
+export type NewProductSizeInventory = typeof productSizeInventory.$inferInsert;
