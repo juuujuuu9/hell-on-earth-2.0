@@ -183,11 +183,43 @@ See `src/lib/db/schema.ts` for full schema definition.
 - Check that image URLs in database are valid CDN URLs
 - Ensure storage zone is public or has proper CORS settings
 
+## BTCPay Server (Bitcoin / Lightning) – Optional
+
+BTCPay Server can be used alongside Stripe. Customers choose their payment method at checkout.
+
+### Setup
+
+1. Deploy BTCPay Server (self-hosted or via [Voltage](https://voltage.cloud/), [LunaNode](https://www.lunanode.com/), etc.)
+2. Create a store and API key with:
+   - View invoices
+   - Create invoice
+   - Modify invoices
+   - Modify stores webhooks
+   - View your stores
+   - Create non-approved pull payments
+3. Add to `.env.local`:
+   ```bash
+   BTCPAY_SERVER_URL=https://your-btcpay-instance.com
+   BTCPAY_STORE_ID=your-store-id
+   BTCPAY_API_KEY=your-api-key
+   SITE_URL=https://yoursite.com
+   ```
+4. Create a webhook in BTCPay: Store → Settings → Webhooks
+   - URL: `https://yoursite.com/api/btcpay-webhook`
+   - Events: InvoiceProcessing, InvoiceSettled, InvoiceExpired, InvoiceInvalid
+   - Copy the webhook **secret** and add: `BTCPAY_WEBHOOK_SECRET=...`
+5. Run `npm run db:push` to create the `btcpay_orders` table
+
+### Redirect URL
+
+`SITE_URL` is used for the success redirect after payment. If omitted, the order confirmation page URL may be incorrect. Set it to your production domain (e.g. `https://yoursite.vercel.app`).
+
 ## Cost Breakdown
 
 - **Neon DB**: Free tier (512 MB storage, 1 project)
 - **Bunny.net**: $1.00/month minimum (10 GB storage)
 - **Vercel**: Free tier (100 GB bandwidth)
 - **Stripe**: 2.9% + $0.30 per transaction (no monthly fee)
+- **BTCPay Server**: Self-hosted or third-party hosting (varies)
 
 Total: ~$1/month + transaction fees

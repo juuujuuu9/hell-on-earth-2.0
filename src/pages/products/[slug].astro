@@ -10,6 +10,7 @@ import Footer from '@components/Footer.astro';
 import type { Product } from '@lib/types';
 import CartButton from '@components/CartButton';
 import { getAllProducts, getProductBySlug } from '@lib/db/queries';
+import { isBtcpayConfigured } from '@lib/btcpay';
 
 interface Props {
   product: Product;
@@ -67,6 +68,7 @@ const displayImages = primaryImage
   ? [primaryImage, ...allImages.filter(img => img.sourceUrl !== primaryImage.sourceUrl)]
   : allImages;
 const hasMultipleImages = displayImages.length > 1;
+const btcpayAvailable = isBtcpayConfigured();
 ---
 
 <Layout title={product.name} hideHeader={true}>
@@ -293,7 +295,7 @@ const hasMultipleImages = displayImages.length > 1;
                 <div id="cart-button-fallback" class="min-h-[52px]">
                   <button
                     id="cart-button-fallback-btn"
-                    class="w-full px-6 py-4 bg-black text-white uppercase font-semibold hover:opacity-70 transition-opacity cursor-pointer disabled:bg-gray-400 disabled:cursor-not-allowed"
+                    class="w-full px-6 py-4 text-[1.5rem] bg-black text-white uppercase font-semibold hover:opacity-70 transition-opacity cursor-pointer disabled:bg-gray-400 disabled:cursor-not-allowed"
                     data-stripe-url={product.stripeCheckoutUrl || ''}
                     data-product-id={product.id}
                     data-has-sizes={product.sizes && product.sizes.length > 0 ? 'true' : 'false'}
@@ -310,6 +312,7 @@ const hasMultipleImages = displayImages.length > 1;
                     productName={product.name}
                     stripeCheckoutUrl={product.stripeCheckoutUrl}
                     sizes={product.sizes}
+                    btcpayAvailable={btcpayAvailable}
                   />
                 </div>
               </>

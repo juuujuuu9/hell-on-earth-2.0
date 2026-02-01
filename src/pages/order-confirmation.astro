@@ -1,0 +1,35 @@
+---
+/**
+ * Order Confirmation Page
+ *
+ * Shown after BTCPay redirect. Order status is updated via webhook.
+ */
+import Layout from '@layouts/Layout.astro';
+import Header from '@components/Header.astro';
+import Footer from '@components/Footer.astro';
+
+const orderId = Astro.url.searchParams.get('order');
+---
+
+<Layout title="Order Confirmation">
+  <Header />
+  <main class="min-h-screen py-16 px-4 max-w-2xl mx-auto">
+    <h1 class="text-3xl font-bold mb-6">Thank you</h1>
+    <p class="text-lg text-gray-700 mb-4">
+      {orderId
+        ? `Your order (${orderId}) has been received. Payment is being confirmed.`
+        : 'Your order has been received.'}
+    </p>
+    <p class="text-gray-600 mb-8">
+      For Bitcoin/Lightning payments, confirmation typically takes a few minutes.
+      You will receive any follow-up via the contact details you provided.
+    </p>
+    <a
+      href="/products"
+      class="inline-block px-6 py-3 bg-black text-white font-semibold hover:opacity-80 transition-opacity"
+    >
+      Continue shopping
+    </a>
+  </main>
+  <Footer />
+</Layout>

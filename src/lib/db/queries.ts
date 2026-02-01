@@ -6,7 +6,7 @@
 
 import { eq, and, desc, asc, inArray, sql } from 'drizzle-orm';
 import { db } from './index';
-import { products, categories, productImages, productCategories, productAttributes, productSizeInventory } from './schema';
+import { products, categories, productImages, productCategories, productAttributes, productSizeInventory, btcpayOrders } from './schema';
 import type { Product, ProductCategory } from '../types';
 import type { Product as DBProduct, ProductImage, ProductAttribute, ProductSizeInventory } from './schema';
 import type { Category } from './schema';
@@ -385,4 +385,98 @@ export async function getProductStripeUrl(productId: string): Promise<string | n
     .limit(1);
 
   return result[0]?.stripeCheckoutUrl || null;
+}
+
+/** Product data needed for checkout (price, name) */
+export interface ProductCheckoutData {
+  id: string;
+  name: string;
+  price: string; // effective price (sale or regular) as decimal string
+  onSale: boolean;
+  salePrice: string | null;
+  regularPrice: string | null;
+}
+
+/**
+ * Get product data for checkout (price calculation)
+ */
+export async function getProductForCheckout(productId: string): Promise<ProductCheckoutData | null> {
+  const result = await db
+    .select({
+      id: products.id,
+      name: products.name,
+      price: products.price,
+      onSale: products.onSale,
+      salePrice: products.salePrice,
+      regularPrice: products.regularPrice,
+    })
+    .from(products)
+    .where(eq(products.id, productId))
+    .limit(1);
+
+  const row = result[0];
+  if (!row) return null;
+
+  const effectivePrice = row.onSale && row.salePrice ? row.salePrice : row.price;
+  if (!effectivePrice) return null;
+
+  return {
+    id: row.id,
+    name: row.name,
+    price: effectivePrice,
+    onSale: row.onSale || false,
+    salePrice: row.salePrice,
+    regularPrice: row.regularPrice,
+  };
+}
+
+/**
+ * Create a BTCPay order record
+ */
+export async function createBtcpayOrder(params: {
+  id: string;
+  productId: string;
+  productName: string;
+  quantity: number;
+  size: string | null;
+  amount: string;
+  currency: string;
+  btcpayInvoiceId: string;
+}) {
+  await db.insert(btcpayOrders).values({
+    id: params.id,
+    productId: params.productId,
+    productName: params.productName,
+    quantity: params.quantity,
+    size: params.size,
+    amount: params.amount,
+    currency: params.currency,
+    btcpayInvoiceId: params.btcpayInvoiceId,
+    status: 'pending',
+  });
+}
+
+/**
+ * Get order by BTCPay invoice ID
+ */
+export async function getOrderByBtcpayInvoiceId(invoiceId: string) {
+  const result = await db
+    .select()
+    .from(btcpayOrders)
+    .where(eq(btcpayOrders.btcpayInvoiceId, invoiceId))
+    .limit(1);
+  return result[0] ?? null;
+}
+
+/**
+ * Update BTCPay order status
+ */
+export async function updateBtcpayOrderStatus(
+  orderId: string,
+  status: 'pending' | 'processing' | 'settled' | 'expired' | 'invalid'
+) {
+  await db
+    .update(btcpayOrders)
+    .set({ status, updatedAt: new Date() })
+    .where(eq(btcpayOrders.id, orderId));
 }

@@ -9,6 +9,7 @@ import { relations } from 'drizzle-orm';
 
 // Enums
 export const stockStatusEnum = pgEnum('stock_status', ['IN_STOCK', 'OUT_OF_STOCK', 'ON_BACKORDER']);
+export const orderStatusEnum = pgEnum('order_status', ['pending', 'processing', 'settled', 'expired', 'invalid']);
 
 // Categories table
 export const categories = pgTable('categories', {
@@ -73,6 +74,21 @@ export const productAttributes = pgTable('product_attributes', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
+// BTCPay orders: maps invoiceId to order for webhook processing
+export const btcpayOrders = pgTable('btcpay_orders', {
+  id: text('id').primaryKey(),
+  productId: text('product_id').notNull().references(() => products.id, { onDelete: 'cascade' }),
+  productName: text('product_name').notNull(),
+  quantity: integer('quantity').default(1).notNull(),
+  size: text('size'),
+  amount: decimal('amount', { precision: 10, scale: 2 }).notNull(),
+  currency: text('currency').default('USD').notNull(),
+  status: orderStatusEnum('status').default('pending').notNull(),
+  btcpayInvoiceId: text('btcpay_invoice_id'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
 // Product size inventory: per-product size labels with updatable quantity (no measurements stored here)
 export const productSizeInventory = pgTable(
   'product_size_inventory',
@@ -99,6 +115,7 @@ export const productsRelations = relations(products, ({ many }) => ({
   productCategories: many(productCategories),
   attributes: many(productAttributes),
   sizeInventory: many(productSizeInventory),
+  btcpayOrders: many(btcpayOrders),
 }));
 
 export const productImagesRelations = relations(productImages, ({ one }) => ({
@@ -133,6 +150,13 @@ export const productSizeInventoryRelations = relations(productSizeInventory, ({ 
   }),
 }));
 
+export const btcpayOrdersRelations = relations(btcpayOrders, ({ one }) => ({
+  product: one(products, {
+    fields: [btcpayOrders.productId],
+    references: [products.id],
+  }),
+}));
+
 // Type exports for use in application code
 export type Category = typeof categories.$inferSelect;
 export type NewCategory = typeof categories.$inferInsert;
@@ -146,3 +170,5 @@ export type ProductAttribute = typeof productAttributes.$inferSelect;
 export type NewProductAttribute = typeof productAttributes.$inferInsert;
 export type ProductSizeInventory = typeof productSizeInventory.$inferSelect;
 export type NewProductSizeInventory = typeof productSizeInventory.$inferInsert;
+export type BtcpayOrder = typeof btcpayOrders.$inferSelect;
+export type NewBtcpayOrder = typeof btcpayOrders.$inferInsert;
