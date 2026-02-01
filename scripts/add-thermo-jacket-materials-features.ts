@@ -17,7 +17,6 @@ config({ path: '.env' });
 const MATERIALS_HTML = `<ul>
 <li>Advanced thermochromic fabric (outer shell)</li>
 <li>Breathable mesh lining</li>
-<li>Materials customized to Hell On Earth, LLC specifications</li>
 <li>Lightweight shell construction</li>
 </ul>`;
 
