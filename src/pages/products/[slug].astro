@@ -216,7 +216,7 @@ const hasMultipleImages = displayImages.length > 1;
 
           <!-- Size selector (when product has size inventory) -->
           {product.sizes && product.sizes.length > 0 && (
-            <div class="pt-4 sm:px-8 px-4">
+            <div class="pt-4 sm:px-8 px-4" data-product-slug={product.slug}>
               <div class="text-xs font-bold uppercase tracking-wide text-gray-600 mb-2">Size</div>
               <div class="flex flex-wrap gap-2" id="size-selector" role="group" aria-label="Select size">
                 {product.sizes.map(({ size, quantity }) => (
@@ -234,6 +234,55 @@ const hasMultipleImages = displayImages.length > 1;
                 ))}
               </div>
             </div>
+          )}
+
+          {product.sizes && product.sizes.length > 0 && (
+            <script define:vars={{ productSlug: product.slug }}>
+              (function() {
+                const container = document.querySelector('[data-product-slug]');
+                const slug = typeof productSlug === 'string' ? productSlug : '';
+                if (!container || !slug) return;
+                const selector = document.getElementById('size-selector');
+                if (!selector) return;
+                fetch('/api/product/' + encodeURIComponent(slug) + '/sizes', { credentials: 'same-origin' })
+                  .then(function(r) { return r.json(); })
+                  .then(function(data) {
+                    if (!data.sizes || !Array.isArray(data.sizes)) return;
+                    const bySize = {};
+                    data.sizes.forEach(function(s) { bySize[s.size] = s.quantity; });
+                    selector.querySelectorAll('.size-option').forEach(function(btn) {
+                      const size = btn.getAttribute('data-size');
+                      const qty = size != null && bySize[size] !== undefined ? bySize[size] : 0;
+                      btn.setAttribute('data-quantity', String(qty));
+                      btn.disabled = qty === 0;
+                      btn.setAttribute('aria-label', 'Size ' + size + (qty === 0 ? ', out of stock' : ', ' + qty + ' available'));
+                      if (qty === 0) {
+                        btn.classList.add('opacity-50', 'cursor-not-allowed', 'line-through');
+                        btn.classList.remove('hover:border-gray-800');
+                      } else {
+                        btn.classList.remove('opacity-50', 'cursor-not-allowed', 'line-through');
+                        btn.classList.add('hover:border-gray-800');
+                      }
+                    });
+                    const wrapper = document.getElementById('cart-button-wrapper');
+                    const fallbackBtn = document.getElementById('cart-button-fallback-btn');
+                    if (wrapper && fallbackBtn) {
+                      const selected = wrapper.getAttribute('data-selected-size');
+                      if (selected && (bySize[selected] === undefined || bySize[selected] === 0)) {
+                        wrapper.removeAttribute('data-selected-size');
+                        fallbackBtn.disabled = true;
+                        fallbackBtn.textContent = 'SELECT SIZE';
+                        selector.querySelectorAll('.size-option').forEach(function(btn) {
+                          btn.classList.remove('border-black', 'bg-black', 'text-white');
+                          btn.classList.add('border-gray-300');
+                          btn.setAttribute('aria-pressed', 'false');
+                        });
+                      }
+                    }
+                  })
+                  .catch(function() {});
+              })();
+            </script>
           )}
 
           <!-- Add to Cart Button -->
