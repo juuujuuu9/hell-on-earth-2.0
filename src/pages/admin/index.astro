@@ -40,20 +40,34 @@ const productRows = await db.select({
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width" />
     <meta name="robots" content="noindex" />
-    <title>Admin – Products</title>
+    <title>Admin</title>
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
   </head>
   <body class="bg-gray-100 min-h-screen px-2 py-6 sm:p-6 font-sans">
     <div class="max-w-[1400px] mx-auto">
-      <header class="mb-6 flex items-center justify-between">
-        <h1 class="text-xl font-semibold text-gray-800">Admin – Products</h1>
+      <header class="mb-6 flex items-center justify-between px-2 sm:px-0">
+        <a href="/" class="flex items-center">
+          <img src="/hell-grey.png" alt="Hell" class="w-[100px] h-auto object-contain" />
+        </a>
         <a href="/" class="text-sm text-gray-600 hover:text-gray-900">← Back to site</a>
       </header>
 
-      <p class="text-sm text-gray-500 mb-4">Edit a row and click Save to update. Cookie session lasts 24h.</p>
-
-      {/* Mobile list: checkbox, name, edit */}
-      <div class="md:hidden bg-white rounded-lg border border-gray-200 divide-y divide-gray-100">
+      {/* Mobile: header + list */}
+      <div class="md:hidden">
+        <div class="flex items-center justify-between gap-2 px-3 py-2 bg-gray-50 border border-b-0 border-gray-200 rounded-t-lg">
+          <div class="flex items-center gap-2">
+            <input type="checkbox" class="admin-select-all rounded border-gray-300" aria-label="Select all products" />
+            <span class="text-xs font-medium text-gray-600">Product</span>
+          </div>
+          <div class="relative" id="admin-actions-wrapper-mobile">
+            <button type="button" class="admin-actions-btn-mobile px-2 py-1 text-sm border border-gray-300 rounded bg-white hover:bg-gray-50 text-gray-700" aria-haspopup="true" aria-expanded="false">Actions ▾</button>
+            <div id="admin-actions-menu-mobile" class="hidden absolute right-0 top-full mt-1 w-40 bg-white border border-gray-200 rounded shadow-lg py-1 z-10">
+              <button type="button" class="admin-bulk-edit px-3 py-2 w-full text-left text-sm text-gray-700 hover:bg-gray-100">Edit</button>
+              <button type="button" class="admin-bulk-delete px-3 py-2 w-full text-left text-sm text-red-600 hover:bg-red-50">Delete</button>
+            </div>
+          </div>
+        </div>
+        <div class="bg-white rounded-b-lg border border-gray-200 divide-y divide-gray-100">
         {productRows.map((row) => (
           <div
             class="flex items-center gap-3 p-3 hover:bg-gray-50/50 admin-mobile-row"
@@ -74,6 +88,7 @@ const productRows = await db.select({
             <button type="button" class="admin-edit-btn shrink-0 px-3 py-1.5 text-sm bg-gray-800 text-white rounded hover:bg-gray-700" data-product-id={row.id}>Edit</button>
           </div>
         ))}
+        </div>
       </div>
 
       {/* Desktop table */}
@@ -81,7 +96,10 @@ const productRows = await db.select({
         <table class="w-full text-left border-collapse">
           <thead>
             <tr class="border-b border-gray-200 bg-gray-50">
-              <th class="p-2 text-xs font-medium text-gray-600">Name</th>
+              <th class="p-2 w-10">
+                <input type="checkbox" class="admin-select-all rounded border-gray-300" aria-label="Select all products" />
+              </th>
+              <th class="p-2 text-xs font-medium text-gray-600">Product</th>
               <th class="p-2 text-xs font-medium text-gray-600">Slug</th>
               <th class="p-2 text-xs font-medium text-gray-600">Price</th>
               <th class="p-2 text-xs font-medium text-gray-600">Regular</th>
@@ -89,12 +107,23 @@ const productRows = await db.select({
               <th class="p-2 text-xs font-medium text-gray-600">On sale</th>
               <th class="p-2 text-xs font-medium text-gray-600">Stock</th>
               <th class="p-2 text-xs font-medium text-gray-600">Qty</th>
-              <th class="p-2 text-xs font-medium text-gray-600 w-32"></th>
+              <th class="p-2 text-xs font-medium text-gray-600 w-40">
+                <div class="relative inline-block" id="admin-actions-wrapper">
+                  <button type="button" id="admin-actions-btn" class="px-2 py-1 text-sm border border-gray-300 rounded bg-white hover:bg-gray-50 text-gray-700" aria-haspopup="true" aria-expanded="false">Actions ▾</button>
+                  <div id="admin-actions-menu" class="hidden absolute right-0 top-full mt-1 w-40 bg-white border border-gray-200 rounded shadow-lg py-1 z-10">
+                    <button type="button" class="admin-bulk-edit w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-100">Edit</button>
+                    <button type="button" class="admin-bulk-delete w-full px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50">Delete</button>
+                  </div>
+                </div>
+              </th>
             </tr>
           </thead>
           <tbody>
             {productRows.map((row) => (
-              <tr class="border-b border-gray-100 hover:bg-gray-50/50" data-product-id={row.id}>
+              <tr class="border-b border-gray-100 hover:bg-gray-50/50 admin-desktop-row" data-product-id={row.id}>
+                <td class="p-2">
+                  <input type="checkbox" class="admin-row-select rounded border-gray-300" value={String(row.id)} aria-label="Select product" />
+                </td>
                 <td class="p-2"><input name="name" value={row.name ?? ''} class="w-full min-w-[120px] px-2 py-1 text-sm border border-gray-200 rounded" /></td>
                 <td class="p-2"><input name="slug" value={row.slug ?? ''} class="w-full min-w-[120px] px-2 py-1 text-sm border border-gray-200 rounded" /></td>
                 <td class="p-2"><input name="price" value={row.price ?? ''} type="text" class="w-20 px-2 py-1 text-sm border border-gray-200 rounded" /></td>
@@ -197,6 +226,114 @@ const productRows = await db.select({
     </div>
 
     <script is:inline>
+      (function selectAllAndActions() {
+        var selectAllEls = document.querySelectorAll('.admin-select-all');
+        var actionsBtns = document.querySelectorAll('#admin-actions-btn, .admin-actions-btn-mobile');
+        var actionsMenus = document.querySelectorAll('#admin-actions-menu, #admin-actions-menu-mobile');
+
+        function getRowCheckboxes() {
+          return document.querySelectorAll('.admin-row-select');
+        }
+
+        function getCheckedIds() {
+          var ids = [];
+          getRowCheckboxes().forEach(function(cb) {
+            if (cb.checked && cb.value) ids.push(cb.value);
+          });
+          return Array.from(new Set(ids));
+        }
+
+        function updateSelectAllState() {
+          var all = getRowCheckboxes();
+          var checked = document.querySelectorAll('.admin-row-select:checked');
+          var allChecked = all.length > 0 && checked.length === all.length;
+          var someChecked = checked.length > 0 && checked.length < all.length;
+          selectAllEls.forEach(function(el) {
+            el.checked = allChecked;
+            el.indeterminate = someChecked;
+          });
+        }
+
+        selectAllEls.forEach(function(selectAll) {
+          selectAll.addEventListener('change', function() {
+            getRowCheckboxes().forEach(function(cb) {
+              cb.checked = selectAll.checked;
+            });
+            updateSelectAllState();
+          });
+        });
+
+        document.querySelectorAll('.admin-row-select').forEach(function(cb) {
+          cb.addEventListener('change', updateSelectAllState);
+        });
+
+        function setupDropdown(btn, menu) {
+          if (!btn || !menu) return;
+          btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            var open = !menu.classList.contains('hidden');
+            actionsMenus.forEach(function(m) { m.classList.add('hidden'); });
+            actionsBtns.forEach(function(b) { b.setAttribute('aria-expanded', 'false'); });
+            if (!open) {
+              menu.classList.remove('hidden');
+              btn.setAttribute('aria-expanded', 'true');
+            }
+          });
+        }
+        var desktopBtn = document.getElementById('admin-actions-btn');
+        var desktopMenu = document.getElementById('admin-actions-menu');
+        var mobileBtn = document.querySelector('.admin-actions-btn-mobile');
+        var mobileMenu = document.getElementById('admin-actions-menu-mobile');
+        setupDropdown(desktopBtn, desktopMenu);
+        setupDropdown(mobileBtn, mobileMenu);
+
+        document.addEventListener('click', function() {
+          actionsMenus.forEach(function(m) { m.classList.add('hidden'); });
+          actionsBtns.forEach(function(b) { b.setAttribute('aria-expanded', 'false'); });
+        });
+
+        function closeAllMenus() {
+          actionsMenus.forEach(function(m) { m.classList.add('hidden'); });
+          actionsBtns.forEach(function(b) { b.setAttribute('aria-expanded', 'false'); });
+        }
+
+        document.querySelectorAll('.admin-bulk-edit').forEach(function(btn) {
+          btn.addEventListener('click', function() {
+            var ids = getCheckedIds();
+            if (ids.length === 0) {
+              alert('Select at least one product.');
+              return;
+            }
+            var firstRow = document.querySelector('tr.admin-desktop-row[data-product-id="' + ids[0] + '"]') || document.querySelector('.admin-mobile-row[data-product-id="' + ids[0] + '"]');
+            var editBtn = firstRow && firstRow.querySelector('.edit-sizes-btn, .admin-edit-btn');
+            if (editBtn) editBtn.click();
+            closeAllMenus();
+          });
+        });
+
+        document.querySelectorAll('.admin-bulk-delete').forEach(function(btn) {
+          btn.addEventListener('click', async function() {
+            var ids = getCheckedIds();
+            if (ids.length === 0) {
+              alert('Select at least one product.');
+              return;
+            }
+            if (!confirm('Delete ' + ids.length + ' product(s)? This cannot be undone.')) return;
+            closeAllMenus();
+            var ok = true;
+            for (var i = 0; i < ids.length; i++) {
+              var res = await fetch('/api/admin/product/' + ids[i], {
+                method: 'DELETE',
+                credentials: 'include',
+              });
+              if (!res.ok) ok = false;
+            }
+            if (ok) window.location.reload();
+            else alert('Some products could not be deleted.');
+          });
+        });
+      })();
+
       document.querySelectorAll('.save-row').forEach((btn) => {
         btn.addEventListener('click', async () => {
           const tr = btn.closest('tr');
