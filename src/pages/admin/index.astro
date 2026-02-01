@@ -89,7 +89,7 @@ const productRows = await db.select({
               <th class="p-2 text-xs font-medium text-gray-600">On sale</th>
               <th class="p-2 text-xs font-medium text-gray-600">Stock</th>
               <th class="p-2 text-xs font-medium text-gray-600">Qty</th>
-              <th class="p-2 text-xs font-medium text-gray-600 w-20"></th>
+              <th class="p-2 text-xs font-medium text-gray-600 w-32"></th>
             </tr>
           </thead>
           <tbody>
@@ -115,7 +115,10 @@ const productRows = await db.select({
                 </td>
                 <td class="p-2"><input name="stockQuantity" value={row.stockQuantity ?? ''} type="number" min="0" class="w-16 px-2 py-1 text-sm border border-gray-200 rounded" /></td>
                 <td class="p-2">
-                  <button type="button" class="save-row px-2 py-1 text-sm bg-gray-800 text-white rounded hover:bg-gray-700">Save</button>
+                  <div class="flex flex-nowrap items-center gap-2">
+                    <button type="button" class="edit-sizes-btn whitespace-nowrap px-2 py-1 text-sm border border-gray-300 rounded hover:bg-gray-100 text-gray-700" data-product-id={row.id} data-product-name={row.name ?? ''}>Edit sizes</button>
+                    <button type="button" class="save-row px-2 py-1 text-sm bg-gray-800 text-white rounded hover:bg-gray-700">Save</button>
+                  </div>
                 </td>
               </tr>
             ))}
@@ -125,10 +128,10 @@ const productRows = await db.select({
 
       {productRows.length === 0 && <p class="text-gray-500 py-8 text-center">No products.</p>}
 
-      {/* Mobile edit modal */}
-      <div id="admin-edit-modal" class="fixed inset-0 z-50 hidden md:hidden" aria-hidden="true">
+      {/* Edit modal (mobile + desktop for sizes) */}
+      <div id="admin-edit-modal" class="fixed inset-0 z-50 hidden" aria-hidden="true">
         <div class="absolute inset-0 bg-black/50" id="admin-edit-modal-backdrop"></div>
-        <div class="absolute inset-x-2 top-1/2 -translate-y-1/2 max-h-[90vh] overflow-y-auto bg-white rounded-lg shadow-xl p-4">
+        <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[calc(100%-1rem)] max-w-md max-h-[90vh] overflow-y-auto bg-white rounded-lg shadow-xl p-4">
           <div class="flex items-center justify-between mb-4">
             <h2 class="text-lg font-semibold text-gray-800">Edit product</h2>
             <button type="button" id="admin-edit-modal-close" class="p-2 text-gray-500 hover:text-gray-800" aria-label="Close">✕</button>
@@ -299,11 +302,72 @@ const productRows = await db.select({
           modal.setAttribute('aria-hidden', 'true');
         }
 
+        function openModalFromDesktopRow(tr) {
+          if (!tr) return;
+          const id = tr.dataset.productId;
+          const getVal = (name) => {
+            const el = tr.querySelector('[name="' + name + '"]');
+            if (!el) return '';
+            return el.tagName === 'SELECT' ? el.value : el.value;
+          };
+          document.getElementById('admin-edit-id').value = id;
+          document.getElementById('admin-edit-name').value = getVal('name');
+          document.getElementById('admin-edit-slug').value = getVal('slug');
+          document.getElementById('admin-edit-price').value = getVal('price');
+          document.getElementById('admin-edit-regularPrice').value = getVal('regularPrice');
+          document.getElementById('admin-edit-salePrice').value = getVal('salePrice');
+          document.getElementById('admin-edit-onSale').value = getVal('onSale');
+          document.getElementById('admin-edit-stockStatus').value = getVal('stockStatus');
+          document.getElementById('admin-edit-stockQuantity').value = getVal('stockQuantity');
+          var sizesEl = document.getElementById('admin-edit-sizes');
+          if (sizesEl) {
+            sizesEl.innerHTML = '<span class="text-xs text-gray-500">Loading sizes…</span>';
+            fetch('/api/admin/product/' + id + '/sizes', { credentials: 'include' })
+              .then(function(r) { return r.json(); })
+              .then(function(data) {
+                sizesEl.innerHTML = '';
+                if (data.sizes && data.sizes.length) {
+                  data.sizes.forEach(function(s) {
+                    var div = document.createElement('div');
+                    div.className = 'flex items-center gap-2';
+                    var label = document.createElement('span');
+                    label.className = 'text-sm w-16 shrink-0';
+                    label.textContent = s.size;
+                    var input = document.createElement('input');
+                    input.type = 'number';
+                    input.min = 0;
+                    input.setAttribute('data-size', s.size);
+                    input.value = s.quantity;
+                    input.className = 'w-20 px-2 py-1 text-sm border border-gray-200 rounded';
+                    div.appendChild(label);
+                    div.appendChild(input);
+                    sizesEl.appendChild(div);
+                  });
+                } else {
+                  sizesEl.innerHTML = '<span class="text-xs text-gray-500">No sizes. Add a Size attribute to this product to manage per-size stock.</span>';
+                }
+              })
+              .catch(function() {
+                sizesEl.innerHTML = '<span class="text-xs text-red-500">Failed to load sizes.</span>';
+              });
+          }
+          modal.classList.remove('hidden');
+          modal.setAttribute('aria-hidden', 'false');
+        }
+
         document.querySelectorAll('.admin-edit-btn').forEach((btn) => {
           btn.addEventListener('click', (e) => {
             e.preventDefault();
             const row = btn.closest('.admin-mobile-row');
             if (row) openModal(row);
+          });
+        });
+
+        document.querySelectorAll('.edit-sizes-btn').forEach((btn) => {
+          btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            const tr = btn.closest('tr');
+            if (tr) openModalFromDesktopRow(tr);
           });
         });
 
@@ -344,18 +408,33 @@ const productRows = await db.select({
               const err = await res.json().catch(() => ({}));
               alert(err.error || 'Save failed: ' + res.status);
             } else {
-              const row = document.querySelector('.admin-mobile-row[data-product-id="' + id + '"]');
-              if (row) {
-                row.dataset.name = payload.name;
-                row.dataset.slug = payload.slug;
-                row.dataset.price = payload.price ?? '';
-                row.dataset.regularPrice = payload.regularPrice ?? '';
-                row.dataset.salePrice = payload.salePrice ?? '';
-                row.dataset.onSale = payload.onSale;
-                row.dataset.stockStatus = payload.stockStatus;
-                row.dataset.stockQuantity = String(payload.stockQuantity ?? '');
-                const nameEl = row.querySelector('label span');
+              const mobileRow = document.querySelector('.admin-mobile-row[data-product-id="' + id + '"]');
+              if (mobileRow) {
+                mobileRow.dataset.name = payload.name;
+                mobileRow.dataset.slug = payload.slug;
+                mobileRow.dataset.price = payload.price ?? '';
+                mobileRow.dataset.regularPrice = payload.regularPrice ?? '';
+                mobileRow.dataset.salePrice = payload.salePrice ?? '';
+                mobileRow.dataset.onSale = payload.onSale;
+                mobileRow.dataset.stockStatus = payload.stockStatus;
+                mobileRow.dataset.stockQuantity = String(payload.stockQuantity ?? '');
+                const nameEl = mobileRow.querySelector('label span');
                 if (nameEl) nameEl.textContent = payload.name || 'Untitled';
+              }
+              const desktopRow = document.querySelector('tr[data-product-id="' + id + '"]');
+              if (desktopRow) {
+                var setVal = function(name, val) {
+                  var el = desktopRow.querySelector('[name="' + name + '"]');
+                  if (el) el.value = val ?? '';
+                };
+                setVal('name', payload.name);
+                setVal('slug', payload.slug);
+                setVal('price', payload.price);
+                setVal('regularPrice', payload.regularPrice);
+                setVal('salePrice', payload.salePrice);
+                setVal('onSale', payload.onSale);
+                setVal('stockStatus', payload.stockStatus);
+                setVal('stockQuantity', payload.stockQuantity);
               }
               closeModal();
             }
