@@ -175,6 +175,24 @@ Instead of fake commands, use **inline annotations** in code:
 - Prefer deleting one-off scripts immediately after use; do not leave them in `scripts/` "just in case."
 - Recurring workflow scripts (e.g. compress-images, upload-product-images, import-mailing-list, setup-db) stay; one-off data fixes, migrations for a single product line, or single-purpose updates go.
 
+### RULE-016: Astro Compiler Panic — Avoid Nested Documents 🔴
+**Prevent "originalIM was set twice" / "bad parser state" compiler panic**
+
+**Cause:** The Astro compiler panics when it encounters nested `html`/`head`/`body` elements—e.g. a layout outputs a full document, and a child page/layout also outputs one.
+
+**How to avoid:**
+1. **Single document source:** Only one component in the tree should output `<!doctype html>`, `<html>`, `<head>`, `<body>`. In this project, `Layout.astro` is that source.
+2. **Page structure:** All pages use `Layout` and pass content via `<slot />`. Pages must NOT add their own html/head/body.
+3. **Additional layouts:** If you add a layout that wraps pages, make it pass-through only (e.g. `<slot />`). See `PostHogLayout.astro` as reference.
+4. **Standalone pages:** Pages like admin that need their own document must be leaf pages—they cannot be wrapped by Layout.
+5. **Avoid parser triggers:** Complex single-line conditional HTML (e.g. `{x && <a/><b/>}`) can trigger parser errors; split across lines or use blocks.
+
+**How to fix if it happens:**
+1. **Identify nesting:** Find where two components both output full documents. Usually a new layout added html/head/body while wrapping Layout.
+2. **Fix:** Make the wrapper layout pass-through only, or move the full document to a single place.
+3. **Fallback (last resort):** If a dynamic route (e.g. `[slug].astro`) still panics, the workaround is middleware + API route that returns built HTML (see `product-page-html.ts` pattern). Prefer fixing the structure first.
+4. **Verify:** Run `npm run build`—the panic occurs at build time.
+
 ---
 
 ## Rule Symbols
@@ -331,5 +349,5 @@ You: "Yes"
 ---
 
 **Last updated:** 2026-02-01  
-**Active rules:** 15  
+**Active rules:** 16  
 **Philosophy:** Radical simplicity

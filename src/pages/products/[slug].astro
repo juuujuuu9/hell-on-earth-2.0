@@ -1,0 +1,75 @@
+---
+/**
+ * Product Detail Page
+ * Same structure as products/index.astro - Layout, Header, main, Footer.
+ */
+import Layout from '@layouts/Layout.astro';
+import Header from '@components/Header.astro';
+import Footer from '@components/Footer.astro';
+import ProductDetail from '@components/ProductDetail';
+import type { Product } from '@lib/types';
+import { getAllProducts, getProductBySlug } from '@lib/db/queries';
+import { isBtcpayConfigured } from '@lib/btcpay';
+
+export async function getStaticPaths() {
+  try {
+    const products = await getAllProducts();
+    return products.map((product) => ({
+      params: { slug: product.slug },
+      props: { product },
+    }));
+  } catch (error) {
+    console.error('Error generating static paths:', error);
+    return [];
+  }
+}
+
+function stripPriceHtml(price: string): string {
+  return price.replace(/<[^>]*>/g, '').trim();
+}
+
+function formatPrice(price: string | undefined): string {
+  if (!price) return 'Price unavailable';
+  const cleanPrice = stripPriceHtml(price);
+  const numericMatch = cleanPrice.match(/(\d+\.?\d*)/);
+  if (numericMatch) {
+    const numericValue = parseFloat(numericMatch[1]);
+    return `${numericValue.toFixed(2)} USD`;
+  }
+  return cleanPrice;
+}
+
+const { slug } = Astro.params;
+const product = await getProductBySlug(slug || '');
+
+if (!product) {
+  return Astro.redirect('/404');
+}
+
+const formattedPrice = formatPrice(product.price);
+const colorAttribute = product.attributes?.nodes.find(attr => attr.name.toLowerCase() === 'color');
+const sizeAttribute = product.attributes?.nodes.find(attr => attr.name.toLowerCase() === 'size');
+const allImages = product.galleryImages?.nodes || [];
+const primaryImage = product.image;
+const displayImages = primaryImage
+  ? [primaryImage, ...allImages.filter(img => img.sourceUrl !== primaryImage.sourceUrl)]
+  : allImages;
+const hasMultipleImages = displayImages.length > 1;
+const btcpayAvailable = isBtcpayConfigured();
+---
+<Layout title={product.name} hideHeader={true}>
+  <main class="min-h-screen bg-white">
+    <Header />
+    <ProductDetail
+      client:load
+      product={product}
+      formattedPrice={formattedPrice}
+      displayImages={displayImages}
+      hasMultipleImages={hasMultipleImages}
+      btcpayAvailable={btcpayAvailable}
+      colorAttribute={colorAttribute}
+      sizeAttribute={sizeAttribute}
+    />
+    <Footer />
+  </main>
+</Layout>

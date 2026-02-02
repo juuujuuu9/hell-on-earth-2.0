@@ -59,6 +59,7 @@ export function buildProductPageHtml(product: Product): string {
     <div class="max-w-[1920px] mx-auto flex items-center justify-between w-full">
       <nav class="hidden lg:flex items-center gap-6">
         <a href="/products" class="text-white hover:opacity-70">SHOP</a>
+        <a href="/lookbook" class="text-white hover:opacity-70">LOOKBOOK</a>
         <a href="/terms" class="text-white hover:opacity-70">TERMS</a>
       </nav>
       <a href="/" class="absolute left-1/2 -translate-x-1/2">
