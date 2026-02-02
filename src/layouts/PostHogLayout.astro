@@ -1,11 +1,5 @@
 ---
-import PostHog from '../components/posthog.astro';
+// Pass-through only. Full document comes from Layout.astro to avoid nested
+// html/head/body which triggers Astro compiler panic (originalIM set twice).
 ---
-<html>
-  <head>
-    <PostHog />
-  </head>
-  <body>
-    <slot />
-  </body>
-</html>
+<slot />

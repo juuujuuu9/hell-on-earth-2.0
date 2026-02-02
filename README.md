@@ -46,12 +46,14 @@ A headless e-commerce setup using Astro for the frontend.
    npm run dev
    ```
 
-5. **Build for production**:
+5. **Product detail pages** (`/products/:slug`): Served by API + Vercel rewrite (and middleware in dev) to avoid an Astro compiler bug on that route. Build stays green; product pages work in dev and production.
+
+6. **Build for production**:
    ```sh
    npm run build
    ```
 
-6. **Vercel deployment**: In your Vercel project settings, set **Build Command** to `npm run build:vercel` so production uses the locked config (`astro.config.vercel.mjs`). Local dev and `npm run build` use `astro.config.mjs`.
+7. **Vercel deployment**: In your Vercel project settings, set **Build Command** to `npm run build:vercel` so production uses the locked config (`astro.config.vercel.mjs`). Local dev and `npm run build` use `astro.config.mjs`.
 
 📖 **For detailed setup instructions, see [ECCOMMERCE_SETUP.md](./ECCOMMERCE_SETUP.md)**
 

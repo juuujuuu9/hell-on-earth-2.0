@@ -4,15 +4,13 @@
  *
  * Shown after BTCPay redirect. Order status is updated via webhook.
  */
-import PostHogLayout from '../layouts/PostHogLayout.astro';
 import Layout from '@layouts/Layout.astro';
 import Header from '@components/Header.astro';
 import Footer from '@components/Footer.astro';
 
 const orderId = Astro.url.searchParams.get('order');
 ---
-<PostHogLayout>
-  <Layout title="Order Confirmation">
+<Layout title="Order Confirmation">
     <Header />
     <main class="min-h-screen py-16 px-4 max-w-2xl mx-auto">
       <h1 class="text-3xl font-bold mb-6">Thank you</h1>
@@ -33,5 +31,4 @@ const orderId = Astro.url.searchParams.get('order');
       </a>
     </main>
     <Footer />
-  </Layout>
-</PostHogLayout>
+</Layout>

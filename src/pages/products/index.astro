@@ -2,7 +2,6 @@
 /**
  * Products Listing Page
  */
-import PostHogLayout from '../../layouts/PostHogLayout.astro';
 import Layout from '@layouts/Layout.astro';
 import Header from '@components/Header.astro';
 import Footer from '@components/Footer.astro';
@@ -41,8 +40,7 @@ function stripPriceHtml(price: string): string {
 }
 ---
 
-<PostHogLayout>
-  <Layout title="All Products" hideHeader={true}>
+<Layout title="All Products" hideHeader={true}>
     <main class="min-h-screen bg-white">
       <Header />
 
@@ -222,8 +220,7 @@ function stripPriceHtml(price: string): string {
 
       <Footer />
     </main>
-  </Layout>
-</PostHogLayout>
+</Layout>
 
 <style>
   /* Custom scrollbar styling */
