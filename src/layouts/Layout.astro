@@ -8,6 +8,9 @@ interface Props {
 }
 
 const { title, hideHeader = false } = Astro.props;
+
+const posthogKey = import.meta.env.PUBLIC_POSTHOG_KEY;
+const posthogHost = import.meta.env.PUBLIC_POSTHOG_HOST || 'https://us.i.posthog.com';
 ---
 
 <!doctype html>
@@ -25,6 +28,13 @@ const { title, hideHeader = false } = Astro.props;
     <link href="https://fonts.googleapis.com/css2?family=Lexend+Mega:wght@400&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="https://use.typekit.net/rox0jfu.css" />
     <title>{title}</title>
+    <script defer src="https://cloud.umami.is/script.js" data-website-id="2e3023b6-505a-48d2-b491-0225b61304e4"></script>
+    {posthogKey && (
+      <script define:vars={{ posthogKey, posthogHost }} is:inline>
+        !function(t,e){var o,n,p,r;e.__SV||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.getElementsByTagName("script")[0];e.parentNode.insertBefore(t,o)}(p=t.createElement("script")).type="text/javascript",p.async=!0,p.src=s.api_host+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=g;e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
+        posthog.init(posthogKey,{api_host:posthogHost});
+      </script>
+    )}
   </head>
   <body>
     {!hideHeader && (

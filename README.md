@@ -21,10 +21,10 @@ A headless e-commerce setup using Astro for the frontend.
 
 2. **Configure environment variables**:
    ```sh
-   cp .env.example .env.local
+   cp .env.example .env
    ```
    
-   Edit `.env.local` and add your credentials:
+   Edit `.env` and add your credentials:
    ```env
    DATABASE_URL=postgresql://user:password@host/database?sslmode=require
    STRIPE_SECRET_KEY=sk_test_...
@@ -50,6 +50,8 @@ A headless e-commerce setup using Astro for the frontend.
    ```sh
    npm run build
    ```
+
+6. **Vercel deployment**: In your Vercel project settings, set **Build Command** to `npm run build:vercel` so production uses the locked config (`astro.config.vercel.mjs`). Local dev and `npm run build` use `astro.config.mjs`.
 
 📖 **For detailed setup instructions, see [ECCOMMERCE_SETUP.md](./ECCOMMERCE_SETUP.md)**
 

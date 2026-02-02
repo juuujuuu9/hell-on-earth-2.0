@@ -12,7 +12,7 @@ This project is configured to use:
 
 1. Go to [Neon Console](https://console.neon.tech) and create a new project
 2. Copy your connection string (it looks like: `postgresql://user:password@host/database?sslmode=require`)
-3. Add it to your `.env.local` file:
+3. Add it to your `.env` file:
 
 ```bash
 DATABASE_URL=postgresql://user:password@host/database?sslmode=require
@@ -35,7 +35,7 @@ npm run db:migrate
 
 1. Go to [Stripe Dashboard](https://dashboard.stripe.com/apikeys)
 2. Get your API keys (use test keys for development)
-3. Add to `.env.local`:
+3. Add to `.env`:
 
 ```bash
 STRIPE_SECRET_KEY=sk_test_...
@@ -167,7 +167,7 @@ See `src/lib/db/schema.ts` for full schema definition.
 
 ### Database Connection Errors
 
-- Check that `DATABASE_URL` is set correctly in `.env.local`
+- Check that `DATABASE_URL` is set correctly in `.env`
 - Ensure your Neon project is active
 - Verify SSL mode is included in connection string
 
@@ -197,7 +197,7 @@ BTCPay Server can be used alongside Stripe. Customers choose their payment metho
    - Modify stores webhooks
    - View your stores
    - Create non-approved pull payments
-3. Add to `.env.local`:
+3. Add to `.env`:
    ```bash
    BTCPAY_SERVER_URL=https://your-btcpay-instance.com
    BTCPAY_STORE_ID=your-store-id

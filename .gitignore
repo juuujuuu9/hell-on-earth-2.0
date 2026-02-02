@@ -13,7 +13,6 @@ pnpm-debug.log*
 
 # environment variables
 .env
-.env.local
 .env.production.local
 .env.development.local
 

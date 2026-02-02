@@ -8,34 +8,72 @@
       <h2 class="text-lg uppercase font-bold mb-2">JOIN OUR MAILING LIST</h2>
       <p class="text-sm mb-6">Enter your email to be notified of upcoming releases.</p>
       
-      <form 
+      <form
         id="footer-mailing-list-form"
         class="max-w-md mx-auto space-y-4"
         method="post"
-        action="https://hellonearthmfg.com/wp-admin/admin-post.php?action=mailpoet_subscription_form"
+        action="#"
+        novalidate
       >
-        <input type="hidden" name="data[form_id]" value="1">
-        <input type="hidden" name="token" value="78939cab53">
-        <input type="hidden" name="api_version" value="v1">
-        <input type="hidden" name="endpoint" value="subscribers">
-        <input type="hidden" name="mailpoet_method" value="subscribe">
-        
         <input
           type="email"
-          name="data[form_field_ZDVhN2FkYTE5NmFiX2VtYWls]"
+          name="email"
           placeholder="Email Address *"
           required
           class="w-full px-4 py-2 border border-black bg-white text-center focus:outline-none"
           aria-label="Email Address"
         />
-        
+        <p id="footer-subscribe-success" class="hidden text-sm text-green-600 text-center" role="status"></p>
+        <p id="footer-subscribe-error" class="hidden text-sm text-red-600 text-center" role="alert"></p>
         <button
           type="submit"
-          class="w-full px-4 py-2 bg-black text-white uppercase font-bold hover:opacity-70 transition-opacity cursor-pointer"
+          id="footer-subscribe-btn"
+          class="w-full px-4 py-2 bg-black text-white uppercase font-bold hover:opacity-70 transition-opacity cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
         >
           SUBSCRIBE
         </button>
       </form>
+      <script>
+        (function () {
+          const form = document.getElementById('footer-mailing-list-form') as HTMLFormElement;
+          const successEl = document.getElementById('footer-subscribe-success');
+          const errorEl = document.getElementById('footer-subscribe-error');
+          const btn = document.getElementById('footer-subscribe-btn') as HTMLButtonElement;
+          if (!form || !btn) return;
+
+          form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            successEl?.classList.add('hidden');
+            errorEl?.classList.add('hidden');
+            const email = (form.querySelector('input[name="email"]') as HTMLInputElement)?.value?.trim();
+            if (!email) {
+              if (errorEl) { errorEl.textContent = 'Please enter your email.'; errorEl.classList.remove('hidden'); }
+              return;
+            }
+            btn.disabled = true;
+            btn.textContent = 'Submitting...';
+            try {
+              const res = await fetch('/api/mailing-list', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, source: 'footer' }),
+              });
+              const result = await res.json();
+              if (result.success) {
+                if (successEl) { successEl.textContent = result.message ?? 'Thanks for subscribing.'; successEl.classList.remove('hidden'); }
+                form.reset();
+              } else {
+                if (errorEl) { errorEl.textContent = result.error ?? 'Something went wrong.'; errorEl.classList.remove('hidden'); }
+              }
+            } catch {
+              if (errorEl) { errorEl.textContent = 'Something went wrong. Please try again.'; errorEl.classList.remove('hidden'); }
+            } finally {
+              btn.disabled = false;
+              btn.textContent = 'SUBSCRIBE';
+            }
+          });
+        })();
+      </script>
     </div>
   </div>
   <!-- Full-width border -->

@@ -2,6 +2,7 @@
 export const prerender = false;
 
 import '../../styles/global.css';
+import PostHog from '../../components/posthog.astro';
 import { db } from '@lib/db';
 import { products } from '@lib/db/schema';
 import { isAdminAuthenticated, createSessionCookie } from '@lib/admin-auth';
@@ -42,6 +43,7 @@ const productRows = await db.select({
     <meta name="robots" content="noindex" />
     <title>Admin</title>
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <PostHog />
   </head>
   <body class="bg-gray-100 min-h-screen px-2 py-6 sm:p-6 font-sans">
     <div class="max-w-[1400px] mx-auto">
@@ -223,366 +225,365 @@ const productRows = await db.select({
           </form>
         </div>
       </div>
-    </div>
 
-    <script is:inline>
-      (function selectAllAndActions() {
-        var selectAllEls = document.querySelectorAll('.admin-select-all');
-        var actionsBtns = document.querySelectorAll('#admin-actions-btn, .admin-actions-btn-mobile');
-        var actionsMenus = document.querySelectorAll('#admin-actions-menu, #admin-actions-menu-mobile');
+      <script is:inline>
+        (function selectAllAndActions() {
+          var selectAllEls = document.querySelectorAll('.admin-select-all');
+          var actionsBtns = document.querySelectorAll('#admin-actions-btn, .admin-actions-btn-mobile');
+          var actionsMenus = document.querySelectorAll('#admin-actions-menu, #admin-actions-menu-mobile');
 
-        function getRowCheckboxes() {
-          return document.querySelectorAll('.admin-row-select');
-        }
+          function getRowCheckboxes() {
+            return document.querySelectorAll('.admin-row-select');
+          }
 
-        function getCheckedIds() {
-          var ids = [];
-          getRowCheckboxes().forEach(function(cb) {
-            if (cb.checked && cb.value) ids.push(cb.value);
-          });
-          return Array.from(new Set(ids));
-        }
-
-        function updateSelectAllState() {
-          var all = getRowCheckboxes();
-          var checked = document.querySelectorAll('.admin-row-select:checked');
-          var allChecked = all.length > 0 && checked.length === all.length;
-          var someChecked = checked.length > 0 && checked.length < all.length;
-          selectAllEls.forEach(function(el) {
-            el.checked = allChecked;
-            el.indeterminate = someChecked;
-          });
-        }
-
-        selectAllEls.forEach(function(selectAll) {
-          selectAll.addEventListener('change', function() {
+          function getCheckedIds() {
+            var ids = [];
             getRowCheckboxes().forEach(function(cb) {
-              cb.checked = selectAll.checked;
+              if (cb.checked && cb.value) ids.push(cb.value);
             });
-            updateSelectAllState();
+            return Array.from(new Set(ids));
+          }
+
+          function updateSelectAllState() {
+            var all = getRowCheckboxes();
+            var checked = document.querySelectorAll('.admin-row-select:checked');
+            var allChecked = all.length > 0 && checked.length === all.length;
+            var someChecked = checked.length > 0 && checked.length < all.length;
+            selectAllEls.forEach(function(el) {
+              el.checked = allChecked;
+              el.indeterminate = someChecked;
+            });
+          }
+
+          selectAllEls.forEach(function(selectAll) {
+            selectAll.addEventListener('change', function() {
+              getRowCheckboxes().forEach(function(cb) {
+                cb.checked = selectAll.checked;
+              });
+              updateSelectAllState();
+            });
           });
-        });
 
-        document.querySelectorAll('.admin-row-select').forEach(function(cb) {
-          cb.addEventListener('change', updateSelectAllState);
-        });
+          document.querySelectorAll('.admin-row-select').forEach(function(cb) {
+            cb.addEventListener('change', updateSelectAllState);
+          });
 
-        function setupDropdown(btn, menu) {
-          if (!btn || !menu) return;
-          btn.addEventListener('click', function(e) {
-            e.stopPropagation();
-            var open = !menu.classList.contains('hidden');
+          function setupDropdown(btn, menu) {
+            if (!btn || !menu) return;
+            btn.addEventListener('click', function(e) {
+              e.stopPropagation();
+              var open = !menu.classList.contains('hidden');
+              actionsMenus.forEach(function(m) { m.classList.add('hidden'); });
+              actionsBtns.forEach(function(b) { b.setAttribute('aria-expanded', 'false'); });
+              if (!open) {
+                menu.classList.remove('hidden');
+                btn.setAttribute('aria-expanded', 'true');
+              }
+            });
+          }
+          var desktopBtn = document.getElementById('admin-actions-btn');
+          var desktopMenu = document.getElementById('admin-actions-menu');
+          var mobileBtn = document.querySelector('.admin-actions-btn-mobile');
+          var mobileMenu = document.getElementById('admin-actions-menu-mobile');
+          setupDropdown(desktopBtn, desktopMenu);
+          setupDropdown(mobileBtn, mobileMenu);
+
+          document.addEventListener('click', function() {
             actionsMenus.forEach(function(m) { m.classList.add('hidden'); });
             actionsBtns.forEach(function(b) { b.setAttribute('aria-expanded', 'false'); });
-            if (!open) {
-              menu.classList.remove('hidden');
-              btn.setAttribute('aria-expanded', 'true');
-            }
           });
-        }
-        var desktopBtn = document.getElementById('admin-actions-btn');
-        var desktopMenu = document.getElementById('admin-actions-menu');
-        var mobileBtn = document.querySelector('.admin-actions-btn-mobile');
-        var mobileMenu = document.getElementById('admin-actions-menu-mobile');
-        setupDropdown(desktopBtn, desktopMenu);
-        setupDropdown(mobileBtn, mobileMenu);
 
-        document.addEventListener('click', function() {
-          actionsMenus.forEach(function(m) { m.classList.add('hidden'); });
-          actionsBtns.forEach(function(b) { b.setAttribute('aria-expanded', 'false'); });
-        });
+          function closeAllMenus() {
+            actionsMenus.forEach(function(m) { m.classList.add('hidden'); });
+            actionsBtns.forEach(function(b) { b.setAttribute('aria-expanded', 'false'); });
+          }
 
-        function closeAllMenus() {
-          actionsMenus.forEach(function(m) { m.classList.add('hidden'); });
-          actionsBtns.forEach(function(b) { b.setAttribute('aria-expanded', 'false'); });
-        }
-
-        document.querySelectorAll('.admin-bulk-edit').forEach(function(btn) {
-          btn.addEventListener('click', function() {
-            var ids = getCheckedIds();
-            if (ids.length === 0) {
-              alert('Select at least one product.');
-              return;
-            }
-            var firstRow = document.querySelector('tr.admin-desktop-row[data-product-id="' + ids[0] + '"]') || document.querySelector('.admin-mobile-row[data-product-id="' + ids[0] + '"]');
-            var editBtn = firstRow && firstRow.querySelector('.edit-sizes-btn, .admin-edit-btn');
-            if (editBtn) editBtn.click();
-            closeAllMenus();
-          });
-        });
-
-        document.querySelectorAll('.admin-bulk-delete').forEach(function(btn) {
-          btn.addEventListener('click', async function() {
-            var ids = getCheckedIds();
-            if (ids.length === 0) {
-              alert('Select at least one product.');
-              return;
-            }
-            if (!confirm('Delete ' + ids.length + ' product(s)? This cannot be undone.')) return;
-            closeAllMenus();
-            var ok = true;
-            for (var i = 0; i < ids.length; i++) {
-              var res = await fetch('/api/admin/product/' + ids[i], {
-                method: 'DELETE',
-                credentials: 'include',
-              });
-              if (!res.ok) ok = false;
-            }
-            if (ok) window.location.reload();
-            else alert('Some products could not be deleted.');
-          });
-        });
-      })();
-
-      document.querySelectorAll('.save-row').forEach((btn) => {
-        btn.addEventListener('click', async () => {
-          const tr = btn.closest('tr');
-          if (!tr) return;
-          const id = tr.dataset.productId;
-          const get = (name) => tr.querySelector(`[name="${name}"]`);
-          const getVal = (name) => {
-            const el = get(name);
-            if (!el) return undefined;
-            if (el.tagName === 'SELECT') return el.value;
-            return el.value;
-          };
-          const payload = {
-            name: getVal('name'),
-            slug: getVal('slug'),
-            price: getVal('price') || null,
-            regularPrice: getVal('regularPrice') || null,
-            salePrice: getVal('salePrice') || null,
-            onSale: getVal('onSale') === 'true',
-            stockStatus: getVal('stockStatus'),
-            stockQuantity: getVal('stockQuantity') ? parseInt(getVal('stockQuantity'), 10) : null,
-          };
-          btn.textContent = '…';
-          btn.disabled = true;
-          try {
-            const res = await fetch(`/api/admin/product/${id}`, {
-              method: 'PATCH',
-              headers: { 'Content-Type': 'application/json' },
-              credentials: 'include',
-              body: JSON.stringify(payload),
+          document.querySelectorAll('.admin-bulk-edit').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+              var ids = getCheckedIds();
+              if (ids.length === 0) {
+                alert('Select at least one product.');
+                return;
+              }
+              var firstRow = document.querySelector('tr.admin-desktop-row[data-product-id="' + ids[0] + '"]') || document.querySelector('.admin-mobile-row[data-product-id="' + ids[0] + '"]');
+              var editBtn = firstRow && firstRow.querySelector('.edit-sizes-btn, .admin-edit-btn');
+              if (editBtn) editBtn.click();
+              closeAllMenus();
             });
-            if (!res.ok) {
-              const err = await res.json().catch(() => ({}));
-              alert(err.error || `Save failed: ${res.status}`);
-            }
-          } catch (e) {
-            alert('Network error');
-          } finally {
-            btn.textContent = 'Save';
-            btn.disabled = false;
-          }
-        });
-      });
-
-      (function mobileEditModal() {
-        const modal = document.getElementById('admin-edit-modal');
-        const form = document.getElementById('admin-edit-form');
-        const closeBtn = document.getElementById('admin-edit-modal-close');
-        const cancelBtn = document.getElementById('admin-edit-modal-cancel');
-        const backdrop = document.getElementById('admin-edit-modal-backdrop');
-        const saveBtn = document.getElementById('admin-edit-save');
-        if (!modal || !form || !closeBtn || !cancelBtn || !backdrop || !saveBtn) return;
-
-        function openModal(row) {
-          const id = row.dataset.productId;
-          document.getElementById('admin-edit-id').value = id;
-          document.getElementById('admin-edit-name').value = row.dataset.name ?? '';
-          document.getElementById('admin-edit-slug').value = row.dataset.slug ?? '';
-          document.getElementById('admin-edit-price').value = row.dataset.price ?? '';
-          document.getElementById('admin-edit-regularPrice').value = row.dataset.regularPrice ?? '';
-          document.getElementById('admin-edit-salePrice').value = row.dataset.salePrice ?? '';
-          document.getElementById('admin-edit-onSale').value = row.dataset.onSale === 'true' ? 'true' : 'false';
-          document.getElementById('admin-edit-stockStatus').value = row.dataset.stockStatus ?? 'IN_STOCK';
-          document.getElementById('admin-edit-stockQuantity').value = row.dataset.stockQuantity ?? '';
-          var sizesEl = document.getElementById('admin-edit-sizes');
-          if (sizesEl) {
-            sizesEl.innerHTML = '<span class="text-xs text-gray-500">Loading sizes…</span>';
-            fetch('/api/admin/product/' + id + '/sizes', { credentials: 'include' })
-              .then(function(r) { return r.json(); })
-              .then(function(data) {
-                sizesEl.innerHTML = '';
-                if (data.sizes && data.sizes.length) {
-                  data.sizes.forEach(function(s) {
-                    var div = document.createElement('div');
-                    div.className = 'flex items-center gap-2';
-                    var label = document.createElement('span');
-                    label.className = 'text-sm w-16 shrink-0';
-                    label.textContent = s.size;
-                    var input = document.createElement('input');
-                    input.type = 'number';
-                    input.min = 0;
-                    input.setAttribute('data-size', s.size);
-                    input.value = s.quantity;
-                    input.className = 'w-20 px-2 py-1 text-sm border border-gray-200 rounded';
-                    div.appendChild(label);
-                    div.appendChild(input);
-                    sizesEl.appendChild(div);
-                  });
-                } else {
-                  sizesEl.innerHTML = '<span class="text-xs text-gray-500">No sizes for this product.</span>';
-                }
-              })
-              .catch(function() {
-                sizesEl.innerHTML = '<span class="text-xs text-red-500">Failed to load sizes.</span>';
-              });
-          }
-          modal.classList.remove('hidden');
-          modal.setAttribute('aria-hidden', 'false');
-        }
-
-        function closeModal() {
-          modal.classList.add('hidden');
-          modal.setAttribute('aria-hidden', 'true');
-        }
-
-        function openModalFromDesktopRow(tr) {
-          if (!tr) return;
-          const id = tr.dataset.productId;
-          const getVal = (name) => {
-            const el = tr.querySelector('[name="' + name + '"]');
-            if (!el) return '';
-            return el.tagName === 'SELECT' ? el.value : el.value;
-          };
-          document.getElementById('admin-edit-id').value = id;
-          document.getElementById('admin-edit-name').value = getVal('name');
-          document.getElementById('admin-edit-slug').value = getVal('slug');
-          document.getElementById('admin-edit-price').value = getVal('price');
-          document.getElementById('admin-edit-regularPrice').value = getVal('regularPrice');
-          document.getElementById('admin-edit-salePrice').value = getVal('salePrice');
-          document.getElementById('admin-edit-onSale').value = getVal('onSale');
-          document.getElementById('admin-edit-stockStatus').value = getVal('stockStatus');
-          document.getElementById('admin-edit-stockQuantity').value = getVal('stockQuantity');
-          var sizesEl = document.getElementById('admin-edit-sizes');
-          if (sizesEl) {
-            sizesEl.innerHTML = '<span class="text-xs text-gray-500">Loading sizes…</span>';
-            fetch('/api/admin/product/' + id + '/sizes', { credentials: 'include' })
-              .then(function(r) { return r.json(); })
-              .then(function(data) {
-                sizesEl.innerHTML = '';
-                if (data.sizes && data.sizes.length) {
-                  data.sizes.forEach(function(s) {
-                    var div = document.createElement('div');
-                    div.className = 'flex items-center gap-2';
-                    var label = document.createElement('span');
-                    label.className = 'text-sm w-16 shrink-0';
-                    label.textContent = s.size;
-                    var input = document.createElement('input');
-                    input.type = 'number';
-                    input.min = 0;
-                    input.setAttribute('data-size', s.size);
-                    input.value = s.quantity;
-                    input.className = 'w-20 px-2 py-1 text-sm border border-gray-200 rounded';
-                    div.appendChild(label);
-                    div.appendChild(input);
-                    sizesEl.appendChild(div);
-                  });
-                } else {
-                  sizesEl.innerHTML = '<span class="text-xs text-gray-500">No sizes. Add a Size attribute to this product to manage per-size stock.</span>';
-                }
-              })
-              .catch(function() {
-                sizesEl.innerHTML = '<span class="text-xs text-red-500">Failed to load sizes.</span>';
-              });
-          }
-          modal.classList.remove('hidden');
-          modal.setAttribute('aria-hidden', 'false');
-        }
-
-        document.querySelectorAll('.admin-edit-btn').forEach((btn) => {
-          btn.addEventListener('click', (e) => {
-            e.preventDefault();
-            const row = btn.closest('.admin-mobile-row');
-            if (row) openModal(row);
           });
-        });
 
-        document.querySelectorAll('.edit-sizes-btn').forEach((btn) => {
-          btn.addEventListener('click', (e) => {
-            e.preventDefault();
+          document.querySelectorAll('.admin-bulk-delete').forEach(function(btn) {
+            btn.addEventListener('click', async function() {
+              var ids = getCheckedIds();
+              if (ids.length === 0) {
+                alert('Select at least one product.');
+                return;
+              }
+              if (!confirm('Delete ' + ids.length + ' product(s)? This cannot be undone.')) return;
+              closeAllMenus();
+              var ok = true;
+              for (var i = 0; i < ids.length; i++) {
+                var res = await fetch('/api/admin/product/' + ids[i], {
+                  method: 'DELETE',
+                  credentials: 'include',
+                });
+                if (!res.ok) ok = false;
+              }
+              if (ok) window.location.reload();
+              else alert('Some products could not be deleted.');
+            });
+          });
+        })();
+
+        document.querySelectorAll('.save-row').forEach((btn) => {
+          btn.addEventListener('click', async () => {
             const tr = btn.closest('tr');
-            if (tr) openModalFromDesktopRow(tr);
-          });
-        });
-
-        closeBtn.addEventListener('click', closeModal);
-        cancelBtn.addEventListener('click', closeModal);
-        backdrop.addEventListener('click', closeModal);
-
-        form.addEventListener('submit', async (e) => {
-          e.preventDefault();
-          const id = document.getElementById('admin-edit-id').value;
-          var sizeInputs = document.querySelectorAll('#admin-edit-sizes input[data-size]');
-          var sizeInventory = [];
-          sizeInputs.forEach(function(input) {
-            var s = input.getAttribute('data-size');
-            if (s) sizeInventory.push({ size: s, quantity: parseInt(input.value, 10) || 0 });
-          });
-          const payload = {
-            name: document.getElementById('admin-edit-name').value,
-            slug: document.getElementById('admin-edit-slug').value,
-            price: document.getElementById('admin-edit-price').value || null,
-            regularPrice: document.getElementById('admin-edit-regularPrice').value || null,
-            salePrice: document.getElementById('admin-edit-salePrice').value || null,
-            onSale: document.getElementById('admin-edit-onSale').value === 'true',
-            stockStatus: document.getElementById('admin-edit-stockStatus').value,
-            stockQuantity: document.getElementById('admin-edit-stockQuantity').value ? parseInt(document.getElementById('admin-edit-stockQuantity').value, 10) : null,
-            sizeInventory: sizeInventory.length ? sizeInventory : undefined,
-          };
-          saveBtn.textContent = '…';
-          saveBtn.disabled = true;
-          try {
-            const res = await fetch('/api/admin/product/' + id, {
-              method: 'PATCH',
-              headers: { 'Content-Type': 'application/json' },
-              credentials: 'include',
-              body: JSON.stringify(payload),
-            });
-            if (!res.ok) {
-              const err = await res.json().catch(() => ({}));
-              alert(err.error || 'Save failed: ' + res.status);
-            } else {
-              const mobileRow = document.querySelector('.admin-mobile-row[data-product-id="' + id + '"]');
-              if (mobileRow) {
-                mobileRow.dataset.name = payload.name;
-                mobileRow.dataset.slug = payload.slug;
-                mobileRow.dataset.price = payload.price ?? '';
-                mobileRow.dataset.regularPrice = payload.regularPrice ?? '';
-                mobileRow.dataset.salePrice = payload.salePrice ?? '';
-                mobileRow.dataset.onSale = payload.onSale;
-                mobileRow.dataset.stockStatus = payload.stockStatus;
-                mobileRow.dataset.stockQuantity = String(payload.stockQuantity ?? '');
-                const nameEl = mobileRow.querySelector('label span');
-                if (nameEl) nameEl.textContent = payload.name || 'Untitled';
+            if (!tr) return;
+            const id = tr.dataset.productId;
+            const get = (name) => tr.querySelector(`[name="${name}"]`);
+            const getVal = (name) => {
+              const el = get(name);
+              if (!el) return undefined;
+              if (el.tagName === 'SELECT') return el.value;
+              return el.value;
+            };
+            const payload = {
+              name: getVal('name'),
+              slug: getVal('slug'),
+              price: getVal('price') || null,
+              regularPrice: getVal('regularPrice') || null,
+              salePrice: getVal('salePrice') || null,
+              onSale: getVal('onSale') === 'true',
+              stockStatus: getVal('stockStatus'),
+              stockQuantity: getVal('stockQuantity') ? parseInt(getVal('stockQuantity'), 10) : null,
+            };
+            btn.textContent = '…';
+            btn.disabled = true;
+            try {
+              const res = await fetch(`/api/admin/product/${id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify(payload),
+              });
+              if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                alert(err.error || `Save failed: ${res.status}`);
               }
-              const desktopRow = document.querySelector('tr[data-product-id="' + id + '"]');
-              if (desktopRow) {
-                var setVal = function(name, val) {
-                  var el = desktopRow.querySelector('[name="' + name + '"]');
-                  if (el) el.value = val ?? '';
-                };
-                setVal('name', payload.name);
-                setVal('slug', payload.slug);
-                setVal('price', payload.price);
-                setVal('regularPrice', payload.regularPrice);
-                setVal('salePrice', payload.salePrice);
-                setVal('onSale', payload.onSale);
-                setVal('stockStatus', payload.stockStatus);
-                setVal('stockQuantity', payload.stockQuantity);
-              }
-              closeModal();
+            } catch (e) {
+              alert('Network error');
+            } finally {
+              btn.textContent = 'Save';
+              btn.disabled = false;
             }
-          } catch (err) {
-            alert('Network error');
-          } finally {
-            saveBtn.textContent = 'Save';
-            saveBtn.disabled = false;
-          }
+          });
         });
-      })();
-    </script>
+
+        (function mobileEditModal() {
+          const modal = document.getElementById('admin-edit-modal');
+          const form = document.getElementById('admin-edit-form');
+          const closeBtn = document.getElementById('admin-edit-modal-close');
+          const cancelBtn = document.getElementById('admin-edit-modal-cancel');
+          const backdrop = document.getElementById('admin-edit-modal-backdrop');
+          const saveBtn = document.getElementById('admin-edit-save');
+          if (!modal || !form || !closeBtn || !cancelBtn || !backdrop || !saveBtn) return;
+
+          function openModal(row) {
+            const id = row.dataset.productId;
+            document.getElementById('admin-edit-id').value = id;
+            document.getElementById('admin-edit-name').value = row.dataset.name ?? '';
+            document.getElementById('admin-edit-slug').value = row.dataset.slug ?? '';
+            document.getElementById('admin-edit-price').value = row.dataset.price ?? '';
+            document.getElementById('admin-edit-regularPrice').value = row.dataset.regularPrice ?? '';
+            document.getElementById('admin-edit-salePrice').value = row.dataset.salePrice ?? '';
+            document.getElementById('admin-edit-onSale').value = row.dataset.onSale === 'true' ? 'true' : 'false';
+            document.getElementById('admin-edit-stockStatus').value = row.dataset.stockStatus ?? 'IN_STOCK';
+            document.getElementById('admin-edit-stockQuantity').value = row.dataset.stockQuantity ?? '';
+            var sizesEl = document.getElementById('admin-edit-sizes');
+            if (sizesEl) {
+              sizesEl.innerHTML = '<span class="text-xs text-gray-500">Loading sizes…</span>';
+              fetch('/api/admin/product/' + id + '/sizes', { credentials: 'include' })
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                  sizesEl.innerHTML = '';
+                  if (data.sizes && data.sizes.length) {
+                    data.sizes.forEach(function(s) {
+                      var div = document.createElement('div');
+                      div.className = 'flex items-center gap-2';
+                      var label = document.createElement('span');
+                      label.className = 'text-sm w-16 shrink-0';
+                      label.textContent = s.size;
+                      var input = document.createElement('input');
+                      input.type = 'number';
+                      input.min = 0;
+                      input.setAttribute('data-size', s.size);
+                      input.value = s.quantity;
+                      input.className = 'w-20 px-2 py-1 text-sm border border-gray-200 rounded';
+                      div.appendChild(label);
+                      div.appendChild(input);
+                      sizesEl.appendChild(div);
+                    });
+                  } else {
+                    sizesEl.innerHTML = '<span class="text-xs text-gray-500">No sizes for this product.</span>';
+                  }
+                })
+                .catch(function() {
+                  sizesEl.innerHTML = '<span class="text-xs text-red-500">Failed to load sizes.</span>';
+                });
+            }
+            modal.classList.remove('hidden');
+            modal.setAttribute('aria-hidden', 'false');
+          }
+
+          function closeModal() {
+            modal.classList.add('hidden');
+            modal.setAttribute('aria-hidden', 'true');
+          }
+
+          function openModalFromDesktopRow(tr) {
+            if (!tr) return;
+            const id = tr.dataset.productId;
+            const getVal = (name) => {
+              const el = tr.querySelector('[name="' + name + '"]');
+              if (!el) return '';
+              return el.tagName === 'SELECT' ? el.value : el.value;
+            };
+            document.getElementById('admin-edit-id').value = id;
+            document.getElementById('admin-edit-name').value = getVal('name');
+            document.getElementById('admin-edit-slug').value = getVal('slug');
+            document.getElementById('admin-edit-price').value = getVal('price');
+            document.getElementById('admin-edit-regularPrice').value = getVal('regularPrice');
+            document.getElementById('admin-edit-salePrice').value = getVal('salePrice');
+            document.getElementById('admin-edit-onSale').value = getVal('onSale');
+            document.getElementById('admin-edit-stockStatus').value = getVal('stockStatus');
+            document.getElementById('admin-edit-stockQuantity').value = getVal('stockQuantity');
+            var sizesEl = document.getElementById('admin-edit-sizes');
+            if (sizesEl) {
+              sizesEl.innerHTML = '<span class="text-xs text-gray-500">Loading sizes…</span>';
+              fetch('/api/admin/product/' + id + '/sizes', { credentials: 'include' })
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                  sizesEl.innerHTML = '';
+                  if (data.sizes && data.sizes.length) {
+                    data.sizes.forEach(function(s) {
+                      var div = document.createElement('div');
+                      div.className = 'flex items-center gap-2';
+                      var label = document.createElement('span');
+                      label.className = 'text-sm w-16 shrink-0';
+                      label.textContent = s.size;
+                      var input = document.createElement('input');
+                      input.type = 'number';
+                      input.min = 0;
+                      input.setAttribute('data-size', s.size);
+                      input.value = s.quantity;
+                      input.className = 'w-20 px-2 py-1 text-sm border border-gray-200 rounded';
+                      div.appendChild(label);
+                      div.appendChild(input);
+                      sizesEl.appendChild(div);
+                    });
+                  } else {
+                    sizesEl.innerHTML = '<span class="text-xs text-gray-500">No sizes. Add a Size attribute to this product to manage per-size stock.</span>';
+                  }
+                })
+                .catch(function() {
+                  sizesEl.innerHTML = '<span class="text-xs text-red-500">Failed to load sizes.</span>';
+                });
+            }
+            modal.classList.remove('hidden');
+            modal.setAttribute('aria-hidden', 'false');
+          }
+
+          document.querySelectorAll('.admin-edit-btn').forEach((btn) => {
+            btn.addEventListener('click', (e) => {
+              e.preventDefault();
+              const row = btn.closest('.admin-mobile-row');
+              if (row) openModal(row);
+            });
+          });
+
+          document.querySelectorAll('.edit-sizes-btn').forEach((btn) => {
+            btn.addEventListener('click', (e) => {
+              e.preventDefault();
+              const tr = btn.closest('tr');
+              if (tr) openModalFromDesktopRow(tr);
+            });
+          });
+
+          closeBtn.addEventListener('click', closeModal);
+          cancelBtn.addEventListener('click', closeModal);
+          backdrop.addEventListener('click', closeModal);
+
+          form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('admin-edit-id').value;
+            var sizeInputs = document.querySelectorAll('#admin-edit-sizes input[data-size]');
+            var sizeInventory = [];
+            sizeInputs.forEach(function(input) {
+              var s = input.getAttribute('data-size');
+              if (s) sizeInventory.push({ size: s, quantity: parseInt(input.value, 10) || 0 });
+            });
+            const payload = {
+              name: document.getElementById('admin-edit-name').value,
+              slug: document.getElementById('admin-edit-slug').value,
+              price: document.getElementById('admin-edit-price').value || null,
+              regularPrice: document.getElementById('admin-edit-regularPrice').value || null,
+              salePrice: document.getElementById('admin-edit-salePrice').value || null,
+              onSale: document.getElementById('admin-edit-onSale').value === 'true',
+              stockStatus: document.getElementById('admin-edit-stockStatus').value,
+              stockQuantity: document.getElementById('admin-edit-stockQuantity').value ? parseInt(document.getElementById('admin-edit-stockQuantity').value, 10) : null,
+              sizeInventory: sizeInventory.length ? sizeInventory : undefined,
+            };
+            saveBtn.textContent = '…';
+            saveBtn.disabled = true;
+            try {
+              const res = await fetch('/api/admin/product/' + id, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify(payload),
+              });
+              if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                alert(err.error || 'Save failed: ' + res.status);
+              } else {
+                const mobileRow = document.querySelector('.admin-mobile-row[data-product-id="' + id + '"]');
+                if (mobileRow) {
+                  mobileRow.dataset.name = payload.name;
+                  mobileRow.dataset.slug = payload.slug;
+                  mobileRow.dataset.price = payload.price ?? '';
+                  mobileRow.dataset.regularPrice = payload.regularPrice ?? '';
+                  mobileRow.dataset.salePrice = payload.salePrice ?? '';
+                  mobileRow.dataset.onSale = payload.onSale;
+                  mobileRow.dataset.stockStatus = payload.stockStatus;
+                  mobileRow.dataset.stockQuantity = String(payload.stockQuantity ?? '');
+                  const nameEl = mobileRow.querySelector('label span');
+                  if (nameEl) nameEl.textContent = payload.name || 'Untitled';
+                }
+                const desktopRow = document.querySelector('tr[data-product-id="' + id + '"]');
+                if (desktopRow) {
+                  var setVal = function(name, val) {
+                    var el = desktopRow.querySelector('[name="' + name + '"]');
+                    if (el) el.value = val ?? '';
+                  };
+                  setVal('name', payload.name);
+                  setVal('slug', payload.slug);
+                  setVal('price', payload.price);
+                  setVal('regularPrice', payload.regularPrice);
+                  setVal('salePrice', payload.salePrice);
+                  setVal('onSale', payload.onSale);
+                  setVal('stockStatus', payload.stockStatus);
+                  setVal('stockQuantity', payload.stockQuantity);
+                }
+                closeModal();
+              }
+            } catch (err) {
+              alert('Network error');
+            } finally {
+              saveBtn.textContent = 'Save';
+              saveBtn.disabled = false;
+            }
+          });
+        })();
+      </script>
   </body>
 </html>

@@ -32,7 +32,7 @@ After creating the storage zone:
 
 ### 3. Configure Environment Variables
 
-Add to your `.env.local` file:
+Add to your `.env` file:
 
 ```env
 BUNNY_API_KEY=your-api-key-here
@@ -153,7 +153,7 @@ Images are stored with timestamps to avoid collisions:
 
 ### "Credentials not configured" error
 
-- Check that all three environment variables are set in `.env.local`
+- Check that all three environment variables are set in `.env`
 - Restart your dev server after adding environment variables
 
 ### Upload fails with 401/403

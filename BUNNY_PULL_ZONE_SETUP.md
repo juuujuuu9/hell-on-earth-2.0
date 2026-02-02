@@ -26,7 +26,7 @@ After creating the Pull Zone:
 
 ### 3. Update Environment Variables
 
-Update your `.env.local` file:
+Update your `.env` file:
 
 ```env
 BUNNY_CDN_URL=https://hell-on-earth-images.b-cdn.net

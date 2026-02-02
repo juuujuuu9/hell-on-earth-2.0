@@ -9,13 +9,13 @@ import { config } from 'dotenv';
 import { neon } from '@neondatabase/serverless';
 
 // Load environment variables
-config({ path: '.env.local' });
+config({ path: '.env' });
 
 const DATABASE_URL = process.env.DATABASE_URL;
 
 if (!DATABASE_URL) {
-  console.error('❌ DATABASE_URL not found in .env.local');
-  console.log('\nPlease add your Neon DB connection string to .env.local:');
+  console.error('❌ DATABASE_URL not found in .env');
+  console.log('\nPlease add your Neon DB connection string to .env:');
   console.log('DATABASE_URL=postgresql://user:password@host/database?sslmode=require\n');
   process.exit(1);
 }
@@ -38,7 +38,7 @@ async function setupDatabase() {
   } catch (error) {
     console.error('❌ Database connection failed:');
     console.error(error);
-    console.log('\nPlease check your DATABASE_URL in .env.local');
+    console.log('\nPlease check your DATABASE_URL in .env');
     process.exit(1);
   }
 }

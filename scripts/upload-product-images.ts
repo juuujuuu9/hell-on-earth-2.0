@@ -19,7 +19,7 @@ import { eq } from 'drizzle-orm';
 import { randomUUID } from 'crypto';
 
 // Load environment variables
-config({ path: '.env.local' });
+config({ path: '.env' });
 config({ path: '.env' });
 
 /**
@@ -59,7 +59,7 @@ async function main() {
   // Check Bunny.net credentials
   if (!process.env.BUNNY_API_KEY || !process.env.BUNNY_STORAGE_ZONE || !process.env.BUNNY_CDN_URL) {
     console.error('❌ Bunny.net credentials not configured!');
-    console.log('\n💡 Add to .env.local:');
+    console.log('\n💡 Add to .env:');
     console.log('   BUNNY_API_KEY=your-api-key');
     console.log('   BUNNY_STORAGE_ZONE=your-storage-zone-name');
     console.log('   BUNNY_CDN_URL=https://your-storage-zone.b-cdn.net');
@@ -69,7 +69,7 @@ async function main() {
   // Check database connection if creating products
   if (createProducts && !process.env.DATABASE_URL) {
     console.error('❌ DATABASE_URL not configured!');
-    console.log('\n💡 Add to .env.local:');
+    console.log('\n💡 Add to .env:');
     console.log('   DATABASE_URL=postgresql://user:password@host/database?sslmode=require');
     process.exit(1);
   }

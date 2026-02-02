@@ -74,6 +74,20 @@ export const productAttributes = pgTable('product_attributes', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
+// Mailing list: email signups from index and footer forms
+export const mailingList = pgTable(
+  'mailing_list',
+  {
+    id: text('id').primaryKey(),
+    email: text('email').notNull(),
+    source: text('source'), // 'index' | 'footer' for where they signed up
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (table) => ({
+    emailUnique: unique().on(table.email),
+  })
+);
+
 // BTCPay orders: maps invoiceId to order for webhook processing
 export const btcpayOrders = pgTable('btcpay_orders', {
   id: text('id').primaryKey(),
@@ -172,3 +186,5 @@ export type ProductSizeInventory = typeof productSizeInventory.$inferSelect;
 export type NewProductSizeInventory = typeof productSizeInventory.$inferInsert;
 export type BtcpayOrder = typeof btcpayOrders.$inferSelect;
 export type NewBtcpayOrder = typeof btcpayOrders.$inferInsert;
+export type MailingListEntry = typeof mailingList.$inferSelect;
+export type NewMailingListEntry = typeof mailingList.$inferInsert;

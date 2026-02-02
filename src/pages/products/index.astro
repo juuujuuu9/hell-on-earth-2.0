@@ -2,6 +2,7 @@
 /**
  * Products Listing Page
  */
+import PostHogLayout from '../../layouts/PostHogLayout.astro';
 import Layout from '@layouts/Layout.astro';
 import Header from '@components/Header.astro';
 import Footer from '@components/Footer.astro';
@@ -40,187 +41,189 @@ function stripPriceHtml(price: string): string {
 }
 ---
 
-<Layout title="All Products" hideHeader={true}>
-  <main class="min-h-screen bg-white">
-    <Header />
+<PostHogLayout>
+  <Layout title="All Products" hideHeader={true}>
+    <main class="min-h-screen bg-white">
+      <Header />
 
-    <!-- Main Content -->
-    <div class="max-w-[1920px] mx-auto flex flex-col gap-0">
-      <div id="shop-navigation" class="w-full px-4 lg:px-8 py-2 lg:py-4 flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between lg:gap-0 lg:relative">
-        {/* Categories - top row on mobile, centered on desktop */}
-        {categories.length > 0 && (
-          <>
-            <div class="category-scroll-container w-full overflow-x-auto lg:w-auto lg:overflow-visible order-first lg:order-none lg:absolute lg:left-1/2 lg:transform lg:-translate-x-1/2 pb-0">
-              <ul class="flex items-center gap-6 flex-nowrap lg:flex-wrap" id="category-filters">
-                <li>
-                  <button
-                    data-category=""
-                    class={`text-md uppercase hover:opacity-70 transition-opacity whitespace-nowrap cursor-pointer ${
-                      !selectedCategorySlug ? 'text-[#00cd00] font-bold' : 'text-black'
-                    }`}
-                  >
-                    ALL
-                  </button>
-                </li>
-                {categories.map((category) => (
+      <!-- Main Content -->
+      <div class="max-w-[1920px] mx-auto flex flex-col gap-0">
+        <div id="shop-navigation" class="w-full px-4 lg:px-8 py-2 lg:py-4 flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between lg:gap-0 lg:relative">
+          {/* Categories - top row on mobile, centered on desktop */}
+          {categories.length > 0 && (
+            <>
+              <div class="category-scroll-container w-full overflow-x-auto lg:w-auto lg:overflow-visible order-first lg:order-none lg:absolute lg:left-1/2 lg:transform lg:-translate-x-1/2 pb-0">
+                <ul class="flex items-center gap-6 flex-nowrap lg:flex-wrap" id="category-filters">
                   <li>
                     <button
-                      data-category={category.slug}
+                      data-category=""
                       class={`text-md uppercase hover:opacity-70 transition-opacity whitespace-nowrap cursor-pointer ${
-                        selectedCategorySlug === category.slug ? 'text-[#00cd00] font-bold' : 'text-black'
+                        !selectedCategorySlug ? 'text-[#00cd00] font-bold' : 'text-black'
                       }`}
                     >
-                      {category.name}
+                      ALL
                     </button>
                   </li>
-                ))}
-              </ul>
-            </div>
-            <div class="border-b border-gray-200 lg:hidden -mx-2 lg:mx-0"></div>
-          </>
-        )}
-        {/* Season text and Filter button - same row on mobile, separate on desktop */}
-        <div class="flex items-center justify-between lg:contents">
-          <h1 class="text-md text-black font-bold uppercase order-2 lg:order-none season-title">MMXXVI-I</h1>
-          <button 
-            id="filters-button"
-            class="text-md text-black uppercase hover:opacity-70 transition-opacity order-3 lg:order-none cursor-pointer"
-          >
-            FILTERS
-          </button>
+                  {categories.map((category) => (
+                    <li>
+                      <button
+                        data-category={category.slug}
+                        class={`text-md uppercase hover:opacity-70 transition-opacity whitespace-nowrap cursor-pointer ${
+                          selectedCategorySlug === category.slug ? 'text-[#00cd00] font-bold' : 'text-black'
+                        }`}
+                      >
+                        {category.name}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div class="border-b border-gray-200 lg:hidden -mx-2 lg:mx-0"></div>
+            </>
+          )}
+          {/* Season text and Filter button - same row on mobile, separate on desktop */}
+          <div class="flex items-center justify-between lg:contents">
+            <h1 class="text-md text-black font-bold uppercase order-2 lg:order-none season-title">MMXXVI-I</h1>
+            <button 
+              id="filters-button"
+              class="text-md text-black uppercase hover:opacity-70 transition-opacity order-3 lg:order-none cursor-pointer"
+            >
+              FILTERS
+            </button>
+          </div>
         </div>
+
+        {filteredProducts.length === 0 ? (
+          <div class="text-center py-12 empty-state" id="empty-state">
+            <p class="text-gray-500">
+              {selectedCategorySlug ? 'No products found in this category.' : 'No products found.'}
+            </p>
+            <p class="text-sm text-gray-400 mt-2">
+              {selectedCategorySlug ? (
+                <button class="text-[#00cd00] hover:opacity-70 underline show-all-btn cursor-pointer">
+                  View all products
+                </button>
+              ) : (
+                'No products available.'
+              )}
+            </p>
+          </div>
+        ) : (
+          <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-0 product-grid" id="products-grid">
+            {filteredProducts.map((product) => {
+              // Format price: extract numeric value and format as USD XX.XX
+              let formattedPrice: string | null = null;
+              if (product.price) {
+                const cleanPrice = stripPriceHtml(product.price);
+                // Extract numeric value (handles various formats like $50.00, 50.00, £50, etc.)
+                const numericMatch = cleanPrice.match(/(\d+\.?\d*)/);
+                if (numericMatch) {
+                  const numericValue = parseFloat(numericMatch[1]);
+                  formattedPrice = `USD ${numericValue.toFixed(2)}`;
+                }
+              }
+              
+              // Find hover image based on product type
+              const isShellJacket = product.name.toLowerCase().includes('shell jacket');
+              const isShellJacketBlue = product.name.toLowerCase().includes('shell jacket') && product.name.toLowerCase().includes('blue');
+              const hasMultipleImages = product.galleryImages?.nodes && product.galleryImages.nodes.length > 1;
+              
+              let hoverImage = null;
+              let showHoverEffect = false;
+              
+              if (isShellJacketBlue && hasMultipleImages && product.galleryImages?.nodes) {
+                // For blue shell jacket: use second image that's different from primary
+                hoverImage = product.galleryImages.nodes.find(img => img.sourceUrl !== product.image?.sourceUrl);
+                showHoverEffect = !!hoverImage;
+              } else if (isShellJacket && hasMultipleImages && product.galleryImages?.nodes) {
+                // For other shell jackets: use thermochromic if available
+                const thermochromicImage = product.galleryImages.nodes.find(img => 
+                  img.sourceUrl.toLowerCase().includes('thermochromic')
+                );
+                
+                hoverImage = thermochromicImage;
+                showHoverEffect = !!hoverImage && hoverImage.sourceUrl !== product.image?.sourceUrl;
+              } else if (hasMultipleImages && product.galleryImages?.nodes) {
+                // For other products: use second image that's different from primary
+                hoverImage = product.galleryImages.nodes.find(img => img.sourceUrl !== product.image?.sourceUrl);
+                showHoverEffect = !!hoverImage;
+              }
+              
+              // Extract sizes and colors from attributes
+              const productSizes: string[] = [];
+              const productColors: string[] = [];
+              product.attributes?.nodes.forEach(attr => {
+                if (attr.name.toLowerCase() === 'size') {
+                  productSizes.push(...attr.options);
+                }
+                if (attr.name.toLowerCase() === 'color') {
+                  productColors.push(...attr.options);
+                }
+              });
+              const productTypeNames = product.productCategories?.nodes.map(c => c.name) || [];
+
+              return (
+                <a
+                  href={`/products/${product.slug}`}
+                  class="group product-item cursor-pointer"
+                  data-categories={JSON.stringify(product.productCategories?.nodes.map(c => c.slug) || [])}
+                  data-sizes={JSON.stringify(productSizes)}
+                  data-colors={JSON.stringify(productColors)}
+                  data-product-types={JSON.stringify(productTypeNames)}
+                >
+                  {/* Product Image - Square with light gray background */}
+                  <div class="w-full aspect-square bg-gray-100 mb-2 flex items-center justify-center overflow-hidden relative">
+                    {product.image ? (
+                      <>
+                        {/* Primary image */}
+                        <img
+                          src={product.image.sourceUrl}
+                          alt={product.image.altText || product.name}
+                          class={`w-full h-full object-contain transition-opacity duration-300 absolute inset-0 ${
+                            showHoverEffect
+                              ? 'opacity-100 group-hover:opacity-0' 
+                              : 'group-hover:opacity-90'
+                          }`}
+                        />
+                        {/* Hover image - visible on hover */}
+                        {showHoverEffect && hoverImage && (
+                          <img
+                            src={hoverImage.sourceUrl}
+                            alt={hoverImage.altText || product.name}
+                            class="w-full h-full object-contain transition-opacity duration-300 opacity-0 group-hover:opacity-100 absolute inset-0"
+                          />
+                        )}
+                      </>
+                    ) : (
+                      <span class="text-gray-400 text-sm">No image</span>
+                    )}
+                  </div>
+                  
+                  {/* Product Info */}
+                  <div class="space-y-1 text-center">
+                    <h2 class="text-base font-bold uppercase text-[#00cd00] group-hover:opacity-70 transition-opacity product-title">
+                      {product.name}
+                    </h2>
+                    
+                    {formattedPrice && (
+                      <p class="text-sm text-black font-medium mt-2 product-price">
+                        {formattedPrice}
+                      </p>
+                    )}
+                  </div>
+                </a>
+              );
+            })}
+          </div>
+        )}
       </div>
 
-      {filteredProducts.length === 0 ? (
-        <div class="text-center py-12 empty-state" id="empty-state">
-          <p class="text-gray-500">
-            {selectedCategorySlug ? 'No products found in this category.' : 'No products found.'}
-          </p>
-          <p class="text-sm text-gray-400 mt-2">
-            {selectedCategorySlug ? (
-              <button class="text-[#00cd00] hover:opacity-70 underline show-all-btn cursor-pointer">
-                View all products
-              </button>
-            ) : (
-              'No products available.'
-            )}
-          </p>
-        </div>
-      ) : (
-        <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-0 product-grid" id="products-grid">
-          {filteredProducts.map((product) => {
-            // Format price: extract numeric value and format as USD XX.XX
-            let formattedPrice: string | null = null;
-            if (product.price) {
-              const cleanPrice = stripPriceHtml(product.price);
-              // Extract numeric value (handles various formats like $50.00, 50.00, £50, etc.)
-              const numericMatch = cleanPrice.match(/(\d+\.?\d*)/);
-              if (numericMatch) {
-                const numericValue = parseFloat(numericMatch[1]);
-                formattedPrice = `USD ${numericValue.toFixed(2)}`;
-              }
-            }
-            
-            // Find hover image based on product type
-            const isShellJacket = product.name.toLowerCase().includes('shell jacket');
-            const isShellJacketBlue = product.name.toLowerCase().includes('shell jacket') && product.name.toLowerCase().includes('blue');
-            const hasMultipleImages = product.galleryImages?.nodes && product.galleryImages.nodes.length > 1;
-            
-            let hoverImage = null;
-            let showHoverEffect = false;
-            
-            if (isShellJacketBlue && hasMultipleImages && product.galleryImages?.nodes) {
-              // For blue shell jacket: use second image that's different from primary
-              hoverImage = product.galleryImages.nodes.find(img => img.sourceUrl !== product.image?.sourceUrl);
-              showHoverEffect = !!hoverImage;
-            } else if (isShellJacket && hasMultipleImages && product.galleryImages?.nodes) {
-              // For other shell jackets: use thermochromic if available
-              const thermochromicImage = product.galleryImages.nodes.find(img => 
-                img.sourceUrl.toLowerCase().includes('thermochromic')
-              );
-              
-              hoverImage = thermochromicImage;
-              showHoverEffect = !!hoverImage && hoverImage.sourceUrl !== product.image?.sourceUrl;
-            } else if (hasMultipleImages && product.galleryImages?.nodes) {
-              // For other products: use second image that's different from primary
-              hoverImage = product.galleryImages.nodes.find(img => img.sourceUrl !== product.image?.sourceUrl);
-              showHoverEffect = !!hoverImage;
-            }
-            
-            // Extract sizes and colors from attributes
-            const productSizes: string[] = [];
-            const productColors: string[] = [];
-            product.attributes?.nodes.forEach(attr => {
-              if (attr.name.toLowerCase() === 'size') {
-                productSizes.push(...attr.options);
-              }
-              if (attr.name.toLowerCase() === 'color') {
-                productColors.push(...attr.options);
-              }
-            });
-            const productTypeNames = product.productCategories?.nodes.map(c => c.name) || [];
+      <FilterTray products={products} categories={categories} />
 
-            return (
-              <a
-                href={`/products/${product.slug}`}
-                class="group product-item cursor-pointer"
-                data-categories={JSON.stringify(product.productCategories?.nodes.map(c => c.slug) || [])}
-                data-sizes={JSON.stringify(productSizes)}
-                data-colors={JSON.stringify(productColors)}
-                data-product-types={JSON.stringify(productTypeNames)}
-              >
-                {/* Product Image - Square with light gray background */}
-                <div class="w-full aspect-square bg-gray-100 mb-2 flex items-center justify-center overflow-hidden relative">
-                  {product.image ? (
-                    <>
-                      {/* Primary image */}
-                      <img
-                        src={product.image.sourceUrl}
-                        alt={product.image.altText || product.name}
-                        class={`w-full h-full object-contain transition-opacity duration-300 absolute inset-0 ${
-                          showHoverEffect
-                            ? 'opacity-100 group-hover:opacity-0' 
-                            : 'group-hover:opacity-90'
-                        }`}
-                      />
-                      {/* Hover image - visible on hover */}
-                      {showHoverEffect && hoverImage && (
-                        <img
-                          src={hoverImage.sourceUrl}
-                          alt={hoverImage.altText || product.name}
-                          class="w-full h-full object-contain transition-opacity duration-300 opacity-0 group-hover:opacity-100 absolute inset-0"
-                        />
-                      )}
-                    </>
-                  ) : (
-                    <span class="text-gray-400 text-sm">No image</span>
-                  )}
-                </div>
-                
-                {/* Product Info */}
-                <div class="space-y-1 text-center">
-                  <h2 class="text-base font-bold uppercase text-[#00cd00] group-hover:opacity-70 transition-opacity product-title">
-                    {product.name}
-                  </h2>
-                  
-                  {formattedPrice && (
-                    <p class="text-sm text-black font-medium mt-2 product-price">
-                      {formattedPrice}
-                    </p>
-                  )}
-                </div>
-              </a>
-            );
-          })}
-        </div>
-      )}
-    </div>
-
-    <FilterTray products={products} categories={categories} />
-
-    <Footer />
-  </main>
-</Layout>
+      <Footer />
+    </main>
+  </Layout>
+</PostHogLayout>
 
 <style>
   /* Custom scrollbar styling */
@@ -370,7 +373,7 @@ function stripPriceHtml(price: string): string {
           const productColors = colorsAttr ? JSON.parse(colorsAttr) : [];
           const productTypes = productTypesAttr ? JSON.parse(productTypesAttr) : [];
           
-          // Size filter: if sizes are selected, product must have at least one matching size
+          // Size filter: if sizes are selected, product must have
           if (trayFilters.size.length > 0) {
             const hasMatchingSize = trayFilters.size.some(size => productSizes.includes(size));
             if (!hasMatchingSize) {
@@ -378,7 +381,7 @@ function stripPriceHtml(price: string): string {
             }
           }
           
-          // Color filter: if colors are selected, product must have at least one matching color
+          // Color filter: if colors are selected, product must have
           if (trayFilters.color.length > 0 && shouldShow) {
             const hasMatchingColor = trayFilters.color.some(color => productColors.includes(color));
             if (!hasMatchingColor) {
@@ -386,7 +389,7 @@ function stripPriceHtml(price: string): string {
             }
           }
           
-          // Product type filter: if types are selected, product must have at least one matching type
+          // Product type filter: if types are selected, product must have
           if (trayFilters['product-type'].length > 0 && shouldShow) {
             const hasMatchingType = trayFilters['product-type'].some(type => productTypes.includes(type));
             if (!hasMatchingType) {

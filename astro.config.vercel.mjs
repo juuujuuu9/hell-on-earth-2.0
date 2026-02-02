@@ -1,5 +1,7 @@
 // @ts-check
-// Local / default config. Production uses astro.config.vercel.mjs (npm run build:vercel).
+// Production config for Vercel. Use this only for deployment.
+// Local dev and "npm run build" use astro.config.mjs.
+// In Vercel: set Build Command to "npm run build:vercel"
 import { defineConfig } from 'astro/config';
 import react from '@astrojs/react';
 import vercel from '@astrojs/vercel';
@@ -10,7 +12,6 @@ import tailwindcss from '@tailwindcss/vite';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-// https://astro.build/config
 export default defineConfig({
   output: 'static',
   adapter: vercel(),

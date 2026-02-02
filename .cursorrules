@@ -168,6 +168,13 @@ Instead of fake commands, use **inline annotations** in code:
 - Workflow: Add image → Compress → Convert to WebP → Upload to Bunny → Add to database → Use CDN URL
 - Scripts available: `npm run compress:webp`, `npm run upload:images`
 
+### RULE-015: One-Off Scripts — Delete After Use ⚠️
+**Scripts for a specific use case should not linger**
+- If a script updates a specific set of items with specific info and will likely never be used again, treat it as one-off.
+- When such a script has been run and completed successfully, **prompt and ask to delete it every time** (e.g. "This script looks one-off. Delete it now?").
+- Prefer deleting one-off scripts immediately after use; do not leave them in `scripts/` "just in case."
+- Recurring workflow scripts (e.g. compress-images, upload-product-images, import-mailing-list, setup-db) stay; one-off data fixes, migrations for a single product line, or single-purpose updates go.
+
 ---
 
 ## Rule Symbols
@@ -323,6 +330,6 @@ You: "Yes"
 
 ---
 
-**Last updated:** 2026-01-27  
-**Active rules:** 14  
+**Last updated:** 2026-02-01  
+**Active rules:** 15  
 **Philosophy:** Radical simplicity
