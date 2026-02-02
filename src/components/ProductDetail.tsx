@@ -11,6 +11,13 @@ interface DisplayImage {
   altText?: string | null;
 }
 
+interface MeasurementData {
+  sizes: Array<{
+    size: string;
+    measurements: Record<string, string>;
+  }>;
+}
+
 interface ProductDetailProps {
   product: Product;
   formattedPrice: string;
@@ -64,6 +71,25 @@ export default function ProductDetail({
 
   const categorySlug = product.productCategories?.nodes?.[0]?.slug;
   const categoryName = product.productCategories?.nodes?.[0]?.name;
+
+  // Parse measurements data
+  let measurementsData: MeasurementData | null = null;
+  let measurementFields: string[] = [];
+  
+  if (product.measurements) {
+    try {
+      const parsed = JSON.parse(product.measurements);
+      // Handle both array format [{ sizes: [...] }] and direct object format { sizes: [...] }
+      measurementsData = Array.isArray(parsed) ? parsed[0] : parsed;
+      
+      // Extract measurement field names from first size
+      if (measurementsData?.sizes?.[0]?.measurements) {
+        measurementFields = Object.keys(measurementsData.sizes[0].measurements);
+      }
+    } catch (e) {
+      console.error('Failed to parse measurements:', e);
+    }
+  }
 
   return (
     <div className="p-0">
@@ -143,7 +169,8 @@ export default function ProductDetail({
             </div>
           )}
 
-          {product.measurements && (
+          {/* Desktop measurements tray - slides in from right */}
+          {measurementsData && (
             <div
               id="measurements-tray"
               className={`hidden lg:block absolute top-0 left-0 right-0 bottom-0 bg-white z-50 transition-transform duration-500 ease-in-out overflow-y-auto ${measurementsOpen ? 'translate-x-0' : 'translate-x-full'}`}
@@ -164,10 +191,98 @@ export default function ProductDetail({
                   <h2 className="text-2xl font-bold uppercase tracking-wide mb-8">
                     <span className="text-black">■</span> MEASUREMENTS
                   </h2>
-                  <div className="text-base leading-relaxed" dangerouslySetInnerHTML={{ __html: product.measurements || '' }} />
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm border-collapse">
+                      <thead>
+                        <tr className="border-b border-gray-300">
+                          <th className="text-left py-3 px-4 font-bold uppercase">Size</th>
+                          {measurementFields.map((field) => (
+                            <th key={field} className="text-left py-3 px-4 font-bold uppercase">{field}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {measurementsData.sizes.map((sizeData) => (
+                          <tr key={sizeData.size} className="border-b border-gray-200 hover:bg-gray-50">
+                            <td className="py-3 px-4 font-medium">{sizeData.size}</td>
+                            {measurementFields.map((field) => (
+                              <td key={field} className="py-3 px-4">{sizeData.measurements[field]}</td>
+                            ))}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               </div>
             </div>
+          )}
+
+          {/* Desktop backdrop - covers right column when tray is open */}
+          {measurementsData && (
+            <div
+              className={`hidden lg:block fixed inset-0 z-40 transition-opacity duration-300 ${measurementsOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+              onClick={() => setMeasurementsOpen(false)}
+            />
+          )}
+
+          {/* Mobile measurements tray - slides up from bottom */}
+          {measurementsData && (
+            <>
+              {/* Backdrop */}
+              <div
+                className={`lg:hidden fixed inset-0 bg-black/50 z-[99] transition-opacity duration-300 ${measurementsOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+                onClick={() => setMeasurementsOpen(false)}
+              />
+              {/* Slide-up tray */}
+              <div
+                className={`lg:hidden fixed left-0 right-0 bottom-0 bg-white z-[100] rounded-t-2xl transition-transform duration-300 ease-out max-h-[80vh] overflow-y-auto ${measurementsOpen ? 'translate-y-0' : 'translate-y-full'}`}
+              >
+                {/* Handle bar */}
+                <div className="flex justify-center pt-3 pb-2">
+                  <div className="w-12 h-1 bg-gray-300 rounded-full" />
+                </div>
+                <div className="px-4 pb-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-lg font-bold uppercase tracking-wide">
+                      <span className="text-black">■</span> MEASUREMENTS
+                    </h2>
+                    <button
+                      type="button"
+                      onClick={() => setMeasurementsOpen(false)}
+                      className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 rounded-full transition-colors cursor-pointer"
+                      aria-label="Close measurements"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm border-collapse">
+                      <thead>
+                        <tr className="border-b border-gray-300">
+                          <th className="text-left py-3 px-2 font-bold uppercase text-xs">Size</th>
+                          {measurementFields.map((field) => (
+                            <th key={field} className="text-left py-3 px-2 font-bold uppercase text-xs">{field}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {measurementsData.sizes.map((sizeData) => (
+                          <tr key={sizeData.size} className="border-b border-gray-200">
+                            <td className="py-3 px-2 font-medium">{sizeData.size}</td>
+                            {measurementFields.map((field) => (
+                              <td key={field} className="py-3 px-2">{sizeData.measurements[field]}</td>
+                            ))}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </>
           )}
         </div>
 
@@ -272,11 +387,11 @@ export default function ProductDetail({
                       <span className="font-medium uppercase">COLOR:</span> {colorAttribute.options.join(', ').toUpperCase()}
                     </div>
                   ) : null}
-                  {product.measurements && (
+                  {measurementsData && (
                     <div className="text-base">
                       <button
                         type="button"
-                        onClick={() => setMeasurementsOpen(true)}
+                        onClick={() => setMeasurementsOpen((prev) => !prev)}
                         className="uppercase underline hover:no-underline cursor-pointer"
                         aria-label="View measurements"
                       >
