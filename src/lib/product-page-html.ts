@@ -24,7 +24,7 @@ function escapeHtml(s: string): string {
     .replace(/'/g, '&#39;');
 }
 
-export function buildProductPageHtml(product: Product): string {
+export function buildProductPageHtml(product: Product, relatedProducts: Product[] = []): string {
   const formattedPrice = formatPrice(product.price);
   const primaryImage = product.image;
   const imgSrc = primaryImage?.sourceUrl ?? '';
@@ -41,6 +41,37 @@ export function buildProductPageHtml(product: Product): string {
   } else {
     cartBlock = `<a href="${escapeHtml(checkoutUrl)}" class="block w-full px-6 py-4 text-center text-[1.5rem] bg-black text-white uppercase font-semibold hover:opacity-70 transition-opacity">+ ADD TO CART</a>`;
   }
+
+  const relatedSection =
+    relatedProducts.length > 0
+      ? `
+  <section class="border-t border-gray-200" aria-label="Recommended products">
+    <div class="grid grid-cols-2 lg:grid-cols-5 gap-0 border-gray-200">
+      ${relatedProducts
+        .map((p, i) => {
+          const pPrice = formatPrice(p.price);
+          const pImg = p.image?.sourceUrl ?? '';
+          const pImgAlt = escapeHtml(p.image?.altText || p.name);
+          const pName = escapeHtml(p.name);
+          const pSlug = escapeHtml(p.slug);
+          const isLastInRowMobile = (i + 1) % 2 === 0;
+          const isLastInRowLg = (i + 1) % 5 === 0;
+          const rightBorderClass = isLastInRowLg ? ' border-r-0' : isLastInRowMobile ? ' border-r-0 lg:border-r' : '';
+          const firstRowBorder = i < 5 ? ' lg:border-b lg:border-gray-200' : '';
+          return `<a href="/products/${pSlug}" class="group block border-r border-gray-200 p-4 lg:p-6${rightBorderClass}${firstRowBorder}" aria-label="View ${pName}">
+        <div class="w-full aspect-square bg-gray-100 mb-2 flex items-center justify-center overflow-hidden">
+          ${pImg ? `<img src="${escapeHtml(pImg)}" alt="${pImgAlt}" class="w-full h-full object-contain" loading="lazy" />` : '<span class="text-gray-400 text-sm">No image</span>'}
+        </div>
+        <div class="space-y-1 text-center">
+          <h3 class="text-base font-bold uppercase text-[#00cd00] group-hover:opacity-70 transition-opacity">${pName}</h3>
+          <p class="text-sm text-black font-medium mt-2">${escapeHtml(pPrice)}</p>
+        </div>
+      </a>`;
+        })
+        .join('')}
+    </div>
+  </section>`
+      : '';
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -90,7 +121,7 @@ export function buildProductPageHtml(product: Product): string {
         ${product.shortDescription ? `<div class="mt-6 pt-6 border-t border-gray-200 text-base leading-relaxed">${product.shortDescription}</div>` : ''}
         ${product.description ? `<div class="mt-6 pt-6 border-t border-gray-200 text-base leading-relaxed">${product.description}</div>` : ''}
       </div>
-    </div>
+    </div>${relatedSection}
   </main>
   <footer class="max-w-[1920px] mx-auto px-4 lg:px-8 pb-16 pt-8 border-t mt-8">
     <p class="text-center text-sm"><a href="/products" class="underline hover:opacity-70">Back to shop</a></p>

@@ -360,6 +360,86 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
 }
 
 /**
+ * Get related products for a PDP row: at least one per category, then fill with same-category and similar-color. Excludes current product.
+ */
+export async function getRelatedProducts(currentSlug: string, limit: number): Promise<Product[]> {
+  const current = await getProductBySlug(currentSlug);
+  if (!current) return [];
+
+  const currentCategorySlugs = new Set(
+    current.productCategories?.nodes?.map((c) => c.slug) ?? []
+  );
+  const currentColorOptions = (
+    current.attributes?.nodes?.find((a) => a.name.toLowerCase() === 'color')?.options ?? []
+  ).map((o) => o.toLowerCase());
+
+  const allProducts = (await getAllProducts()).filter((p) => p.slug !== currentSlug);
+  if (allProducts.length === 0) return [];
+
+  const allCategories = await getAllCategories();
+  const currentFirstSlug = current.productCategories?.nodes?.[0]?.slug;
+  const categoryOrder: string[] = currentFirstSlug
+    ? [currentFirstSlug, ...allCategories.map((c) => c.slug).filter((s) => s !== currentFirstSlug)]
+    : allCategories.map((c) => c.slug);
+
+  const related: Product[] = [];
+  const relatedSlugs = new Set<string>();
+
+  for (const catSlug of categoryOrder) {
+    if (related.length >= limit) break;
+    const candidate = allProducts.find(
+      (p) =>
+        !relatedSlugs.has(p.slug) &&
+        p.productCategories?.nodes?.some((c) => c.slug === catSlug)
+    );
+    if (candidate) {
+      related.push(candidate);
+      relatedSlugs.add(candidate.slug);
+    }
+  }
+
+  if (related.length < limit) {
+    const sameCategory = allProducts.filter(
+      (p) =>
+        !relatedSlugs.has(p.slug) &&
+        p.productCategories?.nodes?.some((c) => currentCategorySlugs.has(c.slug))
+    );
+    for (const p of sameCategory) {
+      if (related.length >= limit) break;
+      related.push(p);
+      relatedSlugs.add(p.slug);
+    }
+  }
+
+  if (related.length < limit && currentColorOptions.length > 0) {
+    const similarColor = allProducts.filter((p) => {
+      if (relatedSlugs.has(p.slug)) return false;
+      const colorOpts = (
+        p.attributes?.nodes?.find((a) => a.name.toLowerCase() === 'color')?.options ?? []
+      ).map((o) => o.toLowerCase());
+      return colorOpts.some((c) => currentColorOptions.includes(c));
+    });
+    for (const p of similarColor) {
+      if (related.length >= limit) break;
+      related.push(p);
+      relatedSlugs.add(p.slug);
+    }
+  }
+
+  if (related.length < limit) {
+    for (const p of allProducts) {
+      if (related.length >= limit) break;
+      if (!relatedSlugs.has(p.slug)) {
+        related.push(p);
+        relatedSlugs.add(p.slug);
+      }
+    }
+  }
+
+  return related.slice(0, limit);
+}
+
+/**
  * Get all categories
  */
 export async function getAllCategories(): Promise<ProductCategory[]> {

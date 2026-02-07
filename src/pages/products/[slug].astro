@@ -8,7 +8,7 @@ import Header from '@components/Header.astro';
 import Footer from '@components/Footer.astro';
 import ProductDetail from '@components/ProductDetail';
 import type { Product } from '@lib/types';
-import { getAllProducts, getProductBySlug } from '@lib/db/queries';
+import { getAllProducts, getProductBySlug, getRelatedProducts } from '@lib/db/queries';
 import { isBtcpayConfigured } from '@lib/btcpay';
 
 export async function getStaticPaths() {
@@ -56,6 +56,18 @@ const displayImages = primaryImage
   : allImages;
 const hasMultipleImages = displayImages.length > 1;
 const btcpayAvailable = isBtcpayConfigured();
+const relatedProducts = await getRelatedProducts(product.slug, 10);
+
+function formatRelatedPrice(price: string | undefined): string | null {
+  if (!price) return null;
+  const cleanPrice = stripPriceHtml(price);
+  const numericMatch = cleanPrice.match(/(\d+\.?\d*)/);
+  if (numericMatch) {
+    const numericValue = parseFloat(numericMatch[1]);
+    return `USD ${numericValue.toFixed(2)}`;
+  }
+  return null;
+}
 ---
 <Layout title={product.name} hideHeader={true}>
   <main class="min-h-screen bg-white">
@@ -70,6 +82,67 @@ const btcpayAvailable = isBtcpayConfigured();
       colorAttribute={colorAttribute}
       sizeAttribute={sizeAttribute}
     />
+    {relatedProducts.length > 0 && (
+      <section class="max-w-[1920px] mx-auto border-t border-gray-200" aria-label="Recommended products">
+        <div class="grid grid-cols-2 lg:grid-cols-5 gap-0 border-gray-200">
+          {relatedProducts.map((p) => {
+            const formattedRelatedPrice = formatRelatedPrice(p.price);
+            const isShellJacket = p.name.toLowerCase().includes('shell jacket');
+            const isShellJacketBlue = p.name.toLowerCase().includes('shell jacket') && p.name.toLowerCase().includes('blue');
+            const hasMultipleImages = p.galleryImages?.nodes && p.galleryImages.nodes.length > 1;
+            let hoverImage: { sourceUrl: string; altText?: string } | null = null;
+            let showHoverEffect = false;
+            if (isShellJacketBlue && hasMultipleImages && p.galleryImages?.nodes) {
+              hoverImage = p.galleryImages.nodes.find(img => img.sourceUrl !== p.image?.sourceUrl) ?? null;
+              showHoverEffect = !!hoverImage;
+            } else if (isShellJacket && hasMultipleImages && p.galleryImages?.nodes) {
+              const thermochromicImage = p.galleryImages.nodes.find(img => img.sourceUrl.toLowerCase().includes('thermochromic'));
+              hoverImage = thermochromicImage ?? null;
+              showHoverEffect = !!hoverImage && hoverImage.sourceUrl !== p.image?.sourceUrl;
+            } else if (hasMultipleImages && p.galleryImages?.nodes) {
+              hoverImage = p.galleryImages.nodes.find(img => img.sourceUrl !== p.image?.sourceUrl) ?? null;
+              showHoverEffect = !!hoverImage;
+            }
+            return (
+              <a
+                href={`/products/${p.slug}`}
+                class="group block border-r border-gray-200 p-4 lg:p-6 cursor-pointer nth-[2n]:border-r-0 lg:nth-[2n]:border-r lg:nth-[5n]:border-r-0 lg:[&:nth-child(-n+5)]:border-b lg:[&:nth-child(-n+5)]:border-gray-200"
+                aria-label={`View ${p.name}`}
+              >
+                <div class="w-full aspect-square bg-gray-100 mb-2 flex items-center justify-center overflow-hidden relative">
+                  {p.image ? (
+                    <>
+                      <img
+                        src={p.image.sourceUrl}
+                        alt={p.image.altText || p.name}
+                        class={`w-full h-full object-contain transition-opacity duration-300 absolute inset-0 ${showHoverEffect ? 'opacity-100 group-hover:opacity-0' : 'group-hover:opacity-90'}`}
+                      />
+                      {showHoverEffect && hoverImage && (
+                        <img
+                          src={hoverImage.sourceUrl}
+                          alt={hoverImage.altText || p.name}
+                          class="w-full h-full object-contain transition-opacity duration-300 opacity-0 group-hover:opacity-100 absolute inset-0"
+                        />
+                      )}
+                    </>
+                  ) : (
+                    <span class="text-gray-400 text-sm">No image</span>
+                  )}
+                </div>
+                <div class="space-y-1 text-center">
+                  <h3 class="text-base font-bold uppercase text-[#00cd00] group-hover:opacity-70 transition-opacity">
+                    {p.name}
+                  </h3>
+                  {formattedRelatedPrice && (
+                    <p class="text-sm text-black font-medium mt-2">{formattedRelatedPrice}</p>
+                  )}
+                </div>
+              </a>
+            );
+          })}
+        </div>
+      </section>
+    )}
     <Footer />
   </main>
 </Layout>

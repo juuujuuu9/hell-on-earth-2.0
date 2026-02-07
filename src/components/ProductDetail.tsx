@@ -326,7 +326,8 @@ export default function ProductDetail({
         {/* Right: Details */}
         <div className="flex flex-col py-0 pt-0 lg:pt-4">
           <nav className="text-sm text-gray-600 sm:px-8 px-4 pb-8" aria-label="Breadcrumb">
-            <ol className="flex items-center gap-2">
+            <div className="overflow-x-auto scrollbar-hide sm:overflow-visible -mx-4 px-4 sm:mx-0 sm:px-0">
+              <ol className="flex items-center gap-2 flex-nowrap sm:flex-wrap min-w-max sm:min-w-0">
               <li><a href="/" className="hover:text-gray-900 transition-colors">HOME</a></li>
               {categorySlug && categoryName && (
                 <>
@@ -340,7 +341,8 @@ export default function ProductDetail({
               )}
               <li className="text-gray-400">/</li>
               <li className="text-gray-900 font-medium" aria-current="page">{product.name.toUpperCase()}</li>
-            </ol>
+              </ol>
+            </div>
           </nav>
 
           <div className="text-xl font-bold uppercase tracking-wide text-gray-700 pb-0 sm:px-8 px-4">

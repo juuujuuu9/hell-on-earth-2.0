@@ -126,3 +126,13 @@ img {
 #measurements-tray::-webkit-scrollbar-thumb:hover {
   background: #d1d5db !important; /* border-gray-300 */
 }
+
+/* Hide scrollbar while keeping scroll (e.g. breadcrumbs on mobile) */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}

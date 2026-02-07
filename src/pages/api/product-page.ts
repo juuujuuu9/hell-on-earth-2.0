@@ -3,7 +3,7 @@
  * (which triggers compiler panic). Vercel rewrites /products/:slug to this.
  */
 import type { APIRoute } from 'astro';
-import { getProductBySlug } from '@lib/db/queries';
+import { getProductBySlug, getRelatedProducts } from '@lib/db/queries';
 import { buildProductPageHtml } from '@lib/product-page-html';
 
 export const GET: APIRoute = async ({ url }) => {
@@ -17,7 +17,8 @@ export const GET: APIRoute = async ({ url }) => {
     return new Response('Not found', { status: 404 });
   }
 
-  const html = buildProductPageHtml(product);
+  const relatedProducts = await getRelatedProducts(slug, 10);
+  const html = buildProductPageHtml(product, relatedProducts);
   return new Response(html, {
     status: 200,
     headers: { 'Content-Type': 'text/html; charset=utf-8' },
