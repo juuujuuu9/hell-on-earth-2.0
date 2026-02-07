@@ -81,7 +81,14 @@ function formatProduct(
   attributes: ProductAttribute[],
   sizeInventoryList: ProductSizeInventory[]
 ): Product {
-  const primaryImage = images.find(img => img.isPrimary) || images[0];
+  // Deterministic order: primary first, then by sortOrder, then by id
+  const sortedImages = [...images].sort((a, b) => {
+    if (a.isPrimary && !b.isPrimary) return -1;
+    if (!a.isPrimary && b.isPrimary) return 1;
+    if (a.sortOrder !== b.sortOrder) return a.sortOrder - b.sortOrder;
+    return a.id.localeCompare(b.id);
+  });
+  const primaryImage = sortedImages.find(img => img.isPrimary) || sortedImages[0];
   
   return {
     id: dbProduct.id,
@@ -105,8 +112,8 @@ function formatProduct(
       sourceUrl: encodeImageUrl(primaryImage.imageUrl),
       altText: primaryImage.altText || undefined,
     } : undefined,
-    galleryImages: images.length > 0 ? {
-      nodes: images.map(img => ({
+    galleryImages: sortedImages.length > 0 ? {
+      nodes: sortedImages.map(img => ({
         sourceUrl: encodeImageUrl(img.imageUrl),
         altText: img.altText || undefined,
       })),

@@ -11,7 +11,8 @@ import Layout from '@layouts/Layout.astro';
         loop
         playsinline
       >
-        <source id="video-source" src="" type="video/webm" />
+        <source id="video-source-mp4" src="" type="video/mp4" />
+        <source id="video-source-webm" src="" type="video/webm" />
       </video>
       <div class="absolute inset-0 flex flex-col items-center justify-center z-20 overflow-y-auto py-8 px-4">
         <div class="max-w-[650px] w-full mb-8" style="aspect-ratio: 1080 / 581;">
@@ -61,32 +62,28 @@ import Layout from '@layouts/Layout.astro';
 </Layout>
 
 <script>
-  // List of videos in the creep playlist
+  // List of videos in the creep playlist (MP4 for Safari/iOS, WebM for others)
   const videos = [
-    '/videos/creep/Blank Room Soup 2.webm',
-    '/videos/creep/Blank Room Soup 3.webm',
-    '/videos/creep/Blank Room Soup 4.webm',
-    '/videos/creep/Blank Room Soup 5.webm',
-    '/videos/creep/Blank Room Soup.avi.webm',
-    '/videos/creep/Dining Room or There is Nothing.webm',
-    '/videos/creep/full stop punctuation  .    ø.webm',
-    '/videos/creep/Illusion of Bias.webm',
-    '/videos/creep/Take Care.webm',
+    { mp4: '/videos/creep/Blank Room Soup 2.mp4', webm: '/videos/creep/Blank Room Soup 2.webm' },
+    { mp4: '/videos/creep/Blank Room Soup 3.mp4', webm: '/videos/creep/Blank Room Soup 3.webm' },
+    { mp4: '/videos/creep/Blank Room Soup 4.mp4', webm: '/videos/creep/Blank Room Soup 4.webm' },
+    { mp4: '/videos/creep/Blank Room Soup 5.mp4', webm: '/videos/creep/Blank Room Soup 5.webm' },
+    { mp4: '/videos/creep/Blank Room Soup.avi.mp4', webm: '/videos/creep/Blank Room Soup.avi.webm' },
+    { mp4: '/videos/creep/Dining Room or There is Nothing.mp4', webm: '/videos/creep/Dining Room or There is Nothing.webm' },
+    { mp4: '/videos/creep/full stop punctuation  .    ø.mp4', webm: '/videos/creep/full stop punctuation  .    ø.webm' },
+    { mp4: '/videos/creep/Illusion of Bias.mp4', webm: '/videos/creep/Illusion of Bias.webm' },
+    { mp4: '/videos/creep/Take Care.mp4', webm: '/videos/creep/Take Care.webm' },
   ];
 
-  // Select a random video on every page load
   const randomVideo = videos[Math.floor(Math.random() * videos.length)];
-  
   const video = document.getElementById('background-video') as HTMLVideoElement;
-  const source = document.getElementById('video-source') as HTMLSourceElement;
-  
-  if (video && source) {
-    // Set the random video source
-    source.src = randomVideo;
-    // Force reload the video element to pick up the new source
+  const sourceMp4 = document.getElementById('video-source-mp4') as HTMLSourceElement;
+  const sourceWebm = document.getElementById('video-source-webm') as HTMLSourceElement;
+
+  if (video && sourceMp4 && sourceWebm) {
+    sourceMp4.src = randomVideo.mp4;
+    sourceWebm.src = randomVideo.webm;
     video.load();
-    
-    // Ensure video plays (some browsers require user interaction first)
     video.play().catch((error) => {
       console.error('Error playing video:', error);
     });
