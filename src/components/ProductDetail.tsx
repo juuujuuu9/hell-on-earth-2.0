@@ -2,7 +2,7 @@
  * Product detail UI. Renders as a React island so the Astro product page
  * stays minimal and avoids the compiler panic on this route.
  */
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import type { Product } from '@lib/types';
 import CartButton from './CartButton';
 
@@ -41,6 +41,31 @@ export default function ProductDetail({
   const [sizeQuantities, setSizeQuantities] = useState<Record<string, number>>({});
   const [measurementsOpen, setMeasurementsOpen] = useState(false);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
+  const touchStartY = useRef<number>(0);
+  const [swipeOffset, setSwipeOffset] = useState(0);
+
+  const SWIPE_CLOSE_THRESHOLD = 80;
+
+  const handleMobileTrayTouchStart = (e: React.TouchEvent) => {
+    touchStartY.current = e.touches[0].clientY;
+  };
+
+  const handleMobileTrayTouchMove = (e: React.TouchEvent) => {
+    const dy = e.touches[0].clientY - touchStartY.current;
+    // Only track downward swipes (positive dy)
+    if (dy > 0) {
+      setSwipeOffset(dy);
+    }
+  };
+
+  const handleMobileTrayTouchEnd = () => {
+    if (swipeOffset >= SWIPE_CLOSE_THRESHOLD) {
+      setMeasurementsOpen(false);
+      setSwipeOffset(0);
+    } else {
+      setSwipeOffset(0);
+    }
+  };
 
   const handleSizeClick = (size: string) => {
     const qty = sizeQuantities[size] ?? 0;
@@ -54,6 +79,10 @@ export default function ProductDetail({
   };
 
   // Fetch size quantities on mount
+  useEffect(() => {
+    if (!measurementsOpen) setSwipeOffset(0);
+  }, [measurementsOpen]);
+
   useEffect(() => {
     if (!product.sizes?.length || !product.slug) return;
     fetch(`/api/product/${encodeURIComponent(product.slug)}/sizes`, { credentials: 'same-origin' })
@@ -236,10 +265,18 @@ export default function ProductDetail({
               />
               {/* Slide-up tray */}
               <div
-                className={`lg:hidden fixed left-0 right-0 bottom-0 bg-white z-[100] rounded-t-2xl transition-transform duration-300 ease-out max-h-[80vh] overflow-y-auto ${measurementsOpen ? 'translate-y-0' : 'translate-y-full'}`}
+                className={`lg:hidden fixed left-0 right-0 bottom-0 bg-white z-[100] rounded-t-2xl max-h-[80vh] overflow-y-auto ${swipeOffset === 0 ? 'transition-transform duration-300 ease-out' : ''}`}
+                style={{
+                  transform: measurementsOpen ? `translateY(${swipeOffset}px)` : 'translateY(100%)',
+                }}
               >
-                {/* Handle bar */}
-                <div className="flex justify-center pt-3 pb-2">
+                {/* Handle bar - swipe target for closing */}
+                <div
+                  className="flex justify-center pt-3 pb-4 touch-none shrink-0"
+                  onTouchStart={handleMobileTrayTouchStart}
+                  onTouchMove={handleMobileTrayTouchMove}
+                  onTouchEnd={handleMobileTrayTouchEnd}
+                >
                   <div className="w-12 h-1 bg-gray-300 rounded-full" />
                 </div>
                 <div className="px-4 pb-6">
