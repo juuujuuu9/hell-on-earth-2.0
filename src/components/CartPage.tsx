@@ -6,7 +6,12 @@
 
 import { useEffect, useState } from 'react';
 import { useStore } from '@nanostores/react';
-import { cartStore, setCart, setCartLoading, setCartError } from '@lib/cartStore';
+import {
+  cartStore,
+  fetchCartFromServer,
+  updateCartItemQuantity,
+  removeCartItem,
+} from '@lib/cartStore';
 
 // Helper function to strip HTML from price strings
 function stripPriceHtml(price: string): string {
@@ -18,45 +23,19 @@ export default function CartPage() {
   const [updatingKeys, setUpdatingKeys] = useState<Set<string>>(new Set());
   const [removingKeys, setRemovingKeys] = useState<Set<string>>(new Set());
 
-  // Fetch cart on mount
   useEffect(() => {
-    fetchCart();
+    fetchCartFromServer();
   }, []);
-
-  const fetchCart = async () => {
-    setCartLoading(true);
-    setCartError(null);
-
-    try {
-      // TODO: Replace with your new cart API
-      setCart(null);
-      setCartLoading(false);
-    } catch (error) {
-      console.error('Error fetching cart:', error);
-      setCartError(error instanceof Error ? error.message : 'Failed to load cart');
-      setCartLoading(false);
-    }
-  };
 
   const handleUpdateQuantity = async (key: string, quantity: number) => {
     if (quantity < 1) {
       handleRemoveItem(key);
       return;
     }
-
     setUpdatingKeys((prev) => new Set(prev).add(key));
-    setCartError(null);
-
     try {
-      // TODO: Replace with your new cart API
-      setUpdatingKeys((prev) => {
-        const next = new Set(prev);
-        next.delete(key);
-        return next;
-      });
-    } catch (error) {
-      console.error('Error updating cart item:', error);
-      setCartError(error instanceof Error ? error.message : 'Failed to update item');
+      await updateCartItemQuantity(key, quantity);
+    } finally {
       setUpdatingKeys((prev) => {
         const next = new Set(prev);
         next.delete(key);
@@ -67,18 +46,9 @@ export default function CartPage() {
 
   const handleRemoveItem = async (key: string) => {
     setRemovingKeys((prev) => new Set(prev).add(key));
-    setCartError(null);
-
     try {
-      // TODO: Replace with your new cart API
-      setRemovingKeys((prev) => {
-        const next = new Set(prev);
-        next.delete(key);
-        return next;
-      });
-    } catch (error) {
-      console.error('Error removing cart item:', error);
-      setCartError(error instanceof Error ? error.message : 'Failed to remove item');
+      await removeCartItem(key);
+    } finally {
       setRemovingKeys((prev) => {
         const next = new Set(prev);
         next.delete(key);

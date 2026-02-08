@@ -4,10 +4,10 @@
  * Helper functions for querying products and categories
  */
 
-import { eq, and, desc, asc, inArray, sql } from 'drizzle-orm';
+import { eq, and, desc, asc, inArray, isNull } from 'drizzle-orm';
 import { db } from './index';
-import { products, categories, productImages, productCategories, productAttributes, productSizeInventory, btcpayOrders } from './schema';
-import type { Product, ProductCategory } from '../types';
+import { products, categories, productImages, productCategories, productAttributes, productSizeInventory, btcpayOrders, carts, cartItems } from './schema';
+import type { Product, ProductCategory, Cart as AppCart, CartItem as AppCartItem } from '../types';
 import type { Product as DBProduct, ProductImage, ProductAttribute, ProductSizeInventory } from './schema';
 import type { Category } from './schema';
 
@@ -360,6 +360,51 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
 }
 
 /**
+ * Get product by id (for cart and API)
+ */
+export async function getProductById(id: string): Promise<Product | null> {
+  const results = await db
+    .select({
+      product: products,
+      image: productImages,
+      category: categories,
+      productCategory: productCategories,
+      attribute: productAttributes,
+      sizeInventory: productSizeInventory,
+    })
+    .from(products)
+    .where(eq(products.id, id))
+    .leftJoin(productImages, eq(products.id, productImages.productId))
+    .leftJoin(productCategories, eq(products.id, productCategories.productId))
+    .leftJoin(categories, eq(productCategories.categoryId, categories.id))
+    .leftJoin(productAttributes, eq(products.id, productAttributes.productId))
+    .leftJoin(productSizeInventory, eq(products.id, productSizeInventory.productId));
+
+  if (results.length === 0) return null;
+
+  const product = results[0].product;
+  const images: ProductImage[] = [];
+  const categoryInfos: CategoryInfo[] = [];
+  const attributeList: ProductAttribute[] = [];
+  const sizeInventoryList: ProductSizeInventory[] = [];
+
+  for (const row of results) {
+    if (row.image && !images.find((img) => img.id === row.image!.id)) images.push(row.image);
+    if (row.category && !categoryInfos.find((c) => c.categoryId === row.category!.id)) {
+      categoryInfos.push({
+        categoryId: row.category.id,
+        name: row.category.name,
+        slug: row.category.slug,
+      });
+    }
+    if (row.attribute && !attributeList.find((a) => a.id === row.attribute!.id)) attributeList.push(row.attribute);
+    if (row.sizeInventory && !sizeInventoryList.find((s) => s.id === row.sizeInventory!.id)) sizeInventoryList.push(row.sizeInventory);
+  }
+
+  return formatProduct(product, images, categoryInfos, attributeList, sizeInventoryList);
+}
+
+/**
  * Get related products for a PDP row: at least one per category, then fill with same-category and similar-color. Excludes current product.
  */
 export async function getRelatedProducts(currentSlug: string, limit: number): Promise<Product[]> {
@@ -566,4 +611,163 @@ export async function updateBtcpayOrderStatus(
     .update(btcpayOrders)
     .set({ status, updatedAt: new Date() })
     .where(eq(btcpayOrders.id, orderId));
+}
+
+// --- Cart (server-side) ---
+
+const CART_COOKIE_NAME = 'cart_id';
+const CART_COOKIE_MAX_AGE = 60 * 60 * 24 * 30; // 30 days
+
+function parsePriceToNumber(price: string | null): number {
+  if (!price) return 0;
+  const stripped = price.replace(/<[^>]*>/g, '').trim();
+  const match = stripped.match(/(\d+\.?\d*)/);
+  return match ? parseFloat(match[1]) : 0;
+}
+
+function formatLinePrice(amount: number): string {
+  return `${amount.toFixed(2)} USD`;
+}
+
+/**
+ * Get cart_id from request cookies (Astro APIRoute has request)
+ */
+export function getCartIdFromRequest(request: Request): string | null {
+  const cookieHeader = request.headers.get('Cookie');
+  if (!cookieHeader) return null;
+  const match = cookieHeader.match(new RegExp(`${CART_COOKIE_NAME}=([^;]+)`));
+  return match ? match[1].trim() : null;
+}
+
+export { CART_COOKIE_NAME, CART_COOKIE_MAX_AGE };
+
+/**
+ * Create a new cart and return its id
+ */
+export async function createCart(): Promise<string> {
+  const id = crypto.randomUUID();
+  await db.insert(carts).values({ id });
+  return id;
+}
+
+/**
+ * Get cart in app shape (Cart with contents.nodes as CartItem[]) or null if empty/missing
+ */
+export async function getCartForApp(cartId: string): Promise<AppCart | null> {
+  const rows = await db
+    .select()
+    .from(cartItems)
+    .where(eq(cartItems.cartId, cartId))
+    .orderBy(cartItems.createdAt);
+
+  if (rows.length === 0) {
+    return {
+      contents: { nodes: [] },
+      itemCount: 0,
+      subtotal: '0.00 USD',
+      total: '0.00 USD',
+    };
+  }
+
+  const nodes: AppCartItem[] = [];
+  let subtotalNum = 0;
+
+  for (const row of rows) {
+    const product = await getProductById(row.productId);
+    if (!product) continue;
+    const key = row.size ? `${row.productId}-${row.size}` : row.productId;
+    const unitPrice = parsePriceToNumber(product.price ?? null);
+    const lineTotal = unitPrice * row.quantity;
+    subtotalNum += lineTotal;
+    const totalStr = formatLinePrice(lineTotal);
+    nodes.push({
+      key,
+      product: { node: product },
+      quantity: row.quantity,
+      subtotal: totalStr,
+      total: totalStr,
+    });
+  }
+
+  return {
+    contents: { nodes },
+    itemCount: nodes.reduce((s, n) => s + n.quantity, 0),
+    subtotal: formatLinePrice(subtotalNum),
+    total: formatLinePrice(subtotalNum),
+  };
+}
+
+/**
+ * Add item to cart; merge quantity if same product+size exists. Returns added/updated line key.
+ */
+export async function addCartItem(
+  cartId: string,
+  productId: string,
+  quantity: number,
+  size: string | null
+): Promise<string> {
+  const key = size ? `${productId}-${size}` : productId;
+  const existing = await db
+    .select()
+    .from(cartItems)
+    .where(
+      and(
+        eq(cartItems.cartId, cartId),
+        eq(cartItems.productId, productId),
+        size === null ? isNull(cartItems.size) : eq(cartItems.size, size)
+      )
+    )
+    .limit(1);
+
+  if (existing.length > 0) {
+    const newQty = existing[0].quantity + quantity;
+    await db
+      .update(cartItems)
+      .set({ quantity: newQty })
+      .where(eq(cartItems.id, existing[0].id));
+  } else {
+    await db.insert(cartItems).values({
+      id: crypto.randomUUID(),
+      cartId,
+      productId,
+      size,
+      quantity,
+    });
+  }
+
+  await db.update(carts).set({ updatedAt: new Date() }).where(eq(carts.id, cartId));
+  return key;
+}
+
+/**
+ * Update line quantity by key (key = productId or productId-size). Set quantity to 0 to remove.
+ */
+export async function updateCartItemByKey(
+  cartId: string,
+  key: string,
+  quantity: number
+): Promise<void> {
+  const parts = key.includes('-') ? key.split('-') : [key];
+  const productId = parts[0];
+  const size = parts.length > 1 ? parts.slice(1).join('-') : null;
+
+  const rows = await db
+    .select()
+    .from(cartItems)
+    .where(
+      and(
+        eq(cartItems.cartId, cartId),
+        eq(cartItems.productId, productId),
+        size === null ? isNull(cartItems.size) : eq(cartItems.size, size)
+      )
+    )
+    .limit(1);
+
+  if (rows.length === 0) return;
+  if (quantity < 1) {
+    await db.delete(cartItems).where(eq(cartItems.id, rows[0].id));
+  } else {
+    await db.update(cartItems).set({ quantity }).where(eq(cartItems.id, rows[0].id));
+  }
+  await db.update(carts).set({ updatedAt: new Date() }).where(eq(carts.id, cartId));
 }

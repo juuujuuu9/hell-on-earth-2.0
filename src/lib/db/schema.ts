@@ -103,6 +103,29 @@ export const btcpayOrders = pgTable('btcpay_orders', {
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
+// Carts: anonymous cart keyed by cookie (cart_id)
+export const carts = pgTable('carts', {
+  id: text('id').primaryKey(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+// Cart line items
+export const cartItems = pgTable(
+  'cart_items',
+  {
+    id: text('id').primaryKey(),
+    cartId: text('cart_id').notNull().references(() => carts.id, { onDelete: 'cascade' }),
+    productId: text('product_id').notNull().references(() => products.id, { onDelete: 'cascade' }),
+    size: text('size'), // optional variant (e.g. "M", "32")
+    quantity: integer('quantity').default(1).notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (table) => ({
+    cartProductSizeUnique: unique().on(table.cartId, table.productId, table.size),
+  })
+);
+
 // Product size inventory: per-product size labels with updatable quantity (no measurements stored here)
 export const productSizeInventory = pgTable(
   'product_size_inventory',
@@ -124,12 +147,22 @@ export const categoriesRelations = relations(categories, ({ many }) => ({
   productCategories: many(productCategories),
 }));
 
+export const cartsRelations = relations(carts, ({ many }) => ({
+  items: many(cartItems),
+}));
+
+export const cartItemsRelations = relations(cartItems, ({ one }) => ({
+  cart: one(carts, { fields: [cartItems.cartId], references: [carts.id] }),
+  product: one(products, { fields: [cartItems.productId], references: [products.id] }),
+}));
+
 export const productsRelations = relations(products, ({ many }) => ({
   images: many(productImages),
   productCategories: many(productCategories),
   attributes: many(productAttributes),
   sizeInventory: many(productSizeInventory),
   btcpayOrders: many(btcpayOrders),
+  cartItems: many(cartItems),
 }));
 
 export const productImagesRelations = relations(productImages, ({ one }) => ({
@@ -186,5 +219,9 @@ export type ProductSizeInventory = typeof productSizeInventory.$inferSelect;
 export type NewProductSizeInventory = typeof productSizeInventory.$inferInsert;
 export type BtcpayOrder = typeof btcpayOrders.$inferSelect;
 export type NewBtcpayOrder = typeof btcpayOrders.$inferInsert;
+export type DBCart = typeof carts.$inferSelect;
+export type NewDBCart = typeof carts.$inferInsert;
+export type DBCartItem = typeof cartItems.$inferSelect;
+export type NewDBCartItem = typeof cartItems.$inferInsert;
 export type MailingListEntry = typeof mailingList.$inferSelect;
 export type NewMailingListEntry = typeof mailingList.$inferInsert;

@@ -1,0 +1,81 @@
+---
+/**
+ * Checkout page – server-side cart summary and payment placeholder.
+ * Redirects to /cart if cart is empty.
+ */
+export const prerender = false;
+
+import Layout from '@layouts/Layout.astro';
+import Header from '@components/Header.astro';
+import Footer from '@components/Footer.astro';
+import { getCartIdFromRequest, getCartForApp } from '@lib/db/queries';
+
+function stripPriceHtml(price: string): string {
+  return price.replace(/<[^>]*>/g, '').trim();
+}
+
+const cartId = getCartIdFromRequest(Astro.request);
+const cart = cartId ? await getCartForApp(cartId) : null;
+
+if (!cart || (cart.itemCount ?? 0) === 0) {
+  return Astro.redirect('/cart');
+}
+
+const items = cart.contents?.nodes ?? [];
+const subtotal = cart.subtotal ? stripPriceHtml(cart.subtotal) : '0.00 USD';
+---
+
+<Layout title="Checkout" hideHeader={true}>
+  <main class="min-h-screen bg-white">
+    <Header />
+    <div class="max-w-[1920px] mx-auto py-12 px-4 lg:px-8">
+      <h1 class="text-2xl font-bold uppercase text-black mb-8">Checkout</h1>
+
+      <section class="mb-10" aria-label="Order summary">
+        <h2 class="text-lg font-semibold uppercase text-black mb-4">Order summary</h2>
+        <ul class="border-t border-gray-200 divide-y divide-gray-200">
+          {items.map((item) => {
+            const product = item.product.node;
+            const priceStr = item.total ? stripPriceHtml(item.total) : product.price ? stripPriceHtml(product.price) : '—';
+            return (
+              <li class="flex gap-4 py-4">
+                {product.image?.sourceUrl && (
+                  <img
+                    src={product.image.sourceUrl}
+                    alt={product.image.altText || product.name}
+                    class="w-20 h-20 object-cover bg-gray-100 shrink-0"
+                  />
+                )}
+                <div class="flex-1 min-w-0">
+                  <p class="font-semibold text-black uppercase">{product.name}</p>
+                  {item.quantity > 1 && (
+                    <p class="text-sm text-gray-600">Qty: {item.quantity}</p>
+                  )}
+                </div>
+                <div class="text-black font-semibold shrink-0">{priceStr}</div>
+              </li>
+            );
+          })}
+        </ul>
+        <div class="flex justify-between items-center mt-4 pt-4 border-t border-gray-200">
+          <span class="text-lg font-semibold uppercase text-black">Subtotal</span>
+          <span class="text-lg font-bold text-black">{subtotal}</span>
+        </div>
+      </section>
+
+      <section class="border-t border-gray-200 pt-8" aria-label="Payment">
+        <h2 class="text-lg font-semibold uppercase text-black mb-4">Payment</h2>
+        <p class="text-gray-600 mb-6">
+          Payment options (card, Bitcoin, etc.) will be available here. Complete your order from the cart page or check back soon.
+        </p>
+        <a
+          href="/cart"
+          class="inline-block px-6 py-3 bg-black text-white uppercase font-semibold hover:opacity-90 transition-opacity"
+        >
+          Back to cart
+        </a>
+      </section>
+    </div>
+    <Footer />
+  </main>
+</Layout>

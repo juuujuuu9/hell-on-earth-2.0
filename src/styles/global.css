@@ -136,3 +136,17 @@ img {
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
+
+/* Cart tray: green fade-in for newly added items */
+@keyframes greenFadeIn {
+  0% {
+    background-color: rgba(34, 197, 94, 0.25);
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+.cart-tray-item-highlight {
+  animation: greenFadeIn 1.2s ease-out forwards;
+}

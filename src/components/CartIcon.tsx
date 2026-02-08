@@ -7,40 +7,28 @@
 
 import { useEffect } from 'react';
 import { useStore } from '@nanostores/react';
-import { cartStore, setCart, setCartLoading, setCartError } from '@lib/cartStore';
+import {
+  cartStore,
+  setCartTrayOpen,
+  fetchCartFromServer,
+} from '@lib/cartStore';
 
 export default function CartIcon() {
   const cart = useStore(cartStore);
 
-  // Fetch cart on mount to get initial count
+  // Hydrate cart from server on mount (every page load)
   useEffect(() => {
-    if (!cart.cart) {
-      fetchCart();
-    }
+    fetchCartFromServer();
   }, []);
-
-  const fetchCart = async () => {
-    setCartLoading(true);
-    setCartError(null);
-
-    try {
-      // TODO: Replace with your new cart API
-      setCart(null);
-      setCartLoading(false);
-    } catch (error) {
-      console.error('Error fetching cart:', error);
-      setCartLoading(false);
-      // Don't set error for cart icon - just fail silently
-    }
-  };
 
   const itemCount = cart.cart?.itemCount || 0;
 
   return (
-    <a
-      href="/cart"
-      className="relative inline-flex items-center justify-center p-2 hover:opacity-70 rounded transition-opacity cursor-pointer"
-      aria-label={`Shopping cart with ${itemCount} items`}
+    <button
+      type="button"
+      onClick={() => setCartTrayOpen(true)}
+      className="relative inline-flex items-center justify-center p-2 hover:opacity-70 rounded transition-opacity cursor-pointer bg-transparent border-0 text-inherit"
+      aria-label={`Open cart${itemCount > 0 ? `, ${itemCount} items` : ''}`}
     >
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -60,6 +48,6 @@ export default function CartIcon() {
           {itemCount > 99 ? '99+' : itemCount}
         </span>
       )}
-    </a>
+    </button>
   );
 }

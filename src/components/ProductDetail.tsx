@@ -4,7 +4,7 @@
  */
 import { useState, useEffect, useRef } from 'react';
 import type { Product } from '@lib/types';
-import CartButton from './CartButton';
+import AddToCartButton from './AddToCartButton';
 
 interface DisplayImage {
   sourceUrl: string;
@@ -23,7 +23,6 @@ interface ProductDetailProps {
   formattedPrice: string;
   displayImages: DisplayImage[];
   hasMultipleImages: boolean;
-  btcpayAvailable: boolean;
   colorAttribute: { options: string[] } | undefined;
   sizeAttribute: { options: string[] } | undefined;
 }
@@ -33,7 +32,6 @@ export default function ProductDetail({
   formattedPrice,
   displayImages,
   hasMultipleImages,
-  btcpayAvailable,
   colorAttribute,
   sizeAttribute,
 }: ProductDetailProps) {
@@ -386,13 +384,7 @@ export default function ProductDetail({
 
           <div className="pt-4 sm:px-8 px-4 pb-4 min-h-[60px]" id="cart-button-wrapper">
             {product.stockStatus === 'IN_STOCK' ? (
-              <CartButton
-                productId={product.id}
-                productName={product.name}
-                stripeCheckoutUrl={product.stripeCheckoutUrl}
-                sizes={product.sizes}
-                btcpayAvailable={btcpayAvailable}
-              />
+              <AddToCartButton product={product} sizes={product.sizes} />
             ) : (
               <div className="h-[52px]" />
             )}

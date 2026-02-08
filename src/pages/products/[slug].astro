@@ -9,7 +9,6 @@ import Footer from '@components/Footer.astro';
 import ProductDetail from '@components/ProductDetail';
 import type { Product } from '@lib/types';
 import { getAllProducts, getProductBySlug, getRelatedProducts } from '@lib/db/queries';
-import { isBtcpayConfigured } from '@lib/btcpay';
 
 export async function getStaticPaths() {
   try {
@@ -55,7 +54,6 @@ const displayImages = primaryImage
   ? [primaryImage, ...allImages.filter(img => img.sourceUrl !== primaryImage.sourceUrl)]
   : allImages;
 const hasMultipleImages = displayImages.length > 1;
-const btcpayAvailable = isBtcpayConfigured();
 const relatedProducts = await getRelatedProducts(product.slug, 10);
 
 function formatRelatedPrice(price: string | undefined): string | null {
@@ -78,7 +76,6 @@ function formatRelatedPrice(price: string | undefined): string | null {
       formattedPrice={formattedPrice}
       displayImages={displayImages}
       hasMultipleImages={hasMultipleImages}
-      btcpayAvailable={btcpayAvailable}
       colorAttribute={colorAttribute}
       sizeAttribute={sizeAttribute}
     />
