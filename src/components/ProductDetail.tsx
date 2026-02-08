@@ -43,7 +43,7 @@ export default function ProductDetail({
   const currentSwipeDy = useRef<number>(0);
   const mobileTrayHandleRef = useRef<HTMLDivElement>(null);
   const [swipeOffset, setSwipeOffset] = useState(0);
-  const [stickyCartVisible, setStickyCartVisible] = useState(false);
+  const [stickyCartVisible, setStickyCartVisible] = useState(true);
 
   const SWIPE_CLOSE_THRESHOLD = 80;
 
@@ -111,18 +111,13 @@ export default function ProductDetail({
       .catch(() => {});
   }, [product.slug, product.sizes?.length]);
 
-  // Mobile sticky Add to Cart: hide when in-page cart scrolls into view
+  // Mobile sticky Add to Cart: visible by default, hides when in-page cart scrolls into view
   useEffect(() => {
     const wrapper = document.getElementById('cart-button-wrapper');
     if (!wrapper) return;
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting) {
-          setStickyCartVisible(false);
-        } else {
-          const top = entry.boundingClientRect.top;
-          setStickyCartVisible(top < 0);
-        }
+        setStickyCartVisible(!entry.isIntersecting);
       },
       { threshold: 0, rootMargin: '0px' }
     );
