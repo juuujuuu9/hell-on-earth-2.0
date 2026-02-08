@@ -1,7 +1,7 @@
 ---
 /**
  * Filter Tray Component
- * Sliding filter panel that opens from the right side
+ * Sliding filter panel: desktop = opens from the left; mobile = slides up from bottom
  */
 import type { Product, ProductCategory } from '@lib/types';
 
@@ -82,10 +82,10 @@ const productTypes = categories.map(cat => cat.name).sort();
 ---
 
 <!-- Overlay for desktop tray -->
-<div id="filter-tray-overlay" class="fixed inset-0 bg-black pointer-events-none transition-opacity duration-300 z-40 hidden" style="opacity: 0;" aria-hidden="true"></div>
+<div id="filter-tray-overlay" class="fixed inset-0 bg-black/40 backdrop-blur-md pointer-events-none transition-opacity duration-300 z-40 hidden" style="opacity: 0;" aria-hidden="true"></div>
 
-<!-- Desktop: right-side tray (lg and up) -->
-<div id="filter-tray" class="hidden lg:flex fixed top-0 right-0 h-full w-80 bg-white shadow-2xl transform translate-x-full transition-transform duration-300 ease-in-out z-50 flex-col">
+<!-- Desktop: left-side tray (lg and up) -->
+<div id="filter-tray" class="hidden lg:flex fixed top-0 left-0 h-full w-80 bg-white shadow-2xl transform -translate-x-full transition-transform duration-300 ease-in-out z-50 flex-col">
   <div class="flex flex-col h-full">
     <div class="flex items-center justify-between p-6 border-b border-gray-200">
       <h2 class="text-lg font-bold uppercase text-black">FILTERS</h2>
@@ -227,7 +227,7 @@ const productTypes = categories.map(cat => cat.name).sort();
     }
 
     function isTrayOpenDesktop(): boolean {
-      return filterTray ? !filterTray.classList.contains('translate-x-full') : false;
+      return filterTray ? !filterTray.classList.contains('-translate-x-full') : false;
     }
     function isTrayOpenMobile(): boolean {
       return filterTrayContentMobile ? !filterTrayContentMobile.classList.contains('translate-y-full') : false;
@@ -238,13 +238,13 @@ const productTypes = categories.map(cat => cat.name).sort();
       filterOverlay.classList.remove('hidden');
       filterOverlay.classList.remove('pointer-events-none');
       filterOverlay.classList.add('pointer-events-auto');
-      filterOverlay.style.opacity = '0.4';
-      filterTray.classList.remove('translate-x-full');
+      filterOverlay.style.opacity = '1';
+      filterTray.classList.remove('-translate-x-full');
       document.body.style.overflow = 'hidden';
     }
     function closeTrayDesktop(): void {
       if (!filterTray || !filterOverlay) return;
-      filterTray.classList.add('translate-x-full');
+      filterTray.classList.add('-translate-x-full');
       filterOverlay.classList.remove('pointer-events-auto');
       filterOverlay.classList.add('pointer-events-none');
       filterOverlay.style.opacity = '0';
