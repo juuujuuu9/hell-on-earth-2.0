@@ -40,30 +40,44 @@ export default function ProductDetail({
   const [measurementsOpen, setMeasurementsOpen] = useState(false);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const touchStartY = useRef<number>(0);
+  const currentSwipeDy = useRef<number>(0);
+  const mobileTrayHandleRef = useRef<HTMLDivElement>(null);
   const [swipeOffset, setSwipeOffset] = useState(0);
 
   const SWIPE_CLOSE_THRESHOLD = 80;
 
-  const handleMobileTrayTouchStart = (e: React.TouchEvent) => {
-    touchStartY.current = e.touches[0].clientY;
-  };
-
-  const handleMobileTrayTouchMove = (e: React.TouchEvent) => {
-    const dy = e.touches[0].clientY - touchStartY.current;
-    // Only track downward swipes (positive dy)
-    if (dy > 0) {
-      setSwipeOffset(dy);
-    }
-  };
-
-  const handleMobileTrayTouchEnd = () => {
-    if (swipeOffset >= SWIPE_CLOSE_THRESHOLD) {
-      setMeasurementsOpen(false);
+  // Native touch listeners with passive: false so preventDefault() works on mobile
+  useEffect(() => {
+    const el = mobileTrayHandleRef.current;
+    if (!el) return;
+    const onTouchStart = (e: TouchEvent) => {
+      touchStartY.current = e.touches[0].clientY;
+      currentSwipeDy.current = 0;
+    };
+    const onTouchMove = (e: TouchEvent) => {
+      const dy = e.touches[0].clientY - touchStartY.current;
+      if (dy > 0) {
+        e.preventDefault();
+        currentSwipeDy.current = dy;
+        setSwipeOffset(dy);
+      }
+    };
+    const onTouchEnd = () => {
+      if (currentSwipeDy.current >= SWIPE_CLOSE_THRESHOLD) {
+        setMeasurementsOpen(false);
+      }
       setSwipeOffset(0);
-    } else {
-      setSwipeOffset(0);
-    }
-  };
+      currentSwipeDy.current = 0;
+    };
+    el.addEventListener('touchstart', onTouchStart);
+    el.addEventListener('touchmove', onTouchMove, { passive: false });
+    el.addEventListener('touchend', onTouchEnd);
+    return () => {
+      el.removeEventListener('touchstart', onTouchStart);
+      el.removeEventListener('touchmove', onTouchMove);
+      el.removeEventListener('touchend', onTouchEnd);
+    };
+  }, []);
 
   const handleSizeClick = (size: string) => {
     const qty = sizeQuantities[size] ?? 0;
@@ -268,12 +282,11 @@ export default function ProductDetail({
                   transform: measurementsOpen ? `translateY(${swipeOffset}px)` : 'translateY(100%)',
                 }}
               >
-                {/* Handle bar - swipe target for closing */}
+                {/* Handle bar - swipe target for closing (native listeners for passive: false) */}
                 <div
+                  ref={mobileTrayHandleRef}
                   className="flex justify-center pt-3 pb-4 touch-none shrink-0"
-                  onTouchStart={handleMobileTrayTouchStart}
-                  onTouchMove={handleMobileTrayTouchMove}
-                  onTouchEnd={handleMobileTrayTouchEnd}
+                  aria-label="Drag down to close"
                 >
                   <div className="w-12 h-1 bg-gray-300 rounded-full" />
                 </div>
