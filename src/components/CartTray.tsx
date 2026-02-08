@@ -250,17 +250,26 @@ function CartTrayItem({
       className={`flex gap-4 ${isHighlighted ? 'cart-tray-item-highlight' : ''} ${isRemoving ? 'opacity-50' : ''}`}
     >
       {product.image?.sourceUrl && (
-        <img
-          src={product.image.sourceUrl}
-          alt={product.image.altText || product.name}
-          className="w-20 h-20 object-cover shrink-0 bg-gray-100"
-        />
+        <a
+          href={`/products/${product.slug}`}
+          className="shrink-0 block"
+          aria-label={`View ${product.name}`}
+        >
+          <img
+            src={product.image.sourceUrl}
+            alt={product.image.altText || product.name}
+            className="w-20 h-20 object-cover bg-gray-100 hover:opacity-90 transition-opacity"
+          />
+        </a>
       )}
       <div className="flex-1 min-w-0">
         <div className="flex justify-between items-start gap-2">
-          <span className="text-sm font-semibold uppercase text-black truncate">
+          <a
+            href={`/products/${product.slug}`}
+            className="text-sm font-semibold uppercase text-black truncate hover:opacity-70 transition-opacity cursor-pointer"
+          >
             {product.name}
-          </span>
+          </a>
           <span className="text-sm text-black shrink-0">{priceStr}</span>
         </div>
         <p className="text-xs text-gray-400 mt-0.5">VAT EXCLUDED / EXCL. SHIPPING</p>
