@@ -419,7 +419,7 @@ export default function ProductDetail({
                       onClick={() => handleSizeClick(size)}
                       className={`size-option min-w-[3rem] px-3 py-2 text-sm border rounded transition-shadow duration-300 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:line-through ${
                         isSelected ? 'border-black bg-black text-white' : 'border-gray-300 hover:border-gray-800'
-                      } ${sizeSwatchGlow ? 'shadow-[0_0_12px_rgba(220,38,38,0.8)]' : ''}`}
+                      } ${sizeSwatchGlow ? 'shadow-[0_0_12px_rgba(220,38,38,0.8)] ring-2 ring-red-400/90' : ''}`}
                       aria-pressed={isSelected}
                       aria-label={`Size ${size}${outOfStock ? ', out of stock' : `, ${qty} available`}`}
                     >
