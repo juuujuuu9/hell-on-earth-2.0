@@ -675,7 +675,7 @@ export async function getCartForApp(cartId: string): Promise<AppCart | null> {
   for (const row of rows) {
     const product = await getProductById(row.productId);
     if (!product) continue;
-    const key = row.size ? `${row.productId}-${row.size}` : row.productId;
+    const key = row.size ? `${row.productId}::${row.size}` : row.productId;
     const unitPrice = parsePriceToNumber(product.price ?? null);
     const lineTotal = unitPrice * row.quantity;
     subtotalNum += lineTotal;
@@ -706,7 +706,7 @@ export async function addCartItem(
   quantity: number,
   size: string | null
 ): Promise<string> {
-  const key = size ? `${productId}-${size}` : productId;
+  const key = size ? `${productId}::${size}` : productId;
   const existing = await db
     .select()
     .from(cartItems)
@@ -740,16 +740,31 @@ export async function addCartItem(
 }
 
 /**
- * Update line quantity by key (key = productId or productId-size). Set quantity to 0 to remove.
+ * Update line quantity by key (key = productId or productId::size). Set quantity to 0 to remove.
+ * Uses :: delimiter because productId can contain hyphens (e.g. prod-xxx-123).
+ * Fallback: if key has no ::, treat last hyphen as separator for backward compat with old keys.
  */
 export async function updateCartItemByKey(
   cartId: string,
   key: string,
   quantity: number
 ): Promise<void> {
-  const parts = key.includes('-') ? key.split('-') : [key];
-  const productId = parts[0];
-  const size = parts.length > 1 ? parts.slice(1).join('-') : null;
+  let productId: string;
+  let size: string | null;
+  const sepIdx = key.indexOf('::');
+  if (sepIdx >= 0) {
+    productId = key.slice(0, sepIdx);
+    size = key.slice(sepIdx + 2);
+  } else {
+    const lastHyphen = key.lastIndexOf('-');
+    if (lastHyphen > 0) {
+      productId = key.slice(0, lastHyphen);
+      size = key.slice(lastHyphen + 1);
+    } else {
+      productId = key;
+      size = null;
+    }
+  }
 
   const rows = await db
     .select()

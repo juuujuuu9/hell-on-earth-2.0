@@ -6,7 +6,7 @@
  * Layout: YOUR CART + close, line items, subtotal, TO SHOPPING CART / TO CHECKOUT.
  */
 
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, useState } from 'react';
 import { useStore } from '@nanostores/react';
 import {
   cartStore,
@@ -32,6 +32,7 @@ export default function CartTray(): JSX.Element {
   const highlightKeys = useStore(cartHighlightKeysStore);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const previousActiveRef = useRef<HTMLElement | null>(null);
+  const [removingKeys, setRemovingKeys] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (highlightKeys.size === 0) return;
@@ -100,8 +101,17 @@ export default function CartTray(): JSX.Element {
     }
   };
 
-  const handleRemoveItem = (key: string): void => {
-    removeCartItem(key);
+  const handleRemoveItem = async (key: string): Promise<void> => {
+    setRemovingKeys((prev) => new Set(prev).add(key));
+    try {
+      await removeCartItem(key);
+    } finally {
+      setRemovingKeys((prev) => {
+        const next = new Set(prev);
+        next.delete(key);
+        return next;
+      });
+    }
   };
 
   const items = cart.cart?.contents?.nodes ?? [];
@@ -152,6 +162,9 @@ export default function CartTray(): JSX.Element {
 
         {/* Scrollable items or empty state */}
         <div className="flex-1 overflow-y-auto min-h-0 p-4 lg:p-6">
+          {cart.error && (
+            <p className="mb-4 text-sm text-red-600 uppercase">{cart.error}</p>
+          )}
           {cart.isLoading && !cart.cart ? (
             <p className="text-gray-500 text-sm uppercase">Loading...</p>
           ) : isEmpty ? (
@@ -171,6 +184,7 @@ export default function CartTray(): JSX.Element {
                   key={item.key}
                   item={item}
                   isHighlighted={highlightKeys.has(item.key)}
+                  isRemoving={removingKeys.has(item.key)}
                   onUpdateQuantity={handleUpdateQuantity}
                   onRemove={handleRemoveItem}
                   stripPrice={stripPriceHtml}
@@ -214,6 +228,7 @@ export default function CartTray(): JSX.Element {
 interface CartTrayItemProps {
   item: CartItem;
   isHighlighted: boolean;
+  isRemoving: boolean;
   onUpdateQuantity: (key: string, quantity: number) => void;
   onRemove: (key: string) => void;
   stripPrice: (price: string) => string;
@@ -222,6 +237,7 @@ interface CartTrayItemProps {
 function CartTrayItem({
   item,
   isHighlighted,
+  isRemoving,
   onUpdateQuantity,
   onRemove,
   stripPrice,
@@ -231,7 +247,7 @@ function CartTrayItem({
 
   return (
     <li
-      className={`flex gap-4 ${isHighlighted ? 'cart-tray-item-highlight' : ''}`}
+      className={`flex gap-4 ${isHighlighted ? 'cart-tray-item-highlight' : ''} ${isRemoving ? 'opacity-50' : ''}`}
     >
       {product.image?.sourceUrl && (
         <img
@@ -252,9 +268,10 @@ function CartTrayItem({
         <button
           type="button"
           onClick={() => onRemove(item.key)}
-          className="mt-1 text-xs text-orange-600 hover:text-orange-700 uppercase cursor-pointer"
+          disabled={isRemoving}
+          className="mt-1 text-xs text-orange-600 hover:text-orange-700 uppercase cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          × REMOVE
+          {isRemoving ? 'Removing...' : '× REMOVE'}
         </button>
       </div>
     </li>
