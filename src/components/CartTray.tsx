@@ -113,7 +113,7 @@ export default function CartTray(): JSX.Element {
       {/* Backdrop - full screen on mobile, below header on desktop */}
       <div
         role="presentation"
-        className="fixed inset-0 md:top-[73px] z-[60] bg-black/40 backdrop-blur-sm transition-opacity duration-300 ease-in-out"
+        className="fixed inset-0 md:top-[73px] z-[70] bg-black/40 backdrop-blur-sm transition-opacity duration-300 ease-in-out"
         style={{
           opacity: isOpen ? 1 : 0,
           pointerEvents: isOpen ? 'auto' : 'none',
@@ -127,7 +127,7 @@ export default function CartTray(): JSX.Element {
         role="dialog"
         aria-modal="true"
         aria-label="Your cart"
-        className="fixed right-0 top-0 bottom-0 md:top-[73px] z-[60] flex flex-col bg-white shadow-2xl transition-transform duration-300 ease-in-out w-full max-w-[450px]"
+        className="fixed right-0 top-0 bottom-0 md:top-[73px] z-[70] flex flex-col bg-white shadow-2xl transition-transform duration-300 ease-in-out w-full max-w-[450px]"
         style={{
           transform: isOpen ? 'translateX(0)' : 'translateX(100%)',
           visibility: isOpen ? 'visible' : 'hidden',

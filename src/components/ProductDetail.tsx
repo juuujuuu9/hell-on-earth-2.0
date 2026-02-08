@@ -58,7 +58,7 @@ export default function ProductDetail({
         section.scrollIntoView({ behavior: 'smooth', block: 'end' });
       }
       setSizeSwatchGlow(true);
-      glowTimeout = setTimeout(() => setSizeSwatchGlow(false), 1500);
+      glowTimeout = setTimeout(() => setSizeSwatchGlow(false), 1000);
     };
     document.addEventListener('select-size-requested', handler as EventListener);
     return () => {
