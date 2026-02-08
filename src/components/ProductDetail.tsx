@@ -43,6 +43,7 @@ export default function ProductDetail({
   const currentSwipeDy = useRef<number>(0);
   const mobileTrayHandleRef = useRef<HTMLDivElement>(null);
   const [swipeOffset, setSwipeOffset] = useState(0);
+  const [stickyCartVisible, setStickyCartVisible] = useState(false);
 
   const SWIPE_CLOSE_THRESHOLD = 80;
 
@@ -109,6 +110,25 @@ export default function ProductDetail({
       })
       .catch(() => {});
   }, [product.slug, product.sizes?.length]);
+
+  // Mobile sticky Add to Cart: hide when in-page cart scrolls into view
+  useEffect(() => {
+    const wrapper = document.getElementById('cart-button-wrapper');
+    if (!wrapper) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setStickyCartVisible(false);
+        } else {
+          const top = entry.boundingClientRect.top;
+          setStickyCartVisible(top < 0);
+        }
+      },
+      { threshold: 0, rootMargin: '0px' }
+    );
+    observer.observe(wrapper);
+    return () => observer.disconnect();
+  }, []);
 
   const categorySlug = product.productCategories?.nodes?.[0]?.slug;
   const categoryName = product.productCategories?.nodes?.[0]?.name;
@@ -454,6 +474,17 @@ export default function ProductDetail({
           </div>
         </div>
       </div>
+
+      {/* Mobile sticky Add to Cart - hides when in-page cart is visible */}
+      {product.stockStatus === 'IN_STOCK' && (
+        <div
+          className={`lg:hidden fixed left-0 right-0 bottom-0 z-50 p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] bg-white border-t border-gray-200 transition-transform duration-300 ${
+            stickyCartVisible ? 'translate-y-0' : 'translate-y-full'
+          }`}
+        >
+          <AddToCartButton product={product} sizes={product.sizes} />
+        </div>
+      )}
     </div>
   );
 }
