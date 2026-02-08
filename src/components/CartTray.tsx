@@ -1,7 +1,8 @@
 /**
  * Cart Tray Component
  *
- * Slides in from the right, 25% width on desktop, top below header (73px).
+ * Slides in from the right. On mobile: full screen (top to bottom).
+ * On desktop: max 450px width, below header (73px).
  * Layout: YOUR CART + close, line items, subtotal, TO SHOPPING CART / TO CHECKOUT.
  */
 
@@ -22,8 +23,6 @@ import type { CartItem } from '@lib/types';
 function stripPriceHtml(price: string): string {
   return price.replace(/<[^>]*>/g, '').trim();
 }
-
-const HEADER_HEIGHT = 73;
 
 const HIGHLIGHT_DURATION_MS = 1500;
 
@@ -111,12 +110,11 @@ export default function CartTray(): JSX.Element {
 
   return (
     <>
-      {/* Backdrop */}
+      {/* Backdrop - full screen on mobile, below header on desktop */}
       <div
         role="presentation"
-        className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm transition-opacity duration-300 ease-in-out"
+        className="fixed inset-0 md:top-[73px] z-40 bg-black/40 backdrop-blur-sm transition-opacity duration-300 ease-in-out"
         style={{
-          top: HEADER_HEIGHT,
           opacity: isOpen ? 1 : 0,
           pointerEvents: isOpen ? 'auto' : 'none',
         }}
@@ -124,15 +122,13 @@ export default function CartTray(): JSX.Element {
         onClick={close}
       />
 
-      {/* Panel */}
+      {/* Panel - full height on mobile (top to bottom), below header on desktop */}
       <div
         role="dialog"
         aria-modal="true"
         aria-label="Your cart"
-        className="fixed right-0 z-50 flex flex-col bg-white shadow-2xl transition-transform duration-300 ease-in-out w-full max-w-[450px]"
+        className="fixed right-0 top-0 bottom-0 md:top-[73px] z-50 flex flex-col bg-white shadow-2xl transition-transform duration-300 ease-in-out w-full max-w-[450px]"
         style={{
-          top: HEADER_HEIGHT,
-          bottom: 0,
           transform: isOpen ? 'translateX(0)' : 'translateX(100%)',
           visibility: isOpen ? 'visible' : 'hidden',
         }}
