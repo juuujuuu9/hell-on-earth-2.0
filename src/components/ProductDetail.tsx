@@ -43,6 +43,7 @@ export default function ProductDetail({
   const touchStartY = useRef<number>(0);
   const currentSwipeDy = useRef<number>(0);
   const mobileTrayHandleRef = useRef<HTMLDivElement>(null);
+  const desktopTrayRef = useRef<HTMLDivElement>(null);
   const [swipeOffset, setSwipeOffset] = useState(0);
   const [stickyCartVisible, setStickyCartVisible] = useState(true);
   const [sizeSwatchGlow, setSizeSwatchGlow] = useState(false);
@@ -122,6 +123,15 @@ export default function ProductDetail({
     if (measurementsOpen) stopLenis();
     else startLenis();
     return () => startLenis();
+  }, [measurementsOpen]);
+
+  // Desktop: scroll page so top of measurements tray aligns with top of viewport
+  useEffect(() => {
+    if (!measurementsOpen || typeof window === 'undefined') return;
+    if (!window.matchMedia('(min-width: 1024px)').matches) return;
+    const tray = desktopTrayRef.current;
+    if (!tray) return;
+    tray.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }, [measurementsOpen]);
 
   useEffect(() => {
@@ -256,6 +266,7 @@ export default function ProductDetail({
           {/* Desktop measurements tray - slides in from right */}
           {measurementsData && (
             <div
+              ref={desktopTrayRef}
               id="measurements-tray"
               className={`hidden lg:block absolute top-0 left-0 right-0 bottom-0 bg-white z-50 transition-transform duration-500 ease-in-out overflow-y-auto ${measurementsOpen ? 'translate-x-0' : 'translate-x-full'}`}
               style={{ willChange: 'transform' }}
@@ -482,9 +493,12 @@ export default function ProductDetail({
                       <button
                         type="button"
                         onClick={() => setMeasurementsOpen((prev) => !prev)}
-                        className="uppercase underline hover:no-underline cursor-pointer"
+                        className="uppercase underline hover:no-underline cursor-pointer inline-flex items-center gap-2"
                         aria-label="View measurements"
                       >
+                        <svg className="w-[1.5625rem] h-[1.5625rem] shrink-0" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="currentColor" aria-hidden>
+                          <path d="M20.354 2.646l2.851 2.852-2.82 2.854-.712-.704L21.303 6H16V5h5.293l-1.647-1.646zM.794 5.502l2.852 2.852.707-.707L2.707 6H8V5H2.697l1.63-1.648-.711-.704zM1 12h22v8H1zm1 7h2v-3h1v3h1v-2h1v2h1v-5h1v5h1v-2h1v2h1v-3h1v3h1v-2h1v2h1v-5h1v5h1v-2h1v2h1v-3h1v3h1v-6H2z" />
+                        </svg>
                         MEASUREMENTS
                       </button>
                     </div>
@@ -497,6 +511,26 @@ export default function ProductDetail({
                 </>
               )}
             </div>
+            {product.features ? (
+              <div className="space-y-3">
+                <div className="text-xs font-bold uppercase tracking-wide mb-4">
+                  <span className="text-black">■</span> FEATURES
+                </div>
+                <div className="text-base leading-relaxed [&_ul]:list-disc [&_ul]:ml-6 [&_ul]:space-y-1 [&_li]:leading-relaxed">
+                  <div dangerouslySetInnerHTML={{ __html: product.features }} />
+                </div>
+              </div>
+            ) : null}
+            {product.materials ? (
+              <div className="space-y-3">
+                <div className="text-xs font-bold uppercase tracking-wide mb-4">
+                  <span className="text-black">■</span> MATERIALS
+                </div>
+                <div className="text-base leading-relaxed [&_ul]:list-disc [&_ul]:ml-6 [&_ul]:space-y-1 [&_li]:leading-relaxed">
+                  <div dangerouslySetInnerHTML={{ __html: product.materials }} />
+                </div>
+              </div>
+            ) : null}
           </div>
         </div>
       </div>

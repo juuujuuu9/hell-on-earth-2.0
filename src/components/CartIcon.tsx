@@ -44,7 +44,7 @@ export default function CartIcon() {
         />
       </svg>
       {itemCount > 0 && (
-        <span className="absolute -top-1 -right-1 bg-primary-600 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+        <span className="absolute -top-1 -right-1 bg-white text-red-600 text-xs font-extrabold rounded-full w-5 h-5 flex items-center justify-center border border-red-600">
           {itemCount > 99 ? '99+' : itemCount}
         </span>
       )}
