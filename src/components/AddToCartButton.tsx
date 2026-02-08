@@ -76,7 +76,7 @@ export default function AddToCartButton({
         type="button"
         onClick={handleAddToCart}
         disabled={isAdding}
-        className={`w-full px-6 py-4 text-[1.5rem] uppercase font-semibold border transition-opacity cursor-pointer ${
+        className={`w-full px-6 py-4 text-[1.5rem] uppercase font-semibold border rounded-lg transition-opacity cursor-pointer ${
           needsSize
             ? 'bg-gray-400 text-white border-gray-400 hover:opacity-90'
             : 'bg-black text-white border-black hover:opacity-90'
