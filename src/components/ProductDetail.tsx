@@ -5,6 +5,7 @@
 import { useState, useEffect, useRef } from 'react';
 import type { Product } from '@lib/types';
 import AddToCartButton from './AddToCartButton';
+import { stopLenis, startLenis } from '@lib/lenis';
 
 interface DisplayImage {
   sourceUrl: string;
@@ -114,6 +115,13 @@ export default function ProductDetail({
   // Fetch size quantities on mount
   useEffect(() => {
     if (!measurementsOpen) setSwipeOffset(0);
+  }, [measurementsOpen]);
+
+  // Pause Lenis when measurements tray is open
+  useEffect(() => {
+    if (measurementsOpen) stopLenis();
+    else startLenis();
+    return () => startLenis();
   }, [measurementsOpen]);
 
   useEffect(() => {
@@ -307,12 +315,13 @@ export default function ProductDetail({
             <>
               {/* Backdrop */}
               <div
-                className={`lg:hidden fixed inset-0 bg-black/50 z-[99] transition-opacity duration-300 ${measurementsOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+                className={`lg:hidden fixed inset-0 bg-black/40 backdrop-blur-md z-[99] transition-opacity duration-300 ${measurementsOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
                 onClick={() => setMeasurementsOpen(false)}
               />
               {/* Slide-up tray */}
               <div
                 className={`lg:hidden fixed left-0 right-0 bottom-0 bg-white z-[100] rounded-t-2xl max-h-[80vh] overflow-y-auto ${swipeOffset === 0 ? 'transition-transform duration-300 ease-out' : ''}`}
+                data-lenis-prevent
                 style={{
                   transform: measurementsOpen ? `translateY(${swipeOffset}px)` : 'translateY(100%)',
                 }}

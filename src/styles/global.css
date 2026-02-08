@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "lenis/dist/lenis.css";
 
 /* Design Tokens - RULE-003: Use design tokens for spacing/colors */
 @theme {

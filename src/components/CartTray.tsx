@@ -18,6 +18,7 @@ import {
   updateCartItemQuantity,
   removeCartItem,
 } from '@lib/cartStore';
+import { stopLenis, startLenis } from '@lib/lenis';
 import type { CartItem } from '@lib/types';
 
 function stripPriceHtml(price: string): string {
@@ -44,6 +45,7 @@ export default function CartTray(): JSX.Element {
 
   const close = useCallback(() => {
     setCartTrayOpen(false);
+    startLenis();
     document.documentElement.style.overflow = '';
     document.documentElement.style.position = '';
     document.documentElement.style.top = '';
@@ -63,6 +65,7 @@ export default function CartTray(): JSX.Element {
     if (!isOpen) return;
     scrollYRef.current = window.scrollY;
     previousActiveRef.current = document.activeElement as HTMLElement | null;
+    stopLenis();
     document.documentElement.style.overflow = 'hidden';
     document.body.style.overflow = 'hidden';
     document.body.style.position = 'fixed';
@@ -70,6 +73,7 @@ export default function CartTray(): JSX.Element {
     document.body.style.width = '100%';
     closeButtonRef.current?.focus();
     return () => {
+      startLenis();
       document.documentElement.style.overflow = '';
       document.body.style.overflow = '';
       document.body.style.position = '';
@@ -123,7 +127,7 @@ export default function CartTray(): JSX.Element {
       {/* Backdrop - full screen on mobile, below header on desktop */}
       <div
         role="presentation"
-        className="fixed inset-0 md:top-[73px] z-[70] bg-black/40 backdrop-blur-sm transition-opacity duration-300 ease-in-out"
+        className="fixed inset-0 md:top-[73px] z-[70] bg-black/40 backdrop-blur-md transition-opacity duration-300 ease-in-out"
         style={{
           opacity: isOpen ? 1 : 0,
           pointerEvents: isOpen ? 'auto' : 'none',
@@ -161,7 +165,7 @@ export default function CartTray(): JSX.Element {
         </div>
 
         {/* Scrollable items or empty state */}
-        <div className="flex-1 overflow-y-auto min-h-0 p-4 lg:p-6">
+        <div className="flex-1 overflow-y-auto min-h-0 p-4 lg:p-6" data-lenis-prevent>
           {cart.error && (
             <p className="mb-4 text-sm text-red-600 uppercase">{cart.error}</p>
           )}

@@ -94,7 +94,7 @@ const productTypes = categories.map(cat => cat.name).sort();
         <button id="filter-tray-close" class="text-black hover:opacity-70 transition-opacity cursor-pointer" aria-label="Close filters">✕</button>
       </div>
     </div>
-    <div class="flex-1 overflow-y-auto p-6">
+    <div class="flex-1 overflow-y-auto p-6" data-lenis-prevent>
       <ul class="space-y-6" data-filter-tray="desktop">
         <li>
           <button class="w-full flex items-center justify-between text-left text-gray-400 uppercase hover:opacity-70 transition-opacity cursor-pointer" data-filter-type="size" aria-expanded="false" aria-controls="filter-size-options"><span>SIZE</span><span>→</span></button>
@@ -139,7 +139,7 @@ const productTypes = categories.map(cat => cat.name).sort();
 
 <!-- Mobile: bottom sheet (below lg) -->
 <div id="filter-tray-mobile" class="lg:hidden fixed inset-0 z-50 pointer-events-none" aria-hidden="true">
-  <div id="filter-backdrop-mobile" class="absolute inset-0 bg-black opacity-0 transition-opacity duration-300 pointer-events-none"></div>
+  <div id="filter-backdrop-mobile" class="absolute inset-0 bg-black/40 backdrop-blur-md opacity-0 transition-opacity duration-300 pointer-events-none"></div>
   <div id="filter-tray-content-mobile" class="absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl shadow-2xl transform translate-y-full transition-transform duration-300 ease-out max-h-[90vh] flex flex-col pointer-events-auto" style="will-change: transform;">
     <div class="flex justify-center pt-4 pb-2 shrink-0">
       <div class="w-12 h-1 bg-gray-300 rounded-full" aria-hidden="true"></div>
@@ -151,7 +151,7 @@ const productTypes = categories.map(cat => cat.name).sort();
         <button id="filter-tray-close-mobile" class="text-black hover:opacity-70 transition-opacity cursor-pointer" aria-label="Close filters">✕</button>
       </div>
     </div>
-    <div class="flex-1 overflow-y-auto p-6 min-h-0">
+    <div class="flex-1 overflow-y-auto p-6 min-h-0" data-lenis-prevent>
       <ul class="space-y-6" data-filter-tray="mobile">
         <li>
           <button class="w-full flex items-center justify-between text-left text-gray-400 uppercase hover:opacity-70 transition-opacity cursor-pointer" data-filter-type-mobile="size" aria-expanded="false" aria-controls="filter-size-options-mobile"><span>SIZE</span><span>→</span></button>
@@ -195,6 +195,8 @@ const productTypes = categories.map(cat => cat.name).sort();
 </div>
 
 <script>
+  import { stopLenis, startLenis } from '@lib/lenis';
+
   declare global {
     interface Window {
       openFilterTray?: () => void;
@@ -235,6 +237,7 @@ const productTypes = categories.map(cat => cat.name).sort();
 
     function openTrayDesktop(): void {
       if (!filterTray || !filterOverlay) return;
+      stopLenis();
       filterOverlay.classList.remove('hidden');
       filterOverlay.classList.remove('pointer-events-none');
       filterOverlay.classList.add('pointer-events-auto');
@@ -250,10 +253,12 @@ const productTypes = categories.map(cat => cat.name).sort();
       filterOverlay.style.opacity = '0';
       filterOverlay.classList.add('hidden');
       document.body.style.overflow = '';
+      startLenis();
     }
 
     function openTrayMobile(): void {
       if (!filterTrayMobile || !filterTrayContentMobile || !filterBackdropMobile) return;
+      stopLenis();
       filterTrayMobile.classList.remove('pointer-events-none');
       filterBackdropMobile.classList.remove('opacity-0', 'pointer-events-none');
       filterBackdropMobile.classList.add('opacity-50');
@@ -275,6 +280,7 @@ const productTypes = categories.map(cat => cat.name).sort();
       setTimeout(() => {
         filterTrayMobile.classList.add('pointer-events-none');
         filterBackdropMobile.classList.add('pointer-events-none');
+        startLenis();
       }, 300);
     }
 
