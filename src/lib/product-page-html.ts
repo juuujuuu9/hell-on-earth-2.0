@@ -37,9 +37,9 @@ export function buildProductPageHtml(product: Product, relatedProducts: Product[
   if (!checkoutUrl) {
     cartBlock = '<p class="text-gray-500">Checkout unavailable</p>';
   } else if (hasSizes) {
-    cartBlock = '<span class="block w-full px-6 py-4 text-center text-[1.5rem] bg-gray-400 text-white uppercase font-semibold cursor-not-allowed">SELECT SIZE</span>';
+    cartBlock = '<span class="block w-full px-6 py-4 text-center text-[2.25rem] bg-gray-400 text-white uppercase font-semibold cursor-not-allowed">SELECT SIZE</span>';
   } else {
-    cartBlock = `<a href="${escapeHtml(checkoutUrl)}" class="block w-full px-6 py-4 text-center text-[1.5rem] bg-black text-white uppercase font-semibold hover:opacity-70 transition-opacity">+ ADD TO CART</a>`;
+    cartBlock = `<a href="${escapeHtml(checkoutUrl)}" class="block w-full px-6 py-4 text-center text-[2.25rem] bg-black text-white uppercase font-semibold hover:opacity-70 transition-opacity">+ ADD TO CART</a>`;
   }
 
   const relatedSection =

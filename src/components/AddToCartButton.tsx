@@ -50,7 +50,10 @@ export default function AddToCartButton({
   const [isAdding, setIsAdding] = useState(false);
 
   const handleAddToCart = async (): Promise<void> => {
-    if (needsSize) return;
+    if (needsSize) {
+      document.dispatchEvent(new CustomEvent('select-size-requested'));
+      return;
+    }
     setIsAdding(true);
     try {
       const addedKey = await addItemToCart(
@@ -72,8 +75,12 @@ export default function AddToCartButton({
       <button
         type="button"
         onClick={handleAddToCart}
-        disabled={needsSize || isAdding}
-        className="w-full px-6 py-4 bg-black text-white uppercase font-semibold border border-black hover:opacity-90 transition-opacity disabled:bg-gray-400 disabled:cursor-not-allowed cursor-pointer"
+        disabled={isAdding}
+        className={`w-full px-6 py-4 text-[1.5rem] uppercase font-semibold border transition-opacity cursor-pointer ${
+          needsSize
+            ? 'bg-gray-400 text-white border-gray-400 hover:opacity-90'
+            : 'bg-black text-white border-black hover:opacity-90'
+        } ${isAdding ? 'cursor-wait opacity-80' : ''}`}
       >
         {isAdding ? 'ADDING...' : needsSize ? 'SELECT SIZE' : 'ADD TO CART'}
       </button>
