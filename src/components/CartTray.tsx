@@ -264,15 +264,38 @@ function CartTrayItem({
           <span className="text-sm text-black shrink-0">{priceStr}</span>
         </div>
         <p className="text-xs text-gray-400 mt-0.5">VAT EXCLUDED / EXCL. SHIPPING</p>
-        <p className="text-xs text-gray-600 mt-1 uppercase">QTY {item.quantity}</p>
-        <button
-          type="button"
-          onClick={() => onRemove(item.key)}
-          disabled={isRemoving}
-          className="mt-1 text-xs text-orange-600 hover:text-orange-700 uppercase cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {isRemoving ? 'Removing...' : '× REMOVE'}
-        </button>
+        <div className="mt-1 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-2 text-sm text-black">
+            <span>Qty:</span>
+            <button
+              type="button"
+              onClick={() => onUpdateQuantity(item.key, item.quantity - 1)}
+              disabled={isRemoving || item.quantity <= 1}
+              className="font-semibold hover:opacity-70 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+              aria-label="Decrease quantity"
+            >
+              −
+            </button>
+            <span>{item.quantity}</span>
+            <button
+              type="button"
+              onClick={() => onUpdateQuantity(item.key, item.quantity + 1)}
+              disabled={isRemoving}
+              className="font-semibold hover:opacity-70 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+              aria-label="Increase quantity"
+            >
+              +
+            </button>
+          </div>
+          <button
+            type="button"
+            onClick={() => onRemove(item.key)}
+            disabled={isRemoving}
+            className="text-xs text-orange-600 hover:text-orange-700 uppercase cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+          >
+            {isRemoving ? 'Removing...' : '× REMOVE'}
+          </button>
+        </div>
       </div>
     </li>
   );
