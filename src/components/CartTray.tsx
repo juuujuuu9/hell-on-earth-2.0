@@ -40,9 +40,19 @@ export default function CartTray(): JSX.Element {
     return () => clearTimeout(t);
   }, [highlightKeys]);
 
+  const scrollYRef = useRef(0);
+
   const close = useCallback(() => {
     setCartTrayOpen(false);
+    document.documentElement.style.overflow = '';
+    document.documentElement.style.position = '';
+    document.documentElement.style.top = '';
+    document.documentElement.style.width = '';
     document.body.style.overflow = '';
+    document.body.style.position = '';
+    document.body.style.top = '';
+    document.body.style.width = '';
+    window.scrollTo(0, scrollYRef.current);
     const prev = previousActiveRef.current;
     if (prev && typeof prev.focus === 'function') {
       prev.focus();
@@ -51,9 +61,22 @@ export default function CartTray(): JSX.Element {
 
   useEffect(() => {
     if (!isOpen) return;
+    scrollYRef.current = window.scrollY;
     previousActiveRef.current = document.activeElement as HTMLElement | null;
+    document.documentElement.style.overflow = 'hidden';
     document.body.style.overflow = 'hidden';
+    document.body.style.position = 'fixed';
+    document.body.style.top = `-${scrollYRef.current}px`;
+    document.body.style.width = '100%';
     closeButtonRef.current?.focus();
+    return () => {
+      document.documentElement.style.overflow = '';
+      document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
+      window.scrollTo(0, scrollYRef.current);
+    };
   }, [isOpen]);
 
   useEffect(() => {
@@ -91,7 +114,7 @@ export default function CartTray(): JSX.Element {
       {/* Backdrop */}
       <div
         role="presentation"
-        className="fixed inset-0 z-40 bg-black/40 transition-opacity duration-300 ease-in-out"
+        className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm transition-opacity duration-300 ease-in-out"
         style={{
           top: HEADER_HEIGHT,
           opacity: isOpen ? 1 : 0,
@@ -106,7 +129,7 @@ export default function CartTray(): JSX.Element {
         role="dialog"
         aria-modal="true"
         aria-label="Your cart"
-        className="fixed right-0 z-50 flex flex-col bg-white shadow-2xl transition-transform duration-300 ease-in-out w-full lg:w-1/4 rounded-b-lg"
+        className="fixed right-0 z-50 flex flex-col bg-white shadow-2xl transition-transform duration-300 ease-in-out w-full max-w-[450px]"
         style={{
           top: HEADER_HEIGHT,
           bottom: 0,
