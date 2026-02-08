@@ -1,6 +1,7 @@
 ---
 import '../styles/global.css';
 import CartIcon from '@components/CartIcon';
+import CartTray from '@components/CartTray';
 
 interface Props {
   title: string;
@@ -56,5 +57,6 @@ const posthogHost = import.meta.env.PUBLIC_POSTHOG_HOST || 'https://us.i.posthog
       </header>
     )}
     <slot />
+    <CartTray client:load />
   </body>
 </html>

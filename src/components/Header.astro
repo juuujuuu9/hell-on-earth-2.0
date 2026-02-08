@@ -1,6 +1,5 @@
 ---
 import CartIcon from '@components/CartIcon';
-import CartTray from '@components/CartTray';
 ---
 
 <header class="sticky top-0 z-50 bg-black border-b border-gray-200c pl-4 pr-2 lg:px-8 h-[73px] flex items-center" style="--header-height: 73px">
@@ -58,9 +57,6 @@ import CartTray from '@components/CartTray';
   
   {/* Backdrop */}
   <div id="menu-backdrop" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden lg:hidden"></div>
-
-  {/* Cart Tray - slides in from right, 25% width on desktop, below header */}
-  <CartTray client:load />
 </header>
 
 <script>
