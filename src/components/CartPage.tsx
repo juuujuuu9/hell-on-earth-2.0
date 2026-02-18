@@ -22,8 +22,10 @@ export default function CartPage() {
   const cart = useStore(cartStore);
   const [updatingKeys, setUpdatingKeys] = useState<Set<string>>(new Set());
   const [removingKeys, setRemovingKeys] = useState<Set<string>>(new Set());
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
+    setIsMounted(true);
     fetchCartFromServer();
   }, []);
 
@@ -57,9 +59,10 @@ export default function CartPage() {
     }
   };
 
-  if (cart.isLoading && !cart.cart) {
+  if (!isMounted || (cart.isLoading && !cart.cart)) {
     return (
       <div className="min-h-screen p-8 max-w-6xl mx-auto">
+        <h1 className="text-4xl font-bold mb-8">Cart</h1>
         <div className="text-center py-12">
           <p className="text-gray-500">Loading cart...</p>
         </div>

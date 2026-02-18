@@ -35,6 +35,12 @@ export default function CartTray(): JSX.Element {
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const previousActiveRef = useRef<HTMLElement | null>(null);
   const [removingKeys, setRemovingKeys] = useState<Set<string>>(new Set());
+  const [isMounted, setIsMounted] = useState(false);
+
+  // Prevent hydration mismatch by only rendering cart content after mount
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   useEffect(() => {
     if (highlightKeys.size === 0) return;
@@ -171,10 +177,12 @@ export default function CartTray(): JSX.Element {
 
         {/* Scrollable items or empty state */}
         <div className="flex-1 overflow-y-auto min-h-0 p-4 lg:p-6" data-lenis-prevent>
-          {cart.error && (
+          {!isMounted ? (
+            // Prevent hydration mismatch by showing consistent loading state
+            <p className="text-gray-500 text-sm uppercase">Loading...</p>
+          ) : cart.error ? (
             <p className="mb-4 text-sm text-red-600 uppercase">{cart.error}</p>
-          )}
-          {cart.isLoading && !cart.cart ? (
+          ) : cart.isLoading && !cart.cart ? (
             <p className="text-gray-500 text-sm uppercase">Loading...</p>
           ) : isEmpty ? (
             <div className="flex flex-col gap-4">
