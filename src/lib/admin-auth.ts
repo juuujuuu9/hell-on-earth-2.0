@@ -70,11 +70,12 @@ function parseBasicAuth(authHeader: string | null): { user: string; pass: string
 /**
  * Returns true if the request is authenticated (valid cookie or valid Basic Auth).
  * If Basic Auth is valid, returns { setCookie: true } so the caller can set the session cookie.
- * When ADMIN_PASSWORD is not set, auth is disabled (returns true).
+ * When ADMIN_PASSWORD is not set, auth fails closed (returns false) for security.
  */
 export function isAdminAuthenticated(request: Request): boolean | { setCookie: true } {
   if (!process.env.ADMIN_PASSWORD?.trim()) {
-    return true; // Auth disabled when no password set
+    console.warn('Admin auth: ADMIN_PASSWORD not set, denying access');
+    return false; // Fail closed - require explicit password setup
   }
 
   const cookieHeader = request.headers.get('cookie');

@@ -19,6 +19,7 @@ import {
   removeCartItem,
 } from '@lib/cartStore';
 import { stopLenis, startLenis } from '@lib/lenis';
+import { registerTray } from '@lib/trayStore';
 import type { CartItem } from '@lib/types';
 
 function stripPriceHtml(price: string): string {
@@ -90,6 +91,10 @@ export default function CartTray(): JSX.Element {
     document.addEventListener('keydown', onKeyDown);
     return () => document.removeEventListener('keydown', onKeyDown);
   }, [isOpen, close]);
+
+  useEffect(() => {
+    registerTray('cart', close);
+  }, [close]);
 
   useEffect(() => {
     if (isOpen && !cart.cart && !cart.isLoading) {

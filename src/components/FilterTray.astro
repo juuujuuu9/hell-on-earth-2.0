@@ -196,6 +196,7 @@ const productTypes = categories.map(cat => cat.name).sort();
 
 <script>
   import { stopLenis, startLenis } from '@lib/lenis';
+  import { registerTray, closeAllExcept } from '@lib/trayStore';
 
   declare global {
     interface Window {
@@ -285,6 +286,7 @@ const productTypes = categories.map(cat => cat.name).sort();
     }
 
     function openFilterTray(): void {
+      closeAllExcept('filter');
       if (isMobile()) {
         openTrayMobile();
         setFiltersFromState('mobile');
@@ -298,6 +300,8 @@ const productTypes = categories.map(cat => cat.name).sort();
       if (isTrayOpenMobile()) closeTrayMobile();
       else if (isTrayOpenDesktop()) closeTrayDesktop();
     }
+
+    registerTray('filter', closeFilterTray);
 
     function setFiltersFromState(scope: TrayScope): void {
       const container = scope === 'mobile' ? document.querySelector('[data-filter-tray="mobile"]') : document.querySelector('[data-filter-tray="desktop"]');

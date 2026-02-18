@@ -12,6 +12,7 @@ import {
   setCartTrayOpen,
   fetchCartFromServer,
 } from '@lib/cartStore';
+import { closeAllExcept } from '@lib/trayStore';
 
 export default function CartIcon() {
   const cart = useStore(cartStore);
@@ -26,7 +27,10 @@ export default function CartIcon() {
   return (
     <button
       type="button"
-      onClick={() => setCartTrayOpen(true)}
+      onClick={() => {
+        closeAllExcept('cart');
+        setCartTrayOpen(true);
+      }}
       className="relative inline-flex items-center justify-center p-2 hover:opacity-70 rounded transition-opacity cursor-pointer bg-transparent border-0 text-inherit"
       aria-label={`Open cart${itemCount > 0 ? `, ${itemCount} items` : ''}`}
     >

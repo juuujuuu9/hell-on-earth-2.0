@@ -1,1 +1,18 @@
-{}
+{
+  "routes": [
+    {
+      "src": "/api/cart/.*",
+      "methods": ["POST", "PATCH", "DELETE"],
+      "headers": {
+        "Cache-Control": "no-store"
+      }
+    },
+    {
+      "src": "/api/(btcpay|stripe)-checkout",
+      "methods": ["POST"],
+      "headers": {
+        "Cache-Control": "no-store"
+      }
+    }
+  ]
+}

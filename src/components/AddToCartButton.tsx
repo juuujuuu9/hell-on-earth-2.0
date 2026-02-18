@@ -13,6 +13,7 @@ import {
   setCartTrayOpen,
   setCartHighlightKeys,
 } from '@lib/cartStore';
+import { closeAllExcept } from '@lib/trayStore';
 
 interface SizeOption {
   size: string;
@@ -63,6 +64,7 @@ export default function AddToCartButton({
       );
       if (addedKey != null) {
         setCartHighlightKeys([addedKey]);
+        closeAllExcept('cart');
         setCartTrayOpen(true);
       }
     } finally {

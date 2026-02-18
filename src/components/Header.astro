@@ -61,6 +61,7 @@ import CartIcon from '@components/CartIcon';
 
 <script>
   import { stopLenis, startLenis } from '@lib/lenis';
+  import { registerTray, closeAllExcept } from '@lib/trayStore';
 
   (function() {
     const hamburgerBtn = document.getElementById('hamburger-menu-btn');
@@ -71,6 +72,7 @@ import CartIcon from '@components/CartIcon';
     if (!hamburgerBtn || !closeBtn || !menuTray || !backdrop) return;
     
     function openMenu() {
+      closeAllExcept('mobile-menu');
       stopLenis();
       menuTray.classList.remove('translate-x-full');
       backdrop.classList.remove('hidden');
@@ -84,6 +86,8 @@ import CartIcon from '@components/CartIcon';
       startLenis();
     }
     
+    registerTray('mobile-menu', closeMenu);
+
     hamburgerBtn.addEventListener('click', openMenu);
     closeBtn.addEventListener('click', closeMenu);
     backdrop.addEventListener('click', closeMenu);

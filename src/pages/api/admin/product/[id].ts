@@ -9,8 +9,24 @@ import { db } from '@lib/db';
 import { products, productSizeInventory } from '@lib/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { isAdminAuthenticated } from '@lib/admin-auth';
+import DOMPurify from 'isomorphic-dompurify';
 
 const STOCK_STATUSES = ['IN_STOCK', 'OUT_OF_STOCK', 'ON_BACKORDER'] as const;
+
+/** Sanitize HTML content to prevent XSS */
+function sanitizeHtml(dirty: string | null | undefined): string | null {
+  if (!dirty) return null;
+  // Allow basic formatting tags, blockquotes, links, lists
+  const clean = DOMPurify.sanitize(dirty, {
+    ALLOWED_TAGS: [
+      'p', 'br', 'strong', 'b', 'em', 'i', 'u', 'strike', 's',
+      'a', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+      'ul', 'ol', 'li', 'blockquote', 'code', 'pre'
+    ],
+    ALLOWED_ATTR: ['href', 'title', 'target', 'rel'],
+  });
+  return clean || null;
+}
 
 export const PATCH: APIRoute = async ({ params, request }) => {
   const auth = isAdminAuthenticated(request);
@@ -48,6 +64,13 @@ export const PATCH: APIRoute = async ({ params, request }) => {
   const stockStatus = typeof body.stockStatus === 'string' && STOCK_STATUSES.includes(body.stockStatus as (typeof STOCK_STATUSES)[number])
     ? (body.stockStatus as (typeof STOCK_STATUSES)[number])
     : undefined;
+
+  // Sanitize HTML fields to prevent XSS
+  const description = typeof body.description === 'string' ? sanitizeHtml(body.description) : undefined;
+  const shortDescription = typeof body.shortDescription === 'string' ? sanitizeHtml(body.shortDescription) : undefined;
+  const materials = typeof body.materials === 'string' ? sanitizeHtml(body.materials) : undefined;
+  const features = typeof body.features === 'string' ? sanitizeHtml(body.features) : undefined;
+  const details = typeof body.details === 'string' ? sanitizeHtml(body.details) : undefined;
   const rawQty = body.stockQuantity;
   const stockQuantity =
     rawQty != null
@@ -87,6 +110,11 @@ export const PATCH: APIRoute = async ({ params, request }) => {
     onSale?: boolean;
     stockStatus?: (typeof STOCK_STATUSES)[number];
     stockQuantity?: number | null;
+    description?: string | null;
+    shortDescription?: string | null;
+    materials?: string | null;
+    features?: string | null;
+    details?: string | null;
     updatedAt?: Date;
   } = { updatedAt: new Date() };
   if (name !== undefined) updates.name = name;
@@ -97,6 +125,11 @@ export const PATCH: APIRoute = async ({ params, request }) => {
   if (onSale !== undefined) updates.onSale = onSale;
   if (stockStatus !== undefined) updates.stockStatus = stockStatus;
   if (stockQuantity !== undefined) updates.stockQuantity = stockQuantity;
+  if (description !== undefined) updates.description = description;
+  if (shortDescription !== undefined) updates.shortDescription = shortDescription;
+  if (materials !== undefined) updates.materials = materials;
+  if (features !== undefined) updates.features = features;
+  if (details !== undefined) updates.details = details;
 
   if (Object.keys(updates).length === 1 && sizeInventory === undefined) {
     return new Response(JSON.stringify({ error: 'No valid fields to update' }), {

@@ -9,6 +9,7 @@ import {
   getCartForApp,
   updateCartItemByKey,
 } from '@lib/db/queries';
+import { checkRateLimit, getClientId } from '@lib/rateLimit';
 
 function jsonResponse(data: object, status = 200): Response {
   return new Response(JSON.stringify(data), {
@@ -18,6 +19,12 @@ function jsonResponse(data: object, status = 200): Response {
 }
 
 export const DELETE: APIRoute = async ({ request, params }) => {
+  // Rate limit: 50 deletions per minute per client
+  const rateLimit = checkRateLimit(getClientId(request), { maxRequests: 50, windowMs: 60000 });
+  if (!rateLimit.allowed) {
+    return jsonResponse({ error: 'Rate limit exceeded' }, 429);
+  }
+
   try {
     const cartId = getCartIdFromRequest(request);
     if (!cartId) {

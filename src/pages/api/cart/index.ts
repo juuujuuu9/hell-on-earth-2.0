@@ -13,6 +13,7 @@ import {
   CART_COOKIE_NAME,
   CART_COOKIE_MAX_AGE,
 } from '@lib/db/queries';
+import { checkRateLimit, getClientId } from '@lib/rateLimit';
 
 function jsonResponse(data: object, status = 200, headers?: HeadersInit): Response {
   return new Response(JSON.stringify(data), {
@@ -22,6 +23,12 @@ function jsonResponse(data: object, status = 200, headers?: HeadersInit): Respon
 }
 
 export const GET: APIRoute = async ({ request }) => {
+  // Rate limit: 100 requests per minute per client
+  const rateLimit = checkRateLimit(getClientId(request), { maxRequests: 100, windowMs: 60000 });
+  if (!rateLimit.allowed) {
+    return jsonResponse({ error: 'Rate limit exceeded' }, 429);
+  }
+
   try {
     let cartId = getCartIdFromRequest(request);
     if (!cartId) {
@@ -43,6 +50,12 @@ export const GET: APIRoute = async ({ request }) => {
 };
 
 export const PATCH: APIRoute = async ({ request }) => {
+  // Rate limit: 50 updates per minute per client
+  const rateLimit = checkRateLimit(getClientId(request), { maxRequests: 50, windowMs: 60000 });
+  if (!rateLimit.allowed) {
+    return jsonResponse({ error: 'Rate limit exceeded' }, 429);
+  }
+
   try {
     const cartId = getCartIdFromRequest(request);
     if (!cartId) {
