@@ -1,5 +1,8 @@
 /**
- * PATCH /api/admin/product/[id] – update product (admin only).
+ * Admin API - Product Management
+ * PATCH /api/admin/product/[id] – update product
+ * DELETE /api/admin/product/[id] – soft delete product
+ * POST /api/admin/product/[id]/restore – restore deleted product
  */
 
 export const prerender = false;
@@ -8,7 +11,9 @@ import type { APIRoute } from 'astro';
 import { db } from '@lib/db';
 import { products, productSizeInventory } from '@lib/db/schema';
 import { eq, and } from 'drizzle-orm';
-import { isAdminAuthenticated } from '@lib/admin-auth';
+import { isAdminAuthenticated, createSessionCookie } from '@lib/admin-auth';
+import { validateCsrfToken } from '@lib/csrf';
+import { softDeleteProduct, restoreProduct, hardDeleteProduct } from '@lib/db/queries';
 import DOMPurify from 'isomorphic-dompurify';
 
 const STOCK_STATUSES = ['IN_STOCK', 'OUT_OF_STOCK', 'ON_BACKORDER'] as const;
@@ -16,7 +21,6 @@ const STOCK_STATUSES = ['IN_STOCK', 'OUT_OF_STOCK', 'ON_BACKORDER'] as const;
 /** Sanitize HTML content to prevent XSS */
 function sanitizeHtml(dirty: string | null | undefined): string | null {
   if (!dirty) return null;
-  // Allow basic formatting tags, blockquotes, links, lists
   const clean = DOMPurify.sanitize(dirty, {
     ALLOWED_TAGS: [
       'p', 'br', 'strong', 'b', 'em', 'i', 'u', 'strike', 's',
@@ -28,14 +32,41 @@ function sanitizeHtml(dirty: string | null | undefined): string | null {
   return clean || null;
 }
 
-export const PATCH: APIRoute = async ({ params, request }) => {
-  const auth = isAdminAuthenticated(request);
-  if (auth === false) {
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-      status: 401,
-      headers: { 'Content-Type': 'application/json' },
-    });
+/** Helper to get session cookie header if needed */
+function getSessionCookieHeader(auth: boolean | { setCookie: true }): string | undefined {
+  if (auth && typeof auth === 'object' && auth.setCookie) {
+    const { name, value, options } = createSessionCookie();
+    return `${name}=${value}; ${options}`;
   }
+  return undefined;
+}
+
+/** Standard unauthorized response */
+function unauthorizedResponse(): Response {
+  return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+    status: 401,
+    headers: { 
+      'Content-Type': 'application/json',
+      'WWW-Authenticate': 'Basic realm="Admin"'
+    },
+  });
+}
+
+/** Standard CSRF error response */
+function csrfResponse(): Response {
+  return new Response(
+    JSON.stringify({ error: 'Invalid CSRF token' }),
+    { status: 403, headers: { 'Content-Type': 'application/json' } }
+  );
+}
+
+export const PATCH: APIRoute = async ({ params, request }) => {
+  // Auth check
+  const auth = isAdminAuthenticated(request);
+  if (auth === false) return unauthorizedResponse();
+  
+  // CSRF check
+  if (!validateCsrfToken(request)) return csrfResponse();
 
   const id = params?.id;
   if (!id) {
@@ -65,12 +96,12 @@ export const PATCH: APIRoute = async ({ params, request }) => {
     ? (body.stockStatus as (typeof STOCK_STATUSES)[number])
     : undefined;
 
-  // Sanitize HTML fields to prevent XSS
   const description = typeof body.description === 'string' ? sanitizeHtml(body.description) : undefined;
   const shortDescription = typeof body.shortDescription === 'string' ? sanitizeHtml(body.shortDescription) : undefined;
   const materials = typeof body.materials === 'string' ? sanitizeHtml(body.materials) : undefined;
   const features = typeof body.features === 'string' ? sanitizeHtml(body.features) : undefined;
   const details = typeof body.details === 'string' ? sanitizeHtml(body.details) : undefined;
+  
   const rawQty = body.stockQuantity;
   const stockQuantity =
     rawQty != null
@@ -117,6 +148,7 @@ export const PATCH: APIRoute = async ({ params, request }) => {
     details?: string | null;
     updatedAt?: Date;
   } = { updatedAt: new Date() };
+  
   if (name !== undefined) updates.name = name;
   if (slug !== undefined) updates.slug = slug;
   if (price !== undefined) updates.price = price;
@@ -180,10 +212,15 @@ export const PATCH: APIRoute = async ({ params, request }) => {
       }
     }
 
-    return new Response(JSON.stringify({ ok: true }), {
+    const response = new Response(JSON.stringify({ ok: true }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
     });
+    
+    const cookie = getSessionCookieHeader(auth);
+    if (cookie) response.headers.set('Set-Cookie', cookie);
+    return response;
+    
   } catch (err) {
     console.error('Admin PATCH product:', err);
     return new Response(JSON.stringify({ error: 'Update failed' }), {
@@ -194,13 +231,96 @@ export const PATCH: APIRoute = async ({ params, request }) => {
 };
 
 export const DELETE: APIRoute = async ({ params, request }) => {
+  // Auth check
   const auth = isAdminAuthenticated(request);
-  if (auth === false) {
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-      status: 401,
+  if (auth === false) return unauthorizedResponse();
+  
+  // CSRF check
+  if (!validateCsrfToken(request)) return csrfResponse();
+
+  const id = params?.id;
+  if (!id) {
+    return new Response(JSON.stringify({ error: 'Product ID required' }), {
+      status: 400,
       headers: { 'Content-Type': 'application/json' },
     });
   }
+
+  const url = new URL(request.url);
+  const permanent = url.searchParams.get('permanent') === 'true';
+
+  try {
+    if (permanent) {
+      // Hard delete with extra safety - must be soft-deleted first
+      const product = await db.query.products.findFirst({
+        where: eq(products.id, id),
+      });
+
+      if (!product) {
+        return new Response(JSON.stringify({ error: 'Product not found' }), {
+          status: 404,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+
+      if (!product.isDeleted) {
+        return new Response(
+          JSON.stringify({
+            error: 'Product must be soft-deleted before permanent deletion',
+            message: 'Delete the product first, then permanently delete from trash',
+          }),
+          { status: 400, headers: { 'Content-Type': 'application/json' } }
+        );
+      }
+
+      await hardDeleteProduct(id);
+      
+      const response = new Response(
+        JSON.stringify({ success: true, message: 'Product permanently deleted' }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } }
+      );
+      
+      const cookie = getSessionCookieHeader(auth);
+      if (cookie) response.headers.set('Set-Cookie', cookie);
+      return response;
+      
+    } else {
+      // Soft delete (default)
+      const success = await softDeleteProduct(id, 'admin');
+      
+      if (!success) {
+        return new Response(JSON.stringify({ error: 'Product not found' }), {
+          status: 404,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+      
+      const response = new Response(
+        JSON.stringify({ success: true, message: 'Product moved to trash' }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } }
+      );
+      
+      const cookie = getSessionCookieHeader(auth);
+      if (cookie) response.headers.set('Set-Cookie', cookie);
+      return response;
+    }
+  } catch (err) {
+    console.error('Admin DELETE product:', err);
+    return new Response(
+      JSON.stringify({ error: 'Delete failed' }),
+      { status: 500, headers: { 'Content-Type': 'application/json' } }
+    );
+  }
+};
+
+/** Restore a soft-deleted product */
+export const POST: APIRoute = async ({ params, request }) => {
+  // Auth check
+  const auth = isAdminAuthenticated(request);
+  if (auth === false) return unauthorizedResponse();
+  
+  // CSRF check
+  if (!validateCsrfToken(request)) return csrfResponse();
 
   const id = params?.id;
   if (!id) {
@@ -211,22 +331,29 @@ export const DELETE: APIRoute = async ({ params, request }) => {
   }
 
   try {
-    const result = await db.delete(products).where(eq(products.id, id)).returning({ id: products.id });
-    if (result.length === 0) {
-      return new Response(JSON.stringify({ error: 'Product not found' }), {
+    const success = await restoreProduct(id);
+    
+    if (!success) {
+      return new Response(JSON.stringify({ error: 'Product not found or not deleted' }), {
         status: 404,
         headers: { 'Content-Type': 'application/json' },
       });
     }
-    return new Response(JSON.stringify({ ok: true }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    
+    const response = new Response(
+      JSON.stringify({ success: true, message: 'Product restored' }),
+      { status: 200, headers: { 'Content-Type': 'application/json' } }
+    );
+    
+    const cookie = getSessionCookieHeader(auth);
+    if (cookie) response.headers.set('Set-Cookie', cookie);
+    return response;
+    
   } catch (err) {
-    console.error('Admin DELETE product:', err);
-    return new Response(JSON.stringify({ error: 'Delete failed' }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    console.error('Admin restore product:', err);
+    return new Response(
+      JSON.stringify({ error: 'Restore failed' }),
+      { status: 500, headers: { 'Content-Type': 'application/json' } }
+    );
   }
 };

@@ -786,3 +786,71 @@ export async function updateCartItemByKey(
   }
   await db.update(carts).set({ updatedAt: new Date() }).where(eq(carts.id, cartId));
 }
+
+/**
+ * Soft delete a product (safe delete with recovery option)
+ */
+export async function softDeleteProduct(
+  id: string,
+  deletedBy?: string
+): Promise<boolean> {
+  const result = await db
+    .update(products)
+    .set({
+      isDeleted: true,
+      deletedAt: new Date(),
+      deletedBy: deletedBy || 'unknown',
+      updatedAt: new Date(),
+    })
+    .where(eq(products.id, id))
+    .returning({ id: products.id });
+
+  return result.length > 0;
+}
+
+/**
+ * Restore a soft-deleted product
+ */
+export async function restoreProduct(id: string): Promise<boolean> {
+  const result = await db
+    .update(products)
+    .set({
+      isDeleted: false,
+      deletedAt: null,
+      deletedBy: null,
+      updatedAt: new Date(),
+    })
+    .where(eq(products.id, id))
+    .returning({ id: products.id });
+
+  return result.length > 0;
+}
+
+/**
+ * Get all products including deleted (for admin)
+ */
+export async function getAllProducts(includeDeleted = false) {
+  if (includeDeleted) {
+    return db
+      .select()
+      .from(products)
+      .orderBy(products.name);
+  }
+  return db
+    .select()
+    .from(products)
+    .where(eq(products.isDeleted, false))
+    .orderBy(products.name);
+}
+
+/**
+ * Permanently delete a product (use with caution!)
+ */
+export async function hardDeleteProduct(id: string): Promise<boolean> {
+  const result = await db
+    .delete(products)
+    .where(eq(products.id, id))
+    .returning({ id: products.id });
+
+  return result.length > 0;
+}

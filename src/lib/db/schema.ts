@@ -42,6 +42,10 @@ export const products = pgTable('products', {
   features: text('features'), // Product features information (rich text/HTML)
   details: text('details'), // Product details information (rich text/HTML)
   stripeCheckoutUrl: text('stripe_checkout_url'), // Stripe Checkout link
+  // Soft delete fields
+  deletedAt: timestamp('deleted_at'), // null = active, set = soft-deleted
+  deletedBy: text('deleted_by'), // who deleted it
+  isDeleted: boolean('is_deleted').default(false).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });

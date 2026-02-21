@@ -1,14 +1,39 @@
 /**
- * API Route: Upload image to Bunny.net
+ * API Route: Upload image to Bunny.net (ADMIN ONLY)
  * 
  * Accepts multipart/form-data with 'image' field
  * Returns the CDN URL of the uploaded image
+ * 
+ * SECURITY: Requires admin authentication
  */
 
 import type { APIRoute } from 'astro';
 import { uploadImageToBunny } from '@lib/bunny';
+import { isAdminAuthenticated, createSessionCookie } from '@lib/admin-auth';
 
 export const POST: APIRoute = async ({ request }) => {
+  // SECURITY FIX: Check authentication first
+  const auth = isAdminAuthenticated(request);
+  if (auth === false) {
+    return new Response(
+      JSON.stringify({ error: 'Unauthorized - Admin access required' }),
+      { 
+        status: 401, 
+        headers: { 
+          'Content-Type': 'application/json',
+          'WWW-Authenticate': 'Basic realm="Admin"'
+        } 
+      }
+    );
+  }
+  
+  // Handle session cookie for Basic Auth
+  let setCookieHeader: string | undefined;
+  if (auth && typeof auth === 'object' && auth.setCookie) {
+    const { name, value, options } = createSessionCookie();
+    setCookieHeader = `${name}=${value}; ${options}`;
+  }
+
   try {
     const formData = await request.formData();
     const file = formData.get('image') as File | null;
@@ -16,7 +41,10 @@ export const POST: APIRoute = async ({ request }) => {
     if (!file) {
       return new Response(
         JSON.stringify({ error: 'No image file provided' }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
+        { 
+          status: 400, 
+          headers: { 'Content-Type': 'application/json' } 
+        }
       );
     }
 
@@ -24,7 +52,10 @@ export const POST: APIRoute = async ({ request }) => {
     if (!file.type.startsWith('image/')) {
       return new Response(
         JSON.stringify({ error: 'File must be an image' }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
+        { 
+          status: 400, 
+          headers: { 'Content-Type': 'application/json' } 
+        }
       );
     }
 
@@ -33,7 +64,10 @@ export const POST: APIRoute = async ({ request }) => {
     if (file.size > maxSize) {
       return new Response(
         JSON.stringify({ error: 'File size exceeds 10MB limit' }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
+        { 
+          status: 400, 
+          headers: { 'Content-Type': 'application/json' } 
+        }
       );
     }
 
@@ -49,7 +83,7 @@ export const POST: APIRoute = async ({ request }) => {
     // Upload to Bunny.net
     const cdnUrl = await uploadImageToBunny(buffer, filename);
 
-    return new Response(
+    const response = new Response(
       JSON.stringify({ 
         success: true,
         url: cdnUrl,
@@ -60,6 +94,14 @@ export const POST: APIRoute = async ({ request }) => {
         headers: { 'Content-Type': 'application/json' } 
       }
     );
+    
+    // Set session cookie if needed
+    if (setCookieHeader) {
+      response.headers.set('Set-Cookie', setCookieHeader);
+    }
+    
+    return response;
+    
   } catch (error) {
     console.error('Error uploading to Bunny.net:', error);
     return new Response(
